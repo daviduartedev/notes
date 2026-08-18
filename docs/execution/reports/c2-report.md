@@ -27,7 +27,7 @@
 ## Commit / push
 
 - Mensagem: `cycle(02): stages and transitions`
-- SHA: pending
+- SHA: `81d9e4a7b4ea63d951ed83322ae0a5c48191e2b3`
 - Push `origin main`: pending
 
 ## Decisões
