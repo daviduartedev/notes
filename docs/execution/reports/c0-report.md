@@ -29,8 +29,8 @@ Smoke: `GET http://localhost:3014/health` → 200 `{"status":"ok"}`; `GET http:/
 ## Commit / push
 
 - Mensagem: `cycle(00): foundation`
-- SHA: *(preenchido após git commit)*
-- Push `origin main`: *(preenchido após push)*
+- SHA: `7d99a9811433f3d08912059851b426bf06a9f85d`
+- Push `origin main`: ok (`293fff4..7d99a98`)
 
 ## Decisões
 

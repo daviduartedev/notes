@@ -1,6 +1,6 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-18 (C0 fechado).
+Atualizado: 2026-08-18 (C0 fechado, SHA `7d99a9811433f3d08912059851b426bf06a9f85d`).
 
 ## Produto
 
