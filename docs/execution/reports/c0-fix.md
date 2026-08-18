@@ -3,6 +3,7 @@
 - **Cycle:** `cycles/Q32026/0818-c0-foundation/`
 - **Data:** 2026-08-18
 - **Commit:** `cycle(00): harden session and tenant lookup`
+- **SHA:** `173781ee960650f3697a445cea17bb8355071d22`
 - **C1:** não iniciado
 
 ```txt

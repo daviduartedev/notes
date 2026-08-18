@@ -1,6 +1,6 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-18 (C0 fix: JWT no middleware, `sessionVersion`, lookup 404).
+Atualizado: 2026-08-18 (C0 fix `173781ee960650f3697a445cea17bb8355071d22`).
 
 ## Produto
 
