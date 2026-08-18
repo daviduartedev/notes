@@ -1,0 +1,29 @@
+{
+  "name": "notes",
+  "private": true,
+  "packageManager": "pnpm@10.29.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm run --parallel --filter @notes/web --filter @notes/api dev",
+    "dev:web": "pnpm --filter @notes/web dev",
+    "dev:api": "pnpm --filter @notes/api dev",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "build": "pnpm -r --if-present build",
+    "db:migrate": "pnpm --filter @notes/api db:migrate",
+    "db:seed": "pnpm --filter @notes/api db:seed"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}

@@ -1,43 +1,56 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-18 (orchestrator bootstrap, pré-C0).
+Atualizado: 2026-08-18 (C0 fechado).
 
 ## Produto
 
 - Nome interno de UI: **Notes**
 - Tipo: Software House Operating System / Delivery CRM
-- Entidade operacional: **Project**
+- Entidade operacional: **Project** (ainda não implementada — C1)
 - Tenant: `workspaceId` sempre da sessão, nunca do body
 
-## Stack (C0 a implementar)
+## Stack (entregue no C0)
 
-- Monorepo **pnpm**
-- `apps/web` — Next.js App Router + TypeScript + Tailwind — porta **3015**
-- `apps/api` — Hono + Prisma + Auth.js (credentials) — porta **3014**
-- PostgreSQL 16 via Docker Compose
+- Monorepo **pnpm** (Node 22)
+- `apps/web` — Next.js App Router + Tailwind — porta **3015**
+- `apps/api` — Hono + Prisma 6 + Auth.js credentials — porta **3014**
+- PostgreSQL 16 via Docker Compose (host local **5433**; CI **5432**)
 - Zod, Vitest, ESLint
 - Enums de domínio em inglês; UI e docs em português
 
 ## O que já existe no repo
 
-- `AGENTS.md`, `cycles/` (C0–C11 com `request.md` + `JANELAS.md`), prompts SDD
-- Sem `spec/` canônico ainda (entra no C0)
-- Sem aplicação, sem CI, sem Prisma
+- Harness em `spec/` + `.cursor/commands/`
+- Auth credentials, seed 1 workspace + 1 owner
+- `/login`, `/hoje` empty state, `/design-system` (dev)
+- CI GitHub Actions (lint, typecheck, test, build + migrate)
 
 ## Auth / banco / módulos
 
-- Auth: não implementado
-- Banco: não implementado
-- Módulos de domínio: nenhum (clientes/projetos começam no C1)
+- Auth: credentials na API, cookie `authjs.session-token`
+- Banco: User, Workspace, Member
+- Módulos de domínio: nenhum além de workspace (clientes/projetos = C1)
 
-## Contratos previstos após C0
+## Contratos
 
-- `GET http://localhost:3014/health`
-- `GET /api/me`, `GET /api/workspace` na API
-- `/login`, `/hoje` (empty state) no frontend
-- Visitante em rotas autenticadas → `/login`
+- `GET http://localhost:3014/health` → `{ "status": "ok" }`
+- `POST /api/auth/login` `{ email, password }`
+- `GET /api/me`, `GET /api/workspace` (403 sem membership)
+- Visitante em `/hoje` → `/login`
+
+## Como rodar
+
+```text
+cp .env.example .env
+docker compose up -d
+pnpm install
+pnpm db:migrate
+pnpm db:seed
+pnpm dev
+```
 
 ## Dependências externas
 
-- Docker Desktop disponível
-- Node 22, pnpm 10, Git, gh autenticado (`daviduartedev`)
+- Docker Desktop
+- Node 22, pnpm 10
+- Origin `https://github.com/daviduartedev/notes.git`

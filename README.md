@@ -6,12 +6,22 @@ A entidade operacional principal é o **Projeto**. Cliente 1:N Projeto. O quadro
 
 ## Desenvolvimento local
 
+```text
+cp .env.example .env
+docker compose up -d
+pnpm install
+pnpm db:migrate
+pnpm db:seed
+pnpm dev
+```
+
 | Superfície | URL |
 |---|---|
 | Frontend | http://localhost:3015 |
 | Backend/API | http://localhost:3014 |
+| Postgres (Compose local) | localhost:5433 |
 
-Portas **obrigatórias** — não usar 3000, 3001, 5173 ou 8080 como portas principais.
+Portas **obrigatórias** da app — não usar 3000, 3001, 5173 ou 8080 como portas principais. Compose local usa **5433** no host para não colidir com outros Postgres em 5432.
 
 ## Processo
 

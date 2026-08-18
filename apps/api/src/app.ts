@@ -1,0 +1,31 @@
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { authRoutes } from "./auth/routes.js";
+import type { AppDeps } from "./deps.js";
+import { clientErrorBody } from "./http/errors.js";
+import { workspaceRoutes } from "./workspace/routes.js";
+
+export const API_PORT = 3014;
+
+export function createApp(deps: AppDeps) {
+  const app = new Hono();
+
+  app.use(
+    "*",
+    cors({
+      origin: deps.webOrigin,
+      credentials: true,
+      allowHeaders: ["Content-Type"],
+      allowMethods: ["GET", "POST", "OPTIONS"],
+    }),
+  );
+
+  app.onError((_err, c) => c.json(clientErrorBody("Erro interno"), 500));
+
+  app.get("/", (c) => c.json({ service: "notes-api" }));
+  app.get("/health", (c) => c.json({ status: "ok" }));
+  app.route("/api/auth", authRoutes(deps));
+  app.route("/api", workspaceRoutes(deps));
+
+  return app;
+}

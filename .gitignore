@@ -3,10 +3,12 @@ node_modules/
 dist/
 build/
 coverage/
+.serena/
 playwright-report/
 test-results/
 .turbo/
 .prisma/
+*.tsbuildinfo
 *.log
 .env
 .env.local

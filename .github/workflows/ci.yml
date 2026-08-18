@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: notes
+          POSTGRES_PASSWORD: notes
+          POSTGRES_DB: notes
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U notes -d notes"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://notes:notes@localhost:5432/notes
+      AUTH_SECRET: ci-auth-secret-replace-with-32-chars
+      WEB_ORIGIN: http://localhost:3015
+      API_ORIGIN: http://localhost:3014
+      AUTH_URL: http://localhost:3014
+      NEXT_PUBLIC_API_ORIGIN: http://localhost:3014
+      SEED_OWNER_EMAIL: owner@example.com
+      SEED_OWNER_PASSWORD: changeme
+      SEED_WORKSPACE_NAME: Notes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @notes/api exec prisma migrate deploy
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build

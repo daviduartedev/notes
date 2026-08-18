@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --notes-canvas: #121212;
+  --notes-panel: #151515;
+  --notes-raised: #181818;
+  --notes-border: rgba(255, 255, 255, 0.08);
+  --notes-text: #f4f4f5;
+  --notes-muted: #a1a1aa;
+  --notes-green: #22c55e;
+  --notes-yellow: #eab308;
+  --notes-red: #ef4444;
+  --notes-blue: #3b82f6;
+  --notes-purple: #a855f7;
+}
+
+html,
+body {
+  min-height: 100%;
+  background: var(--notes-canvas);
+  color: var(--notes-text);
+}
+
+h1,
+h2,
+label {
+  font-family: var(--font-caveat), cursive;
+}

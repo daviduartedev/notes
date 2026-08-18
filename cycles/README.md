@@ -18,7 +18,7 @@ Prompts genéricos (com placeholder): [`prompts/`](prompts/).
 
 | Cycle | Pasta | Tipo | Status | Próxima janela |
 |-------|--------|------|--------|----------------|
-| C0 | [0818-c0-foundation](Q32026/0818-c0-foundation/) | Large | request pronto | Refine |
+| C0 | [0818-c0-foundation](Q32026/0818-c0-foundation/) | Large | **fechado** | — |
 | C1 | [0818-c1-clientes-e-projetos](Q32026/0818-c1-clientes-e-projetos/) | Large | request pronto | Refine **depois de C0 fechado** |
 | C2 | [0818-c2-etapas-e-transicoes](Q32026/0818-c2-etapas-e-transicoes/) | Large | request pronto | Refine depois de C1 |
 | C3 | [0818-c3-pipeline](Q32026/0818-c3-pipeline/) | Medium | request pronto | Refine depois de C2 |

@@ -8,7 +8,7 @@
 SaaS interno (depois comercializável) de **Software House Operating System / Delivery CRM**.
 A entidade operacional principal é o **Projeto**. Não é um CRM só comercial.
 
-Workspace atual: `c:\dev\utopia\internal\notes` (greenfield). Stack e Harness entram no **C0**.
+Workspace atual: `c:\dev\utopia\internal\notes`. Stack confirmada no C0: Next.js App Router (`apps/web` :3015) + Hono/Prisma/Auth.js (`apps/api` :3014) + PostgreSQL 16 + pnpm + Zod + Vitest. Sem Playwright nesta execução.
 
 ## Metodologia — Ciclos SDD (padrão Elli + Harness da casa)
 
@@ -38,8 +38,8 @@ Prompts para colar em **chat novo** por janela: `cycles/prompts/` e `JANELAS.md`
 
 Índice: [`cycles/README.md`](cycles/README.md).
 
-## Stack proposta (confirmar no refine do C0)
+## Stack confirmada (C0)
 
-Next.js App Router + TypeScript + PostgreSQL + Prisma + NextAuth + Zod + Vitest + Playwright + Tailwind.
+Next.js App Router (`apps/web` :3015) + Hono + Prisma + Auth.js (`apps/api` :3014) + PostgreSQL 16 + pnpm + Zod + Vitest. Sem Playwright nesta execução.
 
 Referência de processo: Elli (`C:\dev\orbesoft\elli\cycles`). Referência de Harness: CascaBJJ / Lignum / Movix.
