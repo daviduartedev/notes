@@ -164,3 +164,65 @@ ORCH-003 exige portas 3015 e 3014 de verdade.
 
 ### Consequências
 CORS credentials obrigatório. Cookie no host localhost.
+
+---
+
+## ADR-0009 — Status e transições de Client (C1-D1/D2)
+
+- **Data:** 2026-08-18
+- **Cycle:** cycles/Q32026/0818-c1-clientes-e-projetos/
+- **Status:** Accepted
+
+### Contexto
+O request pedia valores exatos de status do cliente.
+
+### Decisão
+`lead | active | inactive | archived`. Transições: lead→active|archived; active→inactive|archived; inactive→active|archived; archived terminal.
+
+### Alternativas consideradas
+- Só active/inactive — perde o funil lead.
+
+### Consequências
+Máquina de estados no domínio, HTTP 409 se inválida.
+
+---
+
+## ADR-0010 — Envelope de Project.status e overdue (C1-D3/D4/D11)
+
+- **Data:** 2026-08-18
+- **Cycle:** cycles/Q32026/0818-c1-clientes-e-projetos/
+- **Status:** Accepted
+
+### Contexto
+C1 entrega o envelope, não as etapas (C2).
+
+### Decisão
+`draft | active | on_hold | completed | cancelled` com transições fechadas. `visualState: overdue` quando active e prazo passado. Progresso manual 0–100. Prioridade `low|medium|high|urgent`.
+
+### Alternativas consideradas
+- Progresso derivado de checklist — C4.
+- Overdue como status persistido — rejeitado; é DTO.
+
+### Consequências
+Etapas/pipeline ficam para C2/C3.
+
+---
+
+## ADR-0011 — ActivityEvent com actions pontuadas (C1-D9/D10)
+
+- **Data:** 2026-08-18
+- **Cycle:** cycles/Q32026/0818-c1-clientes-e-projetos/
+- **Status:** Accepted
+
+### Contexto
+Mutações precisam de histórico consultável, não só uma frase.
+
+### Decisão
+Tabela `ActivityEvent`; actions `client.created`, `client.updated`, `project.created`, `project.updated`, `project.status_changed`. Payload JSON sem telefone/e-mail.
+
+### Alternativas consideradas
+- Event sourcing / bus — fora de escopo.
+
+### Consequências
+GET nas fichas; histórico do cliente agrega eventos dos seus projetos.
+

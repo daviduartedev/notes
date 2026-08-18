@@ -13,4 +13,12 @@
 
 Unique `(workspaceId, userId)` em Member.
 
-Seed: 1 workspace, 1 owner (e-mail/senha via env placeholders).
+Seed C0: 1 workspace, 1 owner (e-mail/senha via env placeholders).
+
+## Modelos C1
+
+- `Client` — status `lead|active|inactive|archived`; ownerUserId; contato WhatsApp/e-mail opcionais
+- `Project` — status `draft|active|on_hold|completed|cancelled`; prioridade; progresso 0–100; prazo
+- `ActivityEvent` — action string pontuada; payload JSON sem PII de contato
+
+Seed: não cria clientes/projetos (fixtures nos testes; segundo workspace só nos testes de IDOR).

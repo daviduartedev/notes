@@ -13,3 +13,11 @@
 - isolamento de `workspaceId` nas queries `me` / `workspace`
 
 Testes de domínio não exigem Postgres. Teste de persistência usa `DATABASE_URL` quando disponível (CI com service Postgres).
+
+## C1 obrigatório
+
+- transições de `Client.status` e `Project.status`
+- DTO overdue (`active` + prazo passado)
+- dois projetos no mesmo cliente + `project.created` ×2
+- IDOR client/project/activity → 404 vazio
+- payload de activity sem telefone/e-mail

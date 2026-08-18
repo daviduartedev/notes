@@ -17,6 +17,17 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 | `/hoje` | autenticado | empty state “quadro ainda sem operação”; visitante ou JWT inválido → `/login` |
 | `/design-system` | development | 404 em production |
 
-Primitivos: Button, Input, Card, StatusPill. Sem board operacional no C0.
+## Rotas C1
+
+| Path | Quem | Comportamento |
+|------|------|----------------|
+| `/clientes` | autenticado | lista + criação; filtros nome/responsável/status |
+| `/clientes/:id` | autenticado | ficha, projetos do cliente, histórico |
+| `/projetos` | autenticado | lista + criação; filtros responsável/status/cliente/prazo/prioridade |
+| `/projetos/:id` | autenticado | cabeçalho operacional + overdue + histórico |
+
+Nav: Hoje / Clientes / Projetos. `/hoje` continua empty state.
+
+Primitivos: Button, Input, Card, StatusPill, Select, Textarea.
 
 UI em **pt-BR**.

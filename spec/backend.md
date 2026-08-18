@@ -19,7 +19,19 @@ API em `apps/api` (Hono + Prisma + Auth.js), porta **3014**.
 | GET | `/api/workspace` | sessão | workspace da sessão; 403 sem membership |
 | GET | `/api/workspace/:id` | sessão | 200 se o id é o workspace da sessão; 404 vazio se outro tenant |
 
-`workspaceId` no body é ignorado.
+## Contratos C1
+
+| Método | Path | Auth | Notas |
+|--------|------|------|-------|
+| GET | `/api/workspace/members` | sessão | membros do workspace da sessão |
+| GET/POST | `/api/clients` | sessão | list/create; filtros name, ownerUserId, status |
+| GET/PATCH/DELETE | `/api/clients/:id` | sessão | DELETE 409 se houver projetos |
+| GET | `/api/clients/:id/activity` | sessão | |
+| GET/POST | `/api/projects` | sessão | filtros ownerUserId, status, clientId, prazo, priority |
+| GET/PATCH/DELETE | `/api/projects/:id` | sessão | DTO `visualState` |
+| GET | `/api/projects/:id/activity` | sessão | |
+
+CORS: GET, POST, PATCH, PUT, DELETE, OPTIONS. `workspaceId` no body é ignorado.
 
 ## Erros
 

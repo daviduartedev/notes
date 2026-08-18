@@ -1,3 +1,6 @@
+import type { NotesStore } from "./store/types.js";
+import { createMemoryStore, TEST_MEMBERS } from "./store/memory.js";
+
 export type MemberRole = "owner" | "member";
 
 export type AuthResult = {
@@ -25,12 +28,16 @@ export type AppDeps = {
   getWorkspace: (workspaceId: string) => Promise<WorkspaceRecord | null>;
   getSessionVersion: (userId: string) => Promise<number | null>;
   bumpSessionVersion: (userId: string) => Promise<void>;
+  store: NotesStore;
+  now: () => Date;
 };
 
 export function createTestDeps(overrides: Partial<AppDeps> = {}): AppDeps {
   const versions = new Map<string, number>([
     ["seed-user", 0],
     ["no-member", 0],
+    ["seed-user-b", 0],
+    ["member-user", 0],
   ]);
 
   const deps: AppDeps = {
@@ -55,6 +62,24 @@ export function createTestDeps(overrides: Partial<AppDeps> = {}): AppDeps {
           sessionVersion: versions.get("no-member") ?? 0,
         };
       }
+      if (email === "owner-b@example.com" && password === "changeme") {
+        return {
+          userId: "seed-user-b",
+          email,
+          workspaceId: "ws-2",
+          role: "owner",
+          sessionVersion: versions.get("seed-user-b") ?? 0,
+        };
+      }
+      if (email === "member@example.com" && password === "changeme") {
+        return {
+          userId: "member-user",
+          email,
+          workspaceId: "ws-1",
+          role: "member",
+          sessionVersion: versions.get("member-user") ?? 0,
+        };
+      }
       return null;
     },
     getWorkspace: async (workspaceId) => {
@@ -70,6 +95,8 @@ export function createTestDeps(overrides: Partial<AppDeps> = {}): AppDeps {
     bumpSessionVersion: async (userId) => {
       versions.set(userId, (versions.get(userId) ?? 0) + 1);
     },
+    store: createMemoryStore(TEST_MEMBERS),
+    now: () => new Date(),
   };
 
   return { ...deps, ...overrides };

@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { authRoutes } from "./auth/routes.js";
+import { clientRoutes } from "./clients/routes.js";
+import { projectRoutes } from "./projects/routes.js";
 import type { AppDeps } from "./deps.js";
 import { clientErrorBody } from "./http/errors.js";
 import { workspaceRoutes } from "./workspace/routes.js";
@@ -16,7 +18,7 @@ export function createApp(deps: AppDeps) {
       origin: deps.webOrigin,
       credentials: true,
       allowHeaders: ["Content-Type"],
-      allowMethods: ["GET", "POST", "OPTIONS"],
+      allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     }),
   );
 
@@ -26,6 +28,8 @@ export function createApp(deps: AppDeps) {
   app.get("/health", (c) => c.json({ status: "ok" }));
   app.route("/api/auth", authRoutes(deps));
   app.route("/api", workspaceRoutes(deps));
+  app.route("/api/clients", clientRoutes(deps));
+  app.route("/api/projects", projectRoutes(deps));
 
   return app;
 }

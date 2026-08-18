@@ -23,6 +23,30 @@ export function workspaceRoutes(deps: AppDeps) {
     });
   });
 
+  routes.get("/workspace/members", async (c) => {
+    const session = await readLiveSession(c, deps);
+    if (!session) {
+      return c.json({ error: "Não autenticado" }, 401);
+    }
+    if (!hasMembership(session)) {
+      return c.json({ error: "Sem permissão" }, 403);
+    }
+    const workspaceId = workspaceIdFromSession(session, {
+      query: c.req.query(),
+    });
+    if (!workspaceId) {
+      return c.json({ error: "Sem permissão" }, 403);
+    }
+    const members = await deps.store.listMembers(workspaceId);
+    return c.json(
+      members.map((member) => ({
+        id: member.userId,
+        name: member.name,
+        email: member.email,
+      })),
+    );
+  });
+
   routes.get("/workspace/:id", async (c) => {
     const session = await readLiveSession(c, deps);
     if (!session) {

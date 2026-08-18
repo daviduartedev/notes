@@ -9,6 +9,7 @@ import {
   createPrismaSessionVersion,
   createPrismaWorkspaceLookup,
 } from "./prisma-auth";
+import { createPrismaStore } from "./store/prisma";
 
 loadDotenv({ path: resolve(process.cwd(), "../../.env") });
 loadDotenv({ path: resolve(process.cwd(), ".env") });
@@ -53,6 +54,8 @@ describe.skipIf(!databaseUrl)("persistência postgres", () => {
         getWorkspace: createPrismaWorkspaceLookup(prisma),
         getSessionVersion: sessionVersion.getSessionVersion,
         bumpSessionVersion: sessionVersion.bumpSessionVersion,
+        store: createPrismaStore(prisma),
+        now: () => new Date(),
       });
 
       const login = await app.request("/api/auth/login", {
@@ -106,6 +109,8 @@ describe.skipIf(!databaseUrl)("persistência postgres", () => {
         getWorkspace: createPrismaWorkspaceLookup(prisma),
         getSessionVersion: sessionVersion.getSessionVersion,
         bumpSessionVersion: sessionVersion.bumpSessionVersion,
+        store: createPrismaStore(prisma),
+        now: () => new Date(),
       });
 
       const login = await app.request("/api/auth/login", {
@@ -182,6 +187,8 @@ describe.skipIf(!databaseUrl)("persistência postgres", () => {
         getWorkspace: createPrismaWorkspaceLookup(prisma),
         getSessionVersion: sessionVersion.getSessionVersion,
         bumpSessionVersion: sessionVersion.bumpSessionVersion,
+        store: createPrismaStore(prisma),
+        now: () => new Date(),
       });
 
       const login = await app.request("/api/auth/login", {

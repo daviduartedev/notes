@@ -1,15 +1,15 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-18 (C0 fix `173781ee960650f3697a445cea17bb8355071d22`).
+Atualizado: 2026-08-18 (C1 `cycle(01): clients and projects`).
 
 ## Produto
 
 - Nome interno de UI: **Notes**
 - Tipo: Software House Operating System / Delivery CRM
-- Entidade operacional: **Project** (ainda não implementada — C1)
+- Entidade operacional: **Project** (C1 entregue; envelope de status, sem etapas)
 - Tenant: `workspaceId` sempre da sessão, nunca do body
 
-## Stack (entregue no C0)
+## Stack (C0 + C1)
 
 - Monorepo **pnpm** (Node 22)
 - `apps/web` — Next.js App Router + Tailwind — porta **3015**
@@ -23,21 +23,22 @@ Atualizado: 2026-08-18 (C0 fix `173781ee960650f3697a445cea17bb8355071d22`).
 - Harness em `spec/` + `.cursor/commands/`
 - Auth credentials, seed 1 workspace + 1 owner
 - `/login`, `/hoje` empty state, `/design-system` (dev)
+- `/clientes`, `/clientes/:id`, `/projetos`, `/projetos/:id`
 - CI GitHub Actions (lint, typecheck, test, build + migrate)
 
 ## Auth / banco / módulos
 
 - Auth: credentials na API, cookie `authjs.session-token`
-- Banco: User (`sessionVersion`), Workspace, Member
-- Módulos de domínio: nenhum além de workspace (clientes/projetos = C1)
+- Banco: User, Workspace, Member, Client, Project, ActivityEvent
+- Módulos: clientes, projetos, activity (etapas = C2)
 
 ## Contratos
 
-- `GET http://localhost:3014/health` → `{ "status": "ok" }`
-- `POST /api/auth/login` `{ email, password }`
-- `GET /api/me`, `GET /api/workspace`, `GET /api/workspace/:id` (403 sem membership; 404 cross-tenant)
-- Visitante ou JWT inválido em `/hoje` → `/login`
-- Logout incrementa `sessionVersion` (replay do JWT → 401)
+- C0: `GET /health`, login/logout, `/api/me`, `/api/workspace`
+- C1: `/api/clients`, `/api/projects`, `/api/workspace/members`, activity nas fichas
+- Cross-tenant → 404 vazio; sem membership → 403
+- CORS inclui PATCH/PUT/DELETE
+- `visualState: overdue` para projeto `active` com prazo passado
 
 ## Como rodar
 

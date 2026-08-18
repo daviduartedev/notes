@@ -12,6 +12,28 @@ enum MemberRole {
   member
 }
 
+enum ClientStatus {
+  lead
+  active
+  inactive
+  archived
+}
+
+enum ProjectStatus {
+  draft
+  active
+  on_hold
+  completed
+  cancelled
+}
+
+enum ProjectPriority {
+  low
+  medium
+  high
+  urgent
+}
+
 model User {
   id             String   @id @default(cuid())
   email          String   @unique
@@ -21,6 +43,9 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   memberships    Member[]
+  ownedClients   Client[] @relation("ClientOwner")
+  ownedProjects  Project[] @relation("ProjectOwner")
+  activityEvents ActivityEvent[]
 }
 
 model Workspace {
@@ -29,6 +54,73 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   members   Member[]
+  clients   Client[]
+  projects  Project[]
+  activityEvents ActivityEvent[]
+}
+
+model Client {
+  id             String       @id @default(cuid())
+  workspaceId    String
+  name           String
+  company        String?
+  whatsapp       String?
+  email          String?
+  ownerUserId    String
+  notes          String?
+  status         ClientStatus @default(lead)
+  lastContactAt  DateTime?
+  nextFollowUpAt DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  workspace      Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  owner          User         @relation("ClientOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  projects       Project[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, ownerUserId])
+  @@index([workspaceId, status])
+}
+
+model Project {
+  id           String          @id @default(cuid())
+  workspaceId  String
+  clientId     String
+  name         String
+  description  String?
+  ownerUserId  String
+  status       ProjectStatus   @default(draft)
+  startDate    DateTime?
+  dueDate      DateTime?
+  priority     ProjectPriority @default(medium)
+  progress     Int             @default(0)
+  notes        String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client       Client          @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  owner        User            @relation("ProjectOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+
+  @@index([workspaceId])
+  @@index([workspaceId, clientId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, ownerUserId])
+}
+
+model ActivityEvent {
+  id          String   @id @default(cuid())
+  workspaceId String
+  actorId     String
+  entityType  String
+  entityId    String
+  action      String
+  payload     Json
+  createdAt   DateTime @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor       User      @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([workspaceId, entityType, entityId])
+  @@index([workspaceId, createdAt])
 }
 
 model Member {

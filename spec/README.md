@@ -16,3 +16,6 @@ Verdade canônica do que foi **implementado e validado**. Propostas de cycle fic
 | [features/auth/](features/auth/readme.md) | Login/sessão |
 | [features/workspace/](features/workspace/readme.md) | Tenant e membership |
 | [features/hoje/](features/hoje/readme.md) | Empty state C0 |
+| [features/clients/](features/clients/readme.md) | CRUD cliente |
+| [features/projects/](features/projects/readme.md) | CRUD projeto, overdue |
+| [features/activity/](features/activity/readme.md) | Histórico de mutações |

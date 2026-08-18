@@ -6,6 +6,7 @@ import { loadEnv } from "./env.js";
 import { logInfo } from "./logger.js";
 import { prisma } from "./prisma.js";
 import { createPrismaAuthenticate, createPrismaSessionVersion, createPrismaWorkspaceLookup } from "./prisma-auth.js";
+import { createPrismaStore } from "./store/prisma.js";
 
 loadDotenv({ path: resolve(process.cwd(), "../../.env") });
 loadDotenv();
@@ -23,6 +24,8 @@ serve(
       getWorkspace: createPrismaWorkspaceLookup(prisma),
       getSessionVersion: sessionVersion.getSessionVersion,
       bumpSessionVersion: sessionVersion.bumpSessionVersion,
+      store: createPrismaStore(prisma),
+      now: () => new Date(),
     }).fetch,
     port,
   },

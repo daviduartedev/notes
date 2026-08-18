@@ -1,5 +1,5 @@
 # Hoje
 
-No C0, `/hoje` é empty state autenticado: **quadro ainda sem operação**.
+No C0 e C1, `/hoje` é empty state autenticado: **quadro ainda sem operação**.
 
-O board operacional (clientes, projetos, pipeline) entra em cycles posteriores (C10 fecha o MVP).
+Clientes e projetos existem em `/clientes` e `/projetos`. O board operacional de `/hoje` entra no C10.
