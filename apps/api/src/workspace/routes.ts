@@ -1,13 +1,14 @@
 import { Hono } from "hono";
 import type { AppDeps } from "../deps.js";
-import { readSession } from "../auth/read-session.js";
+import { readLiveSession } from "../auth/read-session.js";
+import { lookupForSession } from "./lookup.js";
 import { hasMembership, workspaceIdFromSession } from "./scope.js";
 
 export function workspaceRoutes(deps: AppDeps) {
   const routes = new Hono();
 
   routes.get("/me", async (c) => {
-    const session = await readSession(c, deps.authSecret);
+    const session = await readLiveSession(c, deps);
     if (!session) {
       return c.json({ error: "Não autenticado" }, 401);
     }
@@ -22,8 +23,28 @@ export function workspaceRoutes(deps: AppDeps) {
     });
   });
 
+  routes.get("/workspace/:id", async (c) => {
+    const session = await readLiveSession(c, deps);
+    if (!session) {
+      return c.json({ error: "Não autenticado" }, 401);
+    }
+    if (!hasMembership(session)) {
+      return c.json({ error: "Sem permissão" }, 403);
+    }
+    const workspace = await lookupForSession(
+      session,
+      c.req.param("id"),
+      deps.getWorkspace,
+      (record) => record.id,
+    );
+    if (!workspace) {
+      return c.body(null, 404);
+    }
+    return c.json(workspace);
+  });
+
   routes.get("/workspace", async (c) => {
-    const session = await readSession(c, deps.authSecret);
+    const session = await readLiveSession(c, deps);
     if (!session) {
       return c.json({ error: "Não autenticado" }, 401);
     }
@@ -36,7 +57,12 @@ export function workspaceRoutes(deps: AppDeps) {
     if (!workspaceId) {
       return c.json({ error: "Sem permissão" }, 403);
     }
-    const workspace = await deps.getWorkspace(workspaceId);
+    const workspace = await lookupForSession(
+      session,
+      workspaceId,
+      deps.getWorkspace,
+      (record) => record.id,
+    );
     if (!workspace) {
       return c.body(null, 404);
     }

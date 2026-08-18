@@ -7,7 +7,7 @@
 
 ## Modelos C0 (Stage 4)
 
-- `User` — email único, password hash
+- `User` — email único, password hash, `sessionVersion` (incrementado no logout)
 - `Workspace` — tenant
 - `Member` — `userId` + `workspaceId` + `role` (`owner` \| `member`)
 

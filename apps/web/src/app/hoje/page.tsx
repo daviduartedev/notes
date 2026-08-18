@@ -1,4 +1,5 @@
 import { LogoutButton } from "@/components/logout-button";
+import { HOJE_EMPTY_STATE } from "@/lib/hoje-copy";
 
 export default function HojePage() {
   return (
@@ -9,7 +10,7 @@ export default function HojePage() {
       </header>
       <section className="rounded-lg border border-dashed border-notes-border bg-notes-panel p-8">
         <h2 className="font-display text-2xl">Hoje</h2>
-        <p className="mt-2 text-notes-muted">quadro ainda sem operação</p>
+        <p className="mt-2 text-notes-muted">{HOJE_EMPTY_STATE}</p>
       </section>
     </main>
   );

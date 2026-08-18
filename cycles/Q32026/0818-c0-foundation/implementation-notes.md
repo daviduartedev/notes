@@ -21,7 +21,7 @@ Diário técnico.
 - **Status:** done
 - **Arquivos:** `@auth/core/jwt` encode/decode, `POST /api/auth/login|logout`, CORS credentials, middleware Next (`/hoje` → `/login`)
 - **Comandos:** testes de sessão e route-guard verdes
-- **Riscos / desvios:** login JSON custom (sem CSRF Auth.js) para CORS entre 3015/3014. Middleware valida presença do cookie, não a assinatura (API valida JWT).
+- **Riscos / desvios:** login JSON custom (sem CSRF Auth.js) para CORS entre 3015/3014.
 
 ## Stage 4
 
@@ -29,3 +29,10 @@ Diário técnico.
 - **Arquivos:** Prisma User/Workspace/Member, seed, `GET /health|/api/me|/api/workspace`, `/hoje` empty state, logger redacted
 - **Comandos:** `pnpm db:migrate` + `pnpm db:seed` exit 0; persistência Postgres 1 teste; smoke `GET :3014/health` 200; visitante `/hoje` 307 `/login`
 - **Riscos / desvios:** Prisma **6.16.3** (Prisma 7 quebra `url` no schema). `pnpm.onlyBuiltDependencies` para engines do Prisma.
+
+## C0 fix (pós-verify)
+
+- **Status:** done
+- **Arquivos:** `verifySessionToken` no middleware; `User.sessionVersion`; `lookupForSession` + `GET /api/workspace/:id`; `deleteCookie` com os mesmos flags do set
+- **Comandos:** ver `docs/execution/reports/c0-fix.md`
+- **Riscos / desvios:** nenhum. Postgres local permanece **5433**.

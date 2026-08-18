@@ -10,6 +10,7 @@ describe("auth session", () => {
       email: "owner@example.com",
       workspaceId: "ws-1",
       role: "owner" as const,
+      sessionVersion: 3,
     };
     const token = await encodeSession(payload, secret);
     await expect(decodeSession(token, secret)).resolves.toEqual(payload);
@@ -17,7 +18,7 @@ describe("auth session", () => {
 
   it("rejeita token com secret errado", async () => {
     const token = await encodeSession(
-      { sub: "user-1", email: "a@b.c", workspaceId: null, role: null },
+      { sub: "user-1", email: "a@b.c", workspaceId: null, role: null, sessionVersion: 0 },
       secret,
     );
     await expect(decodeSession(token, "b".repeat(32))).resolves.toBeNull();

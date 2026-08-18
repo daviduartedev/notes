@@ -4,13 +4,16 @@
 
 - Todo dado operacional usa `workspaceId` da **sessão**, nunca do body ou query.
 - Recurso de outro workspace (ou inexistente): **404** sem payload. Não usar 403 que confirme existência.
+- Lookup de recurso por id é sempre scoped à sessão (`lookupForSession`). `GET /api/workspace/:id` do workspace da sessão → 200; id de outro tenant → 404 vazio.
 - Autenticado sem membership válida: **403**.
 
 ## Auth (C0)
 
 - Auth.js v5 credentials na API (`apps/api`).
 - Sem OAuth, convite ou 2FA neste cycle.
-- Sessão em cookie HttpOnly no host `localhost`, SameSite=Lax.
+- Sessão em cookie HttpOnly no host `localhost`, SameSite=Lax. `deleteCookie` replica os mesmos flags.
+- JWT assinado com `AUTH_SECRET`. O middleware Next.js valida a assinatura (cookie forjado → `/login`).
+- Logout incrementa `User.sessionVersion`. Token com versão antiga → 401 em rotas autenticadas.
 - CORS: origem `http://localhost:3015` com credentials.
 
 ## Secrets

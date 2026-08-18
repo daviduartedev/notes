@@ -46,7 +46,7 @@ Perguntas do `request.md` estão **todas respondidas**. Nenhuma pergunta ao huma
 ```text
 apps/web   Next.js App Router + Tailwind     http://localhost:3015
 apps/api   Hono + Prisma + Auth.js JWT       http://localhost:3014
-           PostgreSQL 16 (docker compose)    localhost:5432
+           PostgreSQL 16 (docker compose)    localhost:5433 (CI: 5432)
 ```
 
 - Cookie de sessão Auth.js no host `localhost` (compartilhado entre portas) + CORS `http://localhost:3015` com credentials.

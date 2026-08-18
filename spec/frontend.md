@@ -14,7 +14,7 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 | Path | Quem | Comportamento |
 |------|------|----------------|
 | `/login` | visitante | layout de login |
-| `/hoje` | autenticado | empty state “quadro ainda sem operação”; visitante → `/login` |
+| `/hoje` | autenticado | empty state “quadro ainda sem operação”; visitante ou JWT inválido → `/login` |
 | `/design-system` | development | 404 em production |
 
 Primitivos: Button, Input, Card, StatusPill. Sem board operacional no C0.

@@ -20,6 +20,7 @@ export function createPrismaAuthenticate(prisma: PrismaClient): Authenticate {
       email: user.email,
       workspaceId: membership?.workspaceId ?? null,
       role: membership?.role ?? null,
+      sessionVersion: user.sessionVersion,
     };
   };
 }
@@ -31,5 +32,23 @@ export function createPrismaWorkspaceLookup(prisma: PrismaClient) {
       select: { id: true, name: true },
     });
     return workspace;
+  };
+}
+
+export function createPrismaSessionVersion(prisma: PrismaClient) {
+  return {
+    getSessionVersion: async (userId: string) => {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { sessionVersion: true },
+      });
+      return user?.sessionVersion ?? null;
+    },
+    bumpSessionVersion: async (userId: string) => {
+      await prisma.user.updateMany({
+        where: { id: userId },
+        data: { sessionVersion: { increment: 1 } },
+      });
+    },
   };
 }

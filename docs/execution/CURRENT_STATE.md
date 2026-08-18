@@ -1,6 +1,6 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-18 (C0 fechado, SHA `7d99a9811433f3d08912059851b426bf06a9f85d`).
+Atualizado: 2026-08-18 (C0 fix: JWT no middleware, `sessionVersion`, lookup 404).
 
 ## Produto
 
@@ -28,15 +28,16 @@ Atualizado: 2026-08-18 (C0 fechado, SHA `7d99a9811433f3d08912059851b426bf06a9f85
 ## Auth / banco / módulos
 
 - Auth: credentials na API, cookie `authjs.session-token`
-- Banco: User, Workspace, Member
+- Banco: User (`sessionVersion`), Workspace, Member
 - Módulos de domínio: nenhum além de workspace (clientes/projetos = C1)
 
 ## Contratos
 
 - `GET http://localhost:3014/health` → `{ "status": "ok" }`
 - `POST /api/auth/login` `{ email, password }`
-- `GET /api/me`, `GET /api/workspace` (403 sem membership)
-- Visitante em `/hoje` → `/login`
+- `GET /api/me`, `GET /api/workspace`, `GET /api/workspace/:id` (403 sem membership; 404 cross-tenant)
+- Visitante ou JWT inválido em `/hoje` → `/login`
+- Logout incrementa `sessionVersion` (replay do JWT → 401)
 
 ## Como rodar
 

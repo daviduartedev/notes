@@ -17,6 +17,7 @@ API em `apps/api` (Hono + Prisma + Auth.js), porta **3014**.
 | POST | `/api/auth/logout` | sessão | limpa cookie |
 | GET | `/api/me` | sessão | 403 sem membership |
 | GET | `/api/workspace` | sessão | workspace da sessão; 403 sem membership |
+| GET | `/api/workspace/:id` | sessão | 200 se o id é o workspace da sessão; 404 vazio se outro tenant |
 
 `workspaceId` no body é ignorado.
 
