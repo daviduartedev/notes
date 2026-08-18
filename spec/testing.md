@@ -21,3 +21,12 @@ Testes de domínio não exigem Postgres. Teste de persistência usa `DATABASE_UR
 - dois projetos no mesmo cliente + `project.created` ×2
 - IDOR client/project/activity → 404 vazio
 - payload de activity sem telefone/e-mail
+
+## C2 obrigatório
+
+- matriz de transições de etapa (domínio puro)
+- pulo ilegal → 409 e nenhum `stage.transitioned`
+- projeto novo com 10 etapas do template SaaS
+- template editado não altera instâncias já copiadas
+- IDOR na transição → 404 vazio
+

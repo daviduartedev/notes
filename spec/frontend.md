@@ -24,7 +24,7 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 | `/clientes` | autenticado | lista + criação; filtros nome/responsável/status |
 | `/clientes/:id` | autenticado | ficha, projetos do cliente, histórico |
 | `/projetos` | autenticado | lista + criação; filtros responsável/status/cliente/prazo/prioridade |
-| `/projetos/:id` | autenticado | cabeçalho operacional + overdue + histórico |
+| `/projetos/:id` | autenticado | cabeçalho operacional + overdue + **seção Etapas** + histórico |
 
 Nav: Hoje / Clientes / Projetos. `/hoje` continua empty state.
 

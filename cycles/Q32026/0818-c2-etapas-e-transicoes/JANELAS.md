@@ -3,7 +3,7 @@
 **Pasta:** `cycles/Q32026/0818-c2-etapas-e-transicoes/`  
 **Tipo:** Large  
 **Depende de:** C1 fechado  
-**Status:** `request.md` pronto → **Refine depois de C1**
+**Status:** `CLOSURE.md` — cycle fechado
 
 Abra um **chat novo** para cada janela. Cole o bloco. Padrão Elli: uma missão por contexto.
 

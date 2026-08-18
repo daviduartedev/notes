@@ -4,9 +4,9 @@
 
 - Todo dado operacional usa `workspaceId` da **sessão**, nunca do body ou query.
 - Recurso de outro workspace (ou inexistente): **404** sem payload. Não usar 403 que confirme existência.
-- Lookup de recurso por id é sempre scoped à sessão (`lookupForSession`). `GET /api/workspace/:id` do workspace da sessão → 200; id de outro tenant → 404 vazio. O mesmo vale para cliente, projeto e activity.
+- Lookup de recurso por id é sempre scoped à sessão (`lookupForSession`). `GET /api/workspace/:id` do workspace da sessão → 200; id de outro tenant → 404 vazio. O mesmo vale para cliente, projeto, activity e transição de etapa.
 - Autenticado sem membership válida: **403**.
-- Body não grava `workspaceId` nem `createdAt`. Status só via schema/transição.
+- Body não grava `workspaceId` nem `createdAt`. Status só via schema/transição. `currentStageId` no PATCH de projeto é ignorado.
 
 ## Auth (C0)
 

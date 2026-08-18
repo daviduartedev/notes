@@ -26,10 +26,12 @@ function cookieFrom(response: Response): string {
 
 async function cleanup(prisma: PrismaClient, emails: string[], workspaceIds: string[]) {
   await prisma.activityEvent.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
-  await prisma.project.updateMany({
-    where: { workspaceId: { in: workspaceIds } },
-    data: { currentStageId: null },
-  }).catch(() => undefined);
+  await prisma.project
+    .updateMany({
+      where: { workspaceId: { in: workspaceIds } },
+      data: { currentStageId: null },
+    })
+    .catch(() => undefined);
   await prisma.stage.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
   await prisma.project.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
   await prisma.client.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
@@ -40,11 +42,11 @@ async function cleanup(prisma: PrismaClient, emails: string[], workspaceIds: str
   await prisma.user.deleteMany({ where: { email: { in: emails } } });
 }
 
-describe.skipIf(!databaseUrl)("C1 persistência clientes/projetos", () => {
-  it("cria dois projetos, histórico project.created x2, IDOR 404, transição inválida e overdue", async () => {
+describe.skipIf(!databaseUrl)("C2 persistência etapas", () => {
+  it("copia etapas, rejeita pulo ilegal sem event, isola template e IDOR", async () => {
     const prisma = new PrismaClient();
-    const emailA = `c1-a-${Date.now()}@example.com`;
-    const emailB = `c1-b-${Date.now()}@example.com`;
+    const emailA = `c2-a-${Date.now()}@example.com`;
+    const emailB = `c2-b-${Date.now()}@example.com`;
     const password = "changeme";
     const sessionVersion = createPrismaSessionVersion(prisma);
     const workspaceIds: string[] = [];
@@ -54,7 +56,7 @@ describe.skipIf(!databaseUrl)("C1 persistência clientes/projetos", () => {
           email: emailA,
           passwordHash: await bcrypt.hash(password, 4),
           memberships: {
-            create: { role: "owner", workspace: { create: { name: "Tenant A C1" } } },
+            create: { role: "owner", workspace: { create: { name: "Tenant A C2" } } },
           },
         },
         include: { memberships: true },
@@ -64,7 +66,7 @@ describe.skipIf(!databaseUrl)("C1 persistência clientes/projetos", () => {
           email: emailB,
           passwordHash: await bcrypt.hash(password, 4),
           memberships: {
-            create: { role: "owner", workspace: { create: { name: "Tenant B C1" } } },
+            create: { role: "owner", workspace: { create: { name: "Tenant B C2" } } },
           },
         },
         include: { memberships: true },
@@ -75,7 +77,7 @@ describe.skipIf(!databaseUrl)("C1 persistência clientes/projetos", () => {
       if (workspaceA) workspaceIds.push(workspaceA);
       if (workspaceB) workspaceIds.push(workspaceB);
 
-      const frozenNow = new Date("2026-08-18T12:00:00.000Z");
+      const store = createPrismaStore(prisma);
       const app = createApp({
         authSecret: "a".repeat(32),
         webOrigin: "http://localhost:3015",
@@ -83,8 +85,8 @@ describe.skipIf(!databaseUrl)("C1 persistência clientes/projetos", () => {
         getWorkspace: createPrismaWorkspaceLookup(prisma),
         getSessionVersion: sessionVersion.getSessionVersion,
         bumpSessionVersion: sessionVersion.bumpSessionVersion,
-        store: createPrismaStore(prisma),
-        now: () => frozenNow,
+        store,
+        now: () => new Date(),
       });
 
       const loginA = await app.request("/api/auth/login", {
@@ -97,67 +99,67 @@ describe.skipIf(!databaseUrl)("C1 persistência clientes/projetos", () => {
       const clientRes = await app.request("/api/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json", cookie: cookieA },
-        body: JSON.stringify({
-          name: "Cliente Persist",
-          ownerUserId: userA.id,
-          workspaceId: workspaceB,
-        }),
+        body: JSON.stringify({ name: "Cliente C2", ownerUserId: userA.id }),
       });
-      expect(clientRes.status).toBe(201);
-      const client = (await clientRes.json()) as { id: string; workspaceId: string };
-      expect(client.workspaceId).toBe(workspaceA);
+      const client = (await clientRes.json()) as { id: string };
 
-      const p1 = await app.request("/api/projects", {
+      const created = await app.request("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json", cookie: cookieA },
         body: JSON.stringify({
-          name: "Projeto 1",
-          clientId: client.id,
-          ownerUserId: userA.id,
-          dueDate: "2026-08-01",
-        }),
-      });
-      const p2 = await app.request("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", cookie: cookieA },
-        body: JSON.stringify({
-          name: "Projeto 2",
+          name: "Projeto C2",
           clientId: client.id,
           ownerUserId: userA.id,
         }),
       });
-      expect(p1.status).toBe(201);
-      expect(p2.status).toBe(201);
-      const project1 = (await p1.json()) as { id: string };
-      const project2 = (await p2.json()) as { id: string };
+      expect(created.status).toBe(201);
+      const project = (await created.json()) as {
+        id: string;
+        workflowTemplateId: string;
+        currentStageKey: string;
+        stages: Array<{ id: string; key: string; allowedNextKeys: string[] }>;
+      };
+      expect(project.stages).toHaveLength(10);
+      expect(project.currentStageKey).toBe("briefing");
 
-      const listed = await app.request(`/api/projects?clientId=${client.id}`, {
+      const briefing = project.stages.find((stage) => stage.key === "briefing");
+      expect(briefing).toBeDefined();
+      if (!briefing) return;
+
+      const illegal = await app.request(`/api/projects/${project.id}/stages/${briefing.id}/transition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", cookie: cookieA },
+        body: JSON.stringify({ action: "complete", to: "kickoff" }),
+      });
+      expect(illegal.status).toBe(409);
+
+      const historyAfterIllegal = await app.request(`/api/projects/${project.id}/activity`, {
         headers: { cookie: cookieA },
       });
-      const projects = (await listed.json()) as { id: string }[];
-      expect(projects.map((row) => row.id).sort()).toEqual([project1.id, project2.id].sort());
+      const events = (await historyAfterIllegal.json()) as { action: string }[];
+      expect(events.filter((event) => event.action === "stage.transitioned")).toHaveLength(0);
 
-      const history = await app.request(`/api/clients/${client.id}/activity`, {
+      const valid = await app.request(`/api/projects/${project.id}/stages/${briefing.id}/transition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", cookie: cookieA },
+        body: JSON.stringify({ to: "proposal" }),
+      });
+      expect(valid.status).toBe(200);
+      const moved = (await valid.json()) as { currentStageKey: string };
+      expect(moved.currentStageKey).toBe("proposal");
+
+      const history = await app.request(`/api/projects/${project.id}/activity`, {
         headers: { cookie: cookieA },
       });
-      const events = (await history.json()) as { action: string; payload: Record<string, unknown> }[];
-      expect(events.filter((event) => event.action === "project.created")).toHaveLength(2);
-      expect(JSON.stringify(events)).not.toContain(emailA);
+      const afterValid = (await history.json()) as { action: string; payload: Record<string, unknown> }[];
+      expect(afterValid.some((event) => event.action === "stage.transitioned" && event.payload.from === "briefing" && event.payload.to === "proposal")).toBe(true);
 
-      const invalid = await app.request(`/api/projects/${project1.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", cookie: cookieA },
-        body: JSON.stringify({ status: "completed" }),
-      });
-      expect(invalid.status).toBe(409);
-
-      const activated = await app.request(`/api/projects/${project1.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", cookie: cookieA },
-        body: JSON.stringify({ status: "active" }),
-      });
-      expect(activated.status).toBe(200);
-      await expect(activated.json()).resolves.toMatchObject({ visualState: "overdue" });
+      await store.updateStageTemplateAllowedNextKeys(project.workflowTemplateId, "briefing", ["production"]);
+      const again = await app.request(`/api/projects/${project.id}`, { headers: { cookie: cookieA } });
+      const unchanged = (await again.json()) as {
+        stages: Array<{ key: string; allowedNextKeys: string[] }>;
+      };
+      expect(unchanged.stages.find((stage) => stage.key === "briefing")?.allowedNextKeys).toEqual(["proposal"]);
 
       const loginB = await app.request("/api/auth/login", {
         method: "POST",
@@ -165,21 +167,13 @@ describe.skipIf(!databaseUrl)("C1 persistência clientes/projetos", () => {
         body: JSON.stringify({ email: emailB, password }),
       });
       const cookieB = cookieFrom(loginB);
-      const idorProject = await app.request(`/api/projects/${project1.id}`, {
-        headers: { cookie: cookieB },
+      const idor = await app.request(`/api/projects/${project.id}/stages/${briefing.id}/transition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", cookie: cookieB },
+        body: JSON.stringify({ to: "proposal" }),
       });
-      expect(idorProject.status).toBe(404);
-      expect(await idorProject.text()).toBe("");
-      const idorClient = await app.request(`/api/clients/${client.id}`, {
-        headers: { cookie: cookieB },
-      });
-      expect(idorClient.status).toBe(404);
-      expect(await idorClient.text()).toBe("");
-      const idorActivity = await app.request(`/api/clients/${client.id}/activity`, {
-        headers: { cookie: cookieB },
-      });
-      expect(idorActivity.status).toBe(404);
-      expect(await idorActivity.text()).toBe("");
+      expect(idor.status).toBe(404);
+      expect(await idor.text()).toBe("");
     } finally {
       await cleanup(prisma, [emailA, emailB], workspaceIds);
       await prisma.$disconnect();

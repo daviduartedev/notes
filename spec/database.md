@@ -22,3 +22,10 @@ Seed C0: 1 workspace, 1 owner (e-mail/senha via env placeholders).
 - `ActivityEvent` — action string pontuada; payload JSON sem PII de contato
 
 Seed: não cria clientes/projetos (fixtures nos testes; segundo workspace só nos testes de IDOR).
+
+## Modelos C2
+
+- `WorkflowTemplate` / `StageTemplate` — seed `saas_delivery` por workspace
+- `Stage` — instância copiada no projeto; `Project.currentStageId`, `Project.workflowTemplateId`
+
+Seed C2: template SaaS no workspace; backfill de projetos sem etapas.

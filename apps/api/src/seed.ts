@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import { loadEnv } from "./env.js";
 import { logInfo } from "./logger.js";
 import { prisma } from "./prisma.js";
+import { ensureSaasDeliveryForWorkspace } from "./projects/saas-seed.js";
+import { createPrismaStore } from "./store/prisma.js";
 
 loadDotenv({ path: resolve(process.cwd(), "../../.env") });
 loadDotenv();
@@ -27,18 +29,23 @@ async function seed() {
     include: { workspace: true },
   });
 
-  if (!existing) {
-    await prisma.workspace.create({
-      data: {
-        name: env.SEED_WORKSPACE_NAME,
-        members: {
-          create: { userId: user.id, role: "owner" },
-        },
-      },
-    });
-  }
+  const workspaceId = existing
+    ? existing.workspaceId
+    : (
+        await prisma.workspace.create({
+          data: {
+            name: env.SEED_WORKSPACE_NAME,
+            members: {
+              create: { userId: user.id, role: "owner" },
+            },
+          },
+        })
+      ).id;
 
-  logInfo("seed ok", { email: env.SEED_OWNER_EMAIL });
+  await ensureSaasDeliveryForWorkspace(prisma, workspaceId);
+  await createPrismaStore(prisma).backfillMissingStages(workspaceId, new Date());
+
+  logInfo("seed ok", { email: env.SEED_OWNER_EMAIL, workspaceId });
 }
 
 seed()

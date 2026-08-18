@@ -1,11 +1,52 @@
 import { projectVisualState } from "../domain/overdue.js";
-import type { ProjectRecord } from "../store/types.js";
+import { listStageActions } from "../domain/stage-transition.js";
+import type { StageSnapshot } from "../domain/stage-instance.js";
+import type { ProjectRecord, StageRecord } from "../store/types.js";
+
+export function toStageSnapshot(row: StageRecord): StageSnapshot {
+  return {
+    id: row.id,
+    key: row.key,
+    label: row.label,
+    phase: row.phase,
+    order: row.order,
+    allowedNextKeys: [...row.allowedNextKeys],
+    entryCriteria: row.entryCriteria,
+    exitCriteria: row.exitCriteria,
+    status: row.status,
+  };
+}
+
+export function serializeStage(row: StageRecord, stages: StageRecord[], currentStageId: string | null) {
+  const snapshots = stages.map(toStageSnapshot);
+  return {
+    id: row.id,
+    key: row.key,
+    label: row.label,
+    phase: row.phase,
+    order: row.order,
+    allowedNextKeys: row.allowedNextKeys,
+    entryCriteria: row.entryCriteria,
+    exitCriteria: row.exitCriteria,
+    status: row.status,
+    isCurrent: row.id === currentStageId,
+    startedAt: row.startedAt?.toISOString() ?? null,
+    completedAt: row.completedAt?.toISOString() ?? null,
+    actions: listStageActions({
+      stage: toStageSnapshot(row),
+      stages: snapshots,
+      currentStageId,
+    }),
+  };
+}
 
 export function serializeProject(
   row: ProjectRecord,
   clientName: string,
   now: Date,
+  stages?: StageRecord[],
 ) {
+  const current = stages?.find((stage) => stage.id === row.currentStageId);
   return {
     id: row.id,
     workspaceId: row.workspaceId,
@@ -21,7 +62,13 @@ export function serializeProject(
     progress: row.progress,
     notes: row.notes,
     visualState: projectVisualState(row.status, row.dueDate, now),
+    workflowTemplateId: row.workflowTemplateId,
+    currentStageId: row.currentStageId,
+    currentStageKey: current?.key ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    ...(stages
+      ? { stages: stages.map((stage) => serializeStage(stage, stages, row.currentStageId)) }
+      : {}),
   };
 }

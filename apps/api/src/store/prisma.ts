@@ -1,5 +1,15 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import type { ActivityAction, ClientStatus, EntityType, ProjectPriority, ProjectStatus } from "../domain/types.js";
+import type {
+  ActivityAction,
+  ClientStatus,
+  EntityType,
+  ProjectPriority,
+  ProjectStatus,
+  StagePhase,
+  StageStatus,
+} from "../domain/types.js";
+import { instantiateProjectStages } from "../domain/stage-instance.js";
+import { ensureSaasDeliveryForWorkspace, type SaasTemplateRow } from "../projects/saas-seed.js";
 import type {
   ActivityRecord,
   ClientCreateInput,
@@ -9,7 +19,11 @@ import type {
   ProjectCreateInput,
   ProjectFilters,
   ProjectRecord,
+  StagePersistPatch,
+  StageRecord,
 } from "./types.js";
+
+type DbClient = PrismaClient | Prisma.TransactionClient;
 
 function mapClient(row: {
   id: string;
@@ -42,10 +56,95 @@ function mapProject(row: {
   priority: ProjectPriority;
   progress: number;
   notes: string | null;
+  workflowTemplateId: string | null;
+  currentStageId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): ProjectRecord {
   return { ...row };
+}
+
+function asStringArray(value: Prisma.JsonValue): string[] {
+  if (Array.isArray(value) && value.every((item) => typeof item === "string")) {
+    return value as string[];
+  }
+  return [];
+}
+
+function mapStage(row: {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  stageTemplateId: string | null;
+  key: string;
+  label: string;
+  phase: StagePhase;
+  order: number;
+  allowedNextKeys: Prisma.JsonValue;
+  entryCriteria: string;
+  exitCriteria: string;
+  status: StageStatus;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}): StageRecord {
+  return {
+    ...row,
+    allowedNextKeys: asStringArray(row.allowedNextKeys),
+  };
+}
+
+function templateSnapshots(template: SaasTemplateRow) {
+  return template.stages
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map((stage) => ({
+      key: stage.key,
+      label: stage.label,
+      phase: stage.phase,
+      order: stage.order,
+      allowedNextKeys: asStringArray(stage.allowedNextKeys as Prisma.JsonValue),
+      entryCriteria: stage.entryCriteria,
+      exitCriteria: stage.exitCriteria,
+    }));
+}
+
+async function copyStagesOntoProject(
+  db: DbClient,
+  project: { id: string; workspaceId: string },
+  now: Date,
+): Promise<{ currentStageId: string; workflowTemplateId: string }> {
+  const template = await ensureSaasDeliveryForWorkspace(db, project.workspaceId);
+  const instanced = instantiateProjectStages(templateSnapshots(template));
+  await db.stage.createMany({
+    data: instanced.stages.map((stage) => ({
+      id: stage.id,
+      workspaceId: project.workspaceId,
+      projectId: project.id,
+      stageTemplateId: template.stages.find((item) => item.key === stage.key)?.id ?? null,
+      key: stage.key,
+      label: stage.label,
+      phase: stage.phase,
+      order: stage.order,
+      allowedNextKeys: stage.allowedNextKeys,
+      entryCriteria: stage.entryCriteria,
+      exitCriteria: stage.exitCriteria,
+      status: stage.status,
+      startedAt: stage.id === instanced.currentStageId ? now : null,
+      completedAt: null,
+      createdAt: now,
+      updatedAt: now,
+    })),
+  });
+  await db.project.update({
+    where: { id: project.id },
+    data: {
+      workflowTemplateId: template.id,
+      currentStageId: instanced.currentStageId,
+    },
+  });
+  return { currentStageId: instanced.currentStageId, workflowTemplateId: template.id };
 }
 
 export function createPrismaStore(prisma: PrismaClient): NotesStore {
@@ -135,8 +234,17 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
       return row ? mapProject(row) : null;
     },
     async createProject(data: ProjectCreateInput) {
-      const row = await prisma.project.create({ data });
-      return mapProject(row);
+      const now = new Date();
+      return prisma.$transaction(async (tx) => {
+        const created = await tx.project.create({ data });
+        const copied = await copyStagesOntoProject(tx, created, now);
+        return mapProject({
+          ...created,
+          workflowTemplateId: copied.workflowTemplateId,
+          currentStageId: copied.currentStageId,
+          updatedAt: now,
+        });
+      });
     },
     async updateProject(id, data) {
       try {
@@ -148,7 +256,14 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
     },
     async deleteProject(id) {
       try {
-        await prisma.project.delete({ where: { id } });
+        await prisma.$transaction(async (tx) => {
+          await tx.project.update({
+            where: { id },
+            data: { currentStageId: null },
+          });
+          await tx.stage.deleteMany({ where: { projectId: id } });
+          await tx.project.delete({ where: { id } });
+        });
         return true;
       } catch {
         return false;
@@ -194,6 +309,83 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
         orderBy: { createdAt: "desc" },
       });
       return rows.map(mapActivity);
+    },
+    async listStagesByProject(projectId) {
+      const rows = await prisma.stage.findMany({
+        where: { projectId },
+        orderBy: { order: "asc" },
+      });
+      return rows.map(mapStage);
+    },
+    async getStage(id) {
+      const row = await prisma.stage.findUnique({ where: { id } });
+      return row ? mapStage(row) : null;
+    },
+    async hydrateProjectStages(projectId, now) {
+      const existing = await prisma.stage.findMany({
+        where: { projectId },
+        orderBy: { order: "asc" },
+      });
+      if (existing.length > 0) {
+        return existing.map(mapStage);
+      }
+      const project = await prisma.project.findUnique({ where: { id: projectId } });
+      if (!project) {
+        return [];
+      }
+      await prisma.$transaction(async (tx) => {
+        await copyStagesOntoProject(tx, project, now);
+      });
+      const rows = await prisma.stage.findMany({
+        where: { projectId },
+        orderBy: { order: "asc" },
+      });
+      return rows.map(mapStage);
+    },
+    async persistStageAction(input: {
+      projectId: string;
+      currentStageId: string;
+      patches: StagePersistPatch[];
+    }) {
+      await prisma.$transaction(async (tx) => {
+        for (const patch of input.patches) {
+          await tx.stage.update({
+            where: { id: patch.id },
+            data: {
+              status: patch.status,
+              ...(patch.startedAt !== undefined ? { startedAt: patch.startedAt } : {}),
+              ...(patch.completedAt !== undefined ? { completedAt: patch.completedAt } : {}),
+            },
+          });
+        }
+        await tx.project.update({
+          where: { id: input.projectId },
+          data: { currentStageId: input.currentStageId },
+        });
+      });
+    },
+    async updateStageTemplateAllowedNextKeys(workflowTemplateId, key, allowedNextKeys) {
+      try {
+        await prisma.stageTemplate.update({
+          where: { workflowTemplateId_key: { workflowTemplateId, key } },
+          data: { allowedNextKeys },
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    async backfillMissingStages(workspaceId, now) {
+      const projects = await prisma.project.findMany({
+        where: { workspaceId, stages: { none: {} } },
+        select: { id: true, workspaceId: true },
+      });
+      for (const project of projects) {
+        await prisma.$transaction(async (tx) => {
+          await copyStagesOntoProject(tx, project, now);
+        });
+      }
+      return projects.length;
     },
   };
 }

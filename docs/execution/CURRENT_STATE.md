@@ -1,15 +1,15 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-18 (C1 `ee9461db7b6b8f9c1c3e96712d42c6cb32562c7c`).
+Atualizado: 2026-08-18 (C2 pending SHA).
 
 ## Produto
 
 - Nome interno de UI: **Notes**
 - Tipo: Software House Operating System / Delivery CRM
-- Entidade operacional: **Project** (C1 entregue; envelope de status, sem etapas)
+- Entidade operacional: **Project** (C1 envelope + C2 etapas)
 - Tenant: `workspaceId` sempre da sessão, nunca do body
 
-## Stack (C0 + C1)
+## Stack (C0 + C1 + C2)
 
 - Monorepo **pnpm** (Node 22)
 - `apps/web` — Next.js App Router + Tailwind — porta **3015**
@@ -21,24 +21,26 @@ Atualizado: 2026-08-18 (C1 `ee9461db7b6b8f9c1c3e96712d42c6cb32562c7c`).
 ## O que já existe no repo
 
 - Harness em `spec/` + `.cursor/commands/`
-- Auth credentials, seed 1 workspace + 1 owner
+- Auth credentials, seed 1 workspace + 1 owner + template SaaS delivery
 - `/login`, `/hoje` empty state, `/design-system` (dev)
-- `/clientes`, `/clientes/:id`, `/projetos`, `/projetos/:id`
+- `/clientes`, `/clientes/:id`, `/projetos`, `/projetos/:id` (seção Etapas)
 - CI GitHub Actions (lint, typecheck, test, build + migrate)
 
 ## Auth / banco / módulos
 
 - Auth: credentials na API, cookie `authjs.session-token`
-- Banco: User, Workspace, Member, Client, Project, ActivityEvent
-- Módulos: clientes, projetos, activity (etapas = C2)
+- Banco: User, Workspace, Member, Client, Project, ActivityEvent, WorkflowTemplate, StageTemplate, Stage
+- Módulos: clientes, projetos, activity, etapas (pipeline board = C3)
 
 ## Contratos
 
 - C0: `GET /health`, login/logout, `/api/me`, `/api/workspace`
 - C1: `/api/clients`, `/api/projects`, `/api/workspace/members`, activity nas fichas
+- C2: `POST /api/projects/:id/stages/:stageId/transition`; GET ficha com `stages`
 - Cross-tenant → 404 vazio; sem membership → 403
 - CORS inclui PATCH/PUT/DELETE
 - `visualState: overdue` para projeto `active` com prazo passado
+- PATCH `currentStageId` ignorado
 
 ## Como rodar
 

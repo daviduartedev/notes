@@ -30,8 +30,11 @@ API em `apps/api` (Hono + Prisma + Auth.js), porta **3014**.
 | GET/POST | `/api/projects` | sessão | filtros ownerUserId, status, clientId, prazo, priority |
 | GET/PATCH/DELETE | `/api/projects/:id` | sessão | DTO `visualState` |
 | GET | `/api/projects/:id/activity` | sessão | |
+| POST | `/api/projects/:id/stages/:stageId/transition` | sessão | body `action` e/ou `to`; 409 ilegal sem event |
 
-CORS: GET, POST, PATCH, PUT, DELETE, OPTIONS. `workspaceId` no body é ignorado.
+CORS: GET, POST, PATCH, PUT, DELETE, OPTIONS. `workspaceId` no body é ignorado. PATCH `currentStageId` é ignorado.
+
+GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR.
 
 ## Erros
 

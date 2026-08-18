@@ -1,6 +1,6 @@
 # Projetos
 
-CRUD de `Project`. Relação Cliente **1:N** Projeto. Envelope de status (sem etapas — C2).
+CRUD de `Project`. Relação Cliente **1:N** Projeto. Envelope de status **distinto** das etapas (C2).
 
 ## Status
 
@@ -27,4 +27,4 @@ Se `status === active` e `dueDate < now`, o DTO inclui `visualState: "overdue"`.
 
 ## Web
 
-`/projetos`, `/projetos/:id` (cabeçalho operacional; sem abas de checklist/validação). Lista também em `/clientes/:id`.
+`/projetos`, `/projetos/:id` (cabeçalho operacional + seção Etapas C2; sem abas de checklist/validação). Lista também em `/clientes/:id`.

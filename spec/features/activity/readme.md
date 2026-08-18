@@ -9,6 +9,9 @@
 - `project.created`
 - `project.updated`
 - `project.status_changed`
+- `stage.started`
+- `stage.transitioned`
+- `stage.completed`
 
 Payload consultável **sem** telefone/e-mail. Sanitizer remove essas chaves.
 

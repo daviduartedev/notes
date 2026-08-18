@@ -6,6 +6,9 @@ const actionLabel: Record<ActivityDto["action"], string> = {
   "project.created": "Projeto criado",
   "project.updated": "Projeto atualizado",
   "project.status_changed": "Status do projeto alterado",
+  "stage.started": "Etapa iniciada",
+  "stage.transitioned": "Etapa avançada",
+  "stage.completed": "Etapa concluída",
 };
 
 export function ActivityList({ events }: { events: ActivityDto[] }) {

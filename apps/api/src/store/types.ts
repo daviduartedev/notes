@@ -4,6 +4,8 @@ import type {
   EntityType,
   ProjectPriority,
   ProjectStatus,
+  StagePhase,
+  StageStatus,
 } from "../domain/types.js";
 
 export type MemberRecord = {
@@ -51,6 +53,8 @@ export type ProjectRecord = {
   priority: ProjectPriority;
   progress: number;
   notes: string | null;
+  workflowTemplateId: string | null;
+  currentStageId: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -64,8 +68,37 @@ export type ProjectFilters = {
   priority?: ProjectPriority;
 };
 
-export type ProjectCreateInput = Omit<ProjectRecord, "id" | "createdAt" | "updatedAt">;
+export type ProjectCreateInput = Omit<
+  ProjectRecord,
+  "id" | "createdAt" | "updatedAt" | "workflowTemplateId" | "currentStageId"
+>;
 export type ProjectUpdateInput = Partial<Omit<ProjectRecord, "id" | "workspaceId" | "createdAt">>;
+
+export type StageRecord = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  stageTemplateId: string | null;
+  key: string;
+  label: string;
+  phase: StagePhase;
+  order: number;
+  allowedNextKeys: string[];
+  entryCriteria: string;
+  exitCriteria: string;
+  status: StageStatus;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type StagePersistPatch = {
+  id: string;
+  status: StageStatus;
+  startedAt?: Date | null;
+  completedAt?: Date | null;
+};
 
 export type ActivityRecord = {
   id: string;
@@ -101,4 +134,18 @@ export type NotesStore = {
     entityId: string,
   ): Promise<ActivityRecord[]>;
   listClientHistory(workspaceId: string, clientId: string): Promise<ActivityRecord[]>;
+  listStagesByProject(projectId: string): Promise<StageRecord[]>;
+  getStage(id: string): Promise<StageRecord | null>;
+  hydrateProjectStages(projectId: string, now: Date): Promise<StageRecord[]>;
+  persistStageAction(input: {
+    projectId: string;
+    currentStageId: string;
+    patches: StagePersistPatch[];
+  }): Promise<void>;
+  updateStageTemplateAllowedNextKeys(
+    workflowTemplateId: string,
+    key: string,
+    allowedNextKeys: string[],
+  ): Promise<boolean>;
+  backfillMissingStages(workspaceId: string, now: Date): Promise<number>;
 };

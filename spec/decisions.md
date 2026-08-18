@@ -226,3 +226,65 @@ Tabela `ActivityEvent`; actions `client.created`, `client.updated`, `project.cre
 ### Consequências
 GET nas fichas; histórico do cliente agrega eventos dos seus projetos.
 
+---
+
+## ADR-0012 — Template SaaS delivery por workspace (C2-D1/D4/D12)
+
+- **Data:** 2026-08-18
+- **Cycle:** cycles/Q32026/0818-c2-etapas-e-transicoes/
+- **Status:** Accepted
+
+### Contexto
+C2 precisa de um pipeline concreto sem editor de workflow.
+
+### Decisão
+Um template seed `saas_delivery` por workspace (10 etapas lineares Comercial/Design/Desenvolvimento). Instâncias são deep copy. Outros tipos ficam para C11.
+
+### Alternativas consideradas
+- BPM genérico — fora de escopo.
+- Vários templates na UI agora — C11.
+
+### Consequências
+Criação de projeto copia etapas em transação. Mutar o seed não reescreve instâncias.
+
+---
+
+## ADR-0013 — Transições de etapa sem PATCH de ponteiro (C2-D2–D8/D10–D15)
+
+- **Data:** 2026-08-18
+- **Cycle:** cycles/Q32026/0818-c2-etapas-e-transicoes/
+- **Status:** Accepted
+
+### Contexto
+O ponteiro `currentStageId` não pode ser escrito genericamente.
+
+### Decisão
+`POST /api/projects/:id/stages/:stageId/transition` com `action` e/ou `to`. Qualquer member/owner. `blocked` não completa. Completed não reabre. Ilegal → 409. Cross-tenant → 404. PATCH `currentStageId` ignorado.
+
+### Alternativas consideradas
+- PATCH genérico do ponteiro — rejeitado.
+- Só o responsável transiciona — rejeitado neste cycle.
+
+### Consequências
+UI disabled com motivo pt-BR vindo da API. Entidade Blocker permanece C7.
+
+---
+
+## ADR-0014 — Events de etapa no ActivityEvent (C2-D9)
+
+- **Data:** 2026-08-18
+- **Cycle:** cycles/Q32026/0818-c2-etapas-e-transicoes/
+- **Status:** Accepted
+
+### Contexto
+Histórico precisa mostrar de/para.
+
+### Decisão
+Actions `stage.started`, `stage.transitioned`, `stage.completed` no `ActivityEvent` do projeto. Payload de transição com `from`/`to`. 409 não grava `stage.transitioned`.
+
+### Alternativas consideradas
+- Event sourcing — fora de escopo.
+
+### Consequências
+Histórico da ficha exibe o avanço do pipeline.
+

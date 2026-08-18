@@ -34,6 +34,21 @@ enum ProjectPriority {
   urgent
 }
 
+enum StagePhase {
+  commercial
+  design
+  development
+}
+
+enum StageStatus {
+  pending
+  in_progress
+  waiting
+  blocked
+  completed
+  skipped
+}
+
 model User {
   id             String   @id @default(cuid())
   email          String   @unique
@@ -57,6 +72,8 @@ model Workspace {
   clients   Client[]
   projects  Project[]
   activityEvents ActivityEvent[]
+  workflowTemplates WorkflowTemplate[]
+  stages    Stage[]
 }
 
 model Client {
@@ -83,28 +100,88 @@ model Client {
 }
 
 model Project {
-  id           String          @id @default(cuid())
-  workspaceId  String
-  clientId     String
-  name         String
-  description  String?
-  ownerUserId  String
-  status       ProjectStatus   @default(draft)
-  startDate    DateTime?
-  dueDate      DateTime?
-  priority     ProjectPriority @default(medium)
-  progress     Int             @default(0)
-  notes        String?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  client       Client          @relation(fields: [clientId], references: [id], onDelete: Restrict)
-  owner        User            @relation("ProjectOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  id                 String           @id @default(cuid())
+  workspaceId        String
+  clientId           String
+  name               String
+  description        String?
+  ownerUserId        String
+  status             ProjectStatus    @default(draft)
+  startDate          DateTime?
+  dueDate            DateTime?
+  priority           ProjectPriority  @default(medium)
+  progress           Int              @default(0)
+  notes              String?
+  workflowTemplateId String?
+  currentStageId     String?          @unique
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  workspace          Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client             Client           @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  owner              User             @relation("ProjectOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  workflowTemplate   WorkflowTemplate? @relation(fields: [workflowTemplateId], references: [id], onDelete: SetNull)
+  currentStage       Stage?           @relation("ProjectCurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
+  stages             Stage[]          @relation("ProjectStages")
 
   @@index([workspaceId])
   @@index([workspaceId, clientId])
   @@index([workspaceId, status])
   @@index([workspaceId, ownerUserId])
+}
+
+model WorkflowTemplate {
+  id          String          @id @default(cuid())
+  workspaceId String
+  key         String
+  name        String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  stages      StageTemplate[]
+  projects    Project[]
+
+  @@unique([workspaceId, key])
+}
+
+model StageTemplate {
+  id                 String           @id @default(cuid())
+  workflowTemplateId String
+  key                String
+  label              String
+  phase              StagePhase
+  order              Int
+  allowedNextKeys    Json
+  entryCriteria      String
+  exitCriteria       String
+  workflowTemplate   WorkflowTemplate @relation(fields: [workflowTemplateId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowTemplateId, key])
+  @@index([workflowTemplateId, order])
+}
+
+model Stage {
+  id              String      @id @default(cuid())
+  workspaceId     String
+  projectId       String
+  stageTemplateId String?
+  key             String
+  label           String
+  phase           StagePhase
+  order           Int
+  allowedNextKeys Json
+  entryCriteria   String
+  exitCriteria    String
+  status          StageStatus @default(pending)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  workspace       Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project         Project     @relation("ProjectStages", fields: [projectId], references: [id], onDelete: Cascade)
+  currentFor      Project[]   @relation("ProjectCurrentStage")
+
+  @@unique([projectId, key])
+  @@index([workspaceId, projectId])
 }
 
 model ActivityEvent {

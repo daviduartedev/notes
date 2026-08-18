@@ -1,6 +1,7 @@
 import { ActivityList } from "@/components/activity-list";
 import { AppShell } from "@/components/app-shell";
 import { ProjectEditForm } from "@/components/project-edit-form";
+import { StageBoard } from "@/components/stage-board";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { ActivityDto, ClientDto, MemberDto, ProjectDto } from "@/lib/domain-types";
@@ -43,6 +44,10 @@ export default async function ProjetoFichaPage({
             <p className="text-sm text-notes-muted">{project.progress}% · {project.clientName}</p>
           </div>
           <ProjectEditForm project={project} members={members} clients={clients} />
+        </Card>
+        <Card>
+          <h3 className="mb-4 font-display text-xl">Etapas</h3>
+          <StageBoard project={project} />
         </Card>
         <Card>
           <h3 className="mb-4 font-display text-xl">Histórico</h3>

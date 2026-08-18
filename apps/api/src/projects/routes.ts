@@ -2,18 +2,20 @@ import { recordActivity, serializeActivity } from "../activity/record.js";
 import { Hono } from "hono";
 import type { AppDeps } from "../deps.js";
 import { canTransitionProjectStatus } from "../domain/project-status.js";
-import type { ProjectPriority, ProjectStatus } from "../domain/types.js";
+import { applyStageAction } from "../domain/stage-transition.js";
+import type { ProjectPriority, ProjectStatus, StageAction } from "../domain/types.js";
 import { emptyNotFound, requireMember } from "../http/session-guard.js";
-import type { ProjectUpdateInput } from "../store/types.js";
+import type { ProjectRecord, ProjectUpdateInput, StageRecord } from "../store/types.js";
 import { lookupForSession } from "../workspace/lookup.js";
 import { workspaceIdFromSession } from "../workspace/scope.js";
-import { serializeProject } from "./dto.js";
+import { serializeProject, toStageSnapshot } from "./dto.js";
 import {
   createProjectSchema,
   patchProjectSchema,
   projectPrioritySchema,
   projectStatusSchema,
   toDateOrNull,
+  transitionStageSchema,
 } from "./schema.js";
 
 async function clientNameOf(
@@ -24,8 +26,38 @@ async function clientNameOf(
   return client?.name ?? "";
 }
 
-async function toDto(deps: AppDeps, row: Parameters<typeof serializeProject>[0]) {
-  return serializeProject(row, await clientNameOf(deps, row.clientId), deps.now());
+async function toDto(
+  deps: AppDeps,
+  row: ProjectRecord,
+  includeStages: boolean,
+) {
+  const stages = includeStages
+    ? await deps.store.hydrateProjectStages(row.id, deps.now())
+    : undefined;
+  const fresh = includeStages ? ((await deps.store.getProject(row.id)) ?? row) : row;
+  return serializeProject(fresh, await clientNameOf(deps, fresh.clientId), deps.now(), stages);
+}
+
+function patchesFromAction(
+  before: StageRecord[],
+  after: ReturnType<typeof toStageSnapshot>[],
+  now: Date,
+) {
+  return after
+    .filter((stage) => {
+      const previous = before.find((item) => item.id === stage.id);
+      return previous && previous.status !== stage.status;
+    })
+    .map((stage) => {
+      const previous = before.find((item) => item.id === stage.id);
+      return {
+        id: stage.id,
+        status: stage.status,
+        startedAt:
+          stage.status === "in_progress" && !previous?.startedAt ? now : undefined,
+        completedAt: stage.status === "completed" ? now : undefined,
+      };
+    });
 }
 
 export function projectRoutes(deps: AppDeps) {
@@ -66,7 +98,7 @@ export function projectRoutes(deps: AppDeps) {
       dueBefore: dueBeforeRaw ? new Date(dueBeforeRaw) : undefined,
       dueAfter: dueAfterRaw ? new Date(dueAfterRaw) : undefined,
     });
-    return c.json(await Promise.all(rows.map((row) => toDto(deps, row))));
+    return c.json(await Promise.all(rows.map((row) => toDto(deps, row, false))));
   });
 
   routes.post("/", async (c) => {
@@ -115,7 +147,19 @@ export function projectRoutes(deps: AppDeps) {
       action: "project.created",
       payload: { name: created.name, clientId: created.clientId, status: created.status },
     });
-    return c.json(await toDto(deps, created), 201);
+    const stages = await deps.store.listStagesByProject(created.id);
+    const current = stages.find((stage) => stage.id === created.currentStageId);
+    if (current) {
+      await recordActivity(deps, {
+        workspaceId,
+        actorId: gate.session.sub,
+        entityType: "project",
+        entityId: created.id,
+        action: "stage.started",
+        payload: { key: current.key },
+      });
+    }
+    return c.json(await toDto(deps, created, true), 201);
   });
 
   routes.get("/:id/activity", async (c) => {
@@ -134,6 +178,63 @@ export function projectRoutes(deps: AppDeps) {
     return c.json(events.map(serializeActivity));
   });
 
+  routes.post("/:id/stages/:stageId/transition", async (c) => {
+    const gate = await requireMember(c, deps);
+    if (!gate.ok) return gate.response;
+    const body: unknown = await c.req.json().catch(() => null);
+    void workspaceIdFromSession(gate.session, { body });
+    const project = await lookupForSession(
+      gate.session,
+      c.req.param("id"),
+      (id) => deps.store.getProject(id),
+      (row) => row.workspaceId,
+    );
+    if (!project) {
+      return emptyNotFound(c);
+    }
+    const parsed = transitionStageSchema.safeParse(body ?? {});
+    if (!parsed.success) {
+      return c.json({ error: "Dados inválidos" }, 400);
+    }
+    const stages = await deps.store.hydrateProjectStages(project.id, deps.now());
+    const stageId = c.req.param("stageId");
+    const origin = stages.find((stage) => stage.id === stageId);
+    if (!origin) {
+      return emptyNotFound(c);
+    }
+    const action = (parsed.data.action ?? "complete") as StageAction;
+    const applied = applyStageAction({
+      stages: stages.map(toStageSnapshot),
+      currentStageId: project.currentStageId,
+      stageId,
+      action,
+      toKey: parsed.data.to,
+    });
+    if (!applied.ok) {
+      return c.json({ error: "Transição inválida", reason: applied.reason }, 409);
+    }
+    await deps.store.persistStageAction({
+      projectId: project.id,
+      currentStageId: applied.currentStageId,
+      patches: patchesFromAction(stages, applied.stages, deps.now()),
+    });
+    for (const event of applied.events) {
+      await recordActivity(deps, {
+        workspaceId: project.workspaceId,
+        actorId: gate.session.sub,
+        entityType: "project",
+        entityId: project.id,
+        action: event.action,
+        payload: event.payload,
+      });
+    }
+    const updated = await deps.store.getProject(project.id);
+    if (!updated) {
+      return emptyNotFound(c);
+    }
+    return c.json(await toDto(deps, updated, true));
+  });
+
   routes.get("/:id", async (c) => {
     const gate = await requireMember(c, deps);
     if (!gate.ok) return gate.response;
@@ -146,7 +247,7 @@ export function projectRoutes(deps: AppDeps) {
     if (!record) {
       return emptyNotFound(c);
     }
-    return c.json(await toDto(deps, record));
+    return c.json(await toDto(deps, record, true));
   });
 
   routes.patch("/:id", async (c) => {
@@ -229,7 +330,7 @@ export function projectRoutes(deps: AppDeps) {
         payload: { from: current.status, to: parsed.data.status },
       });
     }
-    return c.json(await toDto(deps, updated));
+    return c.json(await toDto(deps, updated, true));
   });
 
   routes.delete("/:id", async (c) => {

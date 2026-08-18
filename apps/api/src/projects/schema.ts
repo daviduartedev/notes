@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PROJECT_PRIORITIES, PROJECT_STATUSES } from "../domain/types.js";
+import { PROJECT_PRIORITIES, PROJECT_STATUSES, STAGE_ACTIONS } from "../domain/types.js";
 import { toDateOrNull } from "../clients/schema.js";
 
 const blankToNull = z
@@ -40,6 +40,7 @@ export const createProjectSchema = z.object({
   notes: blankToNull,
   workspaceId: z.unknown().optional(),
   createdAt: z.unknown().optional(),
+  currentStageId: z.unknown().optional(),
 });
 
 export const patchProjectSchema = z.object({
@@ -55,6 +56,18 @@ export const patchProjectSchema = z.object({
   notes: blankToNull,
   workspaceId: z.unknown().optional(),
   createdAt: z.unknown().optional(),
+  currentStageId: z.unknown().optional(),
 });
+
+export const transitionStageSchema = z
+  .object({
+    action: z.enum(STAGE_ACTIONS).optional(),
+    to: z.string().trim().min(1).optional(),
+    workspaceId: z.unknown().optional(),
+    currentStageId: z.unknown().optional(),
+  })
+  .refine((value) => Boolean(value.action || value.to), {
+    message: "action ou destino obrigatório",
+  });
 
 export { toDateOrNull };
