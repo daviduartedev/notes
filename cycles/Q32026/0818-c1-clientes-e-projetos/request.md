@@ -70,11 +70,11 @@ login → workspace → cliente → projeto → histórico
 
 ## Critérios de aceite
 
-- [ ] Dois projetos no mesmo cliente aparecem em `/clientes/:id` e `/projetos`
-- [ ] Histórico registra `project.created` duas vezes com payload consultável
-- [ ] GET de projeto do workspace B por membro de A → 404 ou 403, sem payload
-- [ ] `Project.status` rejeita transição inválida
-- [ ] Prazo vencido em projeto `active` tem estado visual `overdue`
+- [x] Dois projetos no mesmo cliente aparecem em `/clientes/:id` e `/projetos`
+- [x] Histórico registra `project.created` duas vezes com payload consultável
+- [x] GET de projeto do workspace B por membro de A → 404 ou 403, sem payload
+- [x] `Project.status` rejeita transição inválida
+- [x] Prazo vencido em projeto `active` tem estado visual `overdue`
 
 ---
 

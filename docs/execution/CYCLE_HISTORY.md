@@ -5,7 +5,7 @@ Ordem de execução (ORCH-011): **C0 → C1 → C2 → C3 → C4 → C5 → C6 �
 | Cycle | Status | Objetivo | Implementado | Testes | Commit | Observações |
 |---|---|---|---|---|---|---|
 | C0 foundation | done | Repo, harness, CI, shell, auth, workspace, `/hoje` vazio | sim | lint/typecheck/test/build 0 | `7d99a98` + harden `173781e` | Verify PASS; Postgres local :5433 |
-| C1 clientes-e-projetos | done | Clientes, projetos, activity log | sim | lint/typecheck/test/build 0 | `cycle(01)` (SHA após push) | Sem Playwright; overdue no DTO |
+| C1 clientes-e-projetos | done | Clientes, projetos, activity log | sim | lint/typecheck/test/build 0 | `ee9461d` | Sem Playwright; overdue no DTO |
 | C2 etapas-e-transicoes | pending | Template SaaS, stages, transições | — | — | — | Depende C1 |
 | C3 pipeline | pending | Board `/pipeline` | — | — | — | Depende C2 |
 | C4 checklists | pending | Templates e instâncias de checklist | — | — | — | Depende C2 |

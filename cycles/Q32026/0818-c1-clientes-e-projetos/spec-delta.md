@@ -34,7 +34,5 @@ Proposta. Promoção para `spec/` só após validação (`/update-spec`).
 
 Delta do C1 foi incorporado em `spec/` (features clients/projects/activity, contratos backend/frontend, modelos database, testes, ADRs 0009–0011).
 
-Itens não entregues (intenção futura) permanecem fora de `spec/` como fato: etapas, pipeline, checklists, validações, `/hoje` operacional, Playwright.
+Itens não entregues (intenção futura) permanecem fora de `spec/` como fato: etapas, pipeline, checklists, validações, aprovações, pendências, lembretes, reuniões, `/hoje` operacional, Playwright, Stage/WorkflowTemplate.
 
-
-Etapas, pipeline, checklists, validações, aprovações, pendências, lembretes, reuniões, `/hoje` operacional, Playwright, Stage/WorkflowTemplate.
