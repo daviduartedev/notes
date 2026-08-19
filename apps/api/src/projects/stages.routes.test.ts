@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "../app";
 import { createTestDeps } from "../deps";
+import { workflowTemplateIdOf } from "../test/templates";
 
 type StageActionDto = {
   action: string;
@@ -56,7 +57,7 @@ async function createProject(app: ReturnType<typeof createApp>, cookie: string, 
   const response = await app.request("/api/projects", {
     method: "POST",
     headers: { "Content-Type": "application/json", cookie },
-    body: JSON.stringify({ name: "SaaS", clientId, ownerUserId: "seed-user" }),
+    body: JSON.stringify({ name: "SaaS", clientId, ownerUserId: "seed-user", workflowTemplateId: await workflowTemplateIdOf(app, cookie) }),
   });
   expect(response.status).toBe(201);
   return (await response.json()) as ProjectDetail;

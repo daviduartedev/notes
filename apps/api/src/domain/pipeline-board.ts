@@ -96,6 +96,24 @@ export function buildPipelineBoard(rows: PipelineCardRow[], now: Date): Pipeline
     projects: [],
   }));
   const byKey = new Map(columns.map((column) => [column.key, column]));
+  const extra = new Map<string, { key: string; label: string }>();
+  for (const row of rows) {
+    if (!byKey.has(row.currentStageKey) && !extra.has(row.currentStageKey)) {
+      extra.set(row.currentStageKey, { key: row.currentStageKey, label: row.currentStageLabel });
+    }
+  }
+  let order = columns.length;
+  for (const item of extra.values()) {
+    order += 1;
+    const column: PipelineColumnDto = {
+      key: item.key,
+      label: item.label,
+      order,
+      projects: [],
+    };
+    columns.push(column);
+    byKey.set(column.key, column);
+  }
   const sorted = [...rows].sort(comparePipelineCards);
   for (const row of sorted) {
     const column = byKey.get(row.currentStageKey);

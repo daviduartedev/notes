@@ -25,7 +25,8 @@ import type { MeetingType } from "../domain/meeting-type.js";
 import type { ValidationStatus, ValidationType } from "../domain/validation-status.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
 import { ensureDeployStagingForWorkspace } from "../checklists/seed.js";
-import { ensureSaasDeliveryForWorkspace, type SaasTemplateRow } from "../projects/saas-seed.js";
+import { isCatalogWorkflowKey } from "../domain/workflow-catalog.js";
+import { ensureWorkflowCatalogForWorkspace, type WorkflowTemplateRow } from "../workflows/seed.js";
 import type {
   ActivityRecord,
   ApprovalCreateInput,
@@ -53,6 +54,9 @@ import type {
   MeetingFilters,
   MeetingRecord,
   MeetingUpdateInput,
+  WorkflowTemplateCreateInput,
+  WorkflowTemplateRecord,
+  WorkflowTemplateUpdateInput,
   StagePersistPatch,
   StageRecord,
   ValidationCreateInput,
@@ -135,7 +139,7 @@ function mapStage(row: {
   };
 }
 
-function templateSnapshots(template: SaasTemplateRow) {
+function templateSnapshots(template: WorkflowTemplateRow) {
   return template.stages
     .slice()
     .sort((a, b) => a.order - b.order)
@@ -150,12 +154,55 @@ function templateSnapshots(template: SaasTemplateRow) {
     }));
 }
 
+function mapWorkflowTemplate(row: WorkflowTemplateRow & { createdAt: Date; updatedAt: Date }): WorkflowTemplateRecord {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    key: row.key,
+    name: row.name,
+    isDefault: row.isDefault,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    stages: row.stages
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((stage) => ({
+        id: stage.id,
+        key: stage.key,
+        label: stage.label,
+        phase: stage.phase,
+        order: stage.order,
+        allowedNextKeys: asStringArray(stage.allowedNextKeys as Prisma.JsonValue),
+        entryCriteria: stage.entryCriteria,
+        exitCriteria: stage.exitCriteria,
+      })),
+  };
+}
+
+async function loadWorkflowTemplate(
+  db: DbClient,
+  id: string,
+): Promise<(WorkflowTemplateRow & { createdAt: Date; updatedAt: Date }) | null> {
+  return db.workflowTemplate.findUnique({
+    where: { id },
+    include: { stages: { orderBy: { order: "asc" } } },
+  });
+}
+
 async function copyStagesOntoProject(
   db: DbClient,
   project: { id: string; workspaceId: string },
   now: Date,
+  workflowTemplateId: string,
 ): Promise<{ currentStageId: string; workflowTemplateId: string }> {
-  const template = await ensureSaasDeliveryForWorkspace(db, project.workspaceId);
+  await ensureWorkflowCatalogForWorkspace(db, project.workspaceId);
+  const template = await db.workflowTemplate.findFirst({
+    where: { id: workflowTemplateId, workspaceId: project.workspaceId },
+    include: { stages: { orderBy: { order: "asc" } } },
+  });
+  if (!template) {
+    throw new Error("template inválido");
+  }
   const instanced = instantiateProjectStages(templateSnapshots(template));
   await db.stage.createMany({
     data: instanced.stages.map((stage) => ({
@@ -185,6 +232,23 @@ async function copyStagesOntoProject(
     },
   });
   return { currentStageId: instanced.currentStageId, workflowTemplateId: template.id };
+}
+
+async function defaultTemplateId(db: DbClient, workspaceId: string): Promise<string> {
+  await ensureWorkflowCatalogForWorkspace(db, workspaceId);
+  const preferred = await db.workflowTemplate.findFirst({
+    where: { workspaceId, isDefault: true },
+    select: { id: true },
+  });
+  if (preferred) return preferred.id;
+  const saas = await db.workflowTemplate.findUnique({
+    where: { workspaceId_key: { workspaceId, key: "saas_delivery" } },
+    select: { id: true },
+  });
+  if (!saas) {
+    throw new Error("catálogo vazio");
+  }
+  return saas.id;
 }
 
 export function createPrismaStore(prisma: PrismaClient): NotesStore {
@@ -317,7 +381,7 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
       const now = new Date();
       return prisma.$transaction(async (tx) => {
         const created = await tx.project.create({ data });
-        const copied = await copyStagesOntoProject(tx, created, now);
+        const copied = await copyStagesOntoProject(tx, created, now, data.workflowTemplateId);
         return mapProject({
           ...created,
           workflowTemplateId: copied.workflowTemplateId,
@@ -419,7 +483,12 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
         return [];
       }
       await prisma.$transaction(async (tx) => {
-        await copyStagesOntoProject(tx, project, now);
+        await copyStagesOntoProject(
+          tx,
+          project,
+          now,
+          project.workflowTemplateId ?? (await defaultTemplateId(tx, project.workspaceId)),
+        );
       });
       const rows = await prisma.stage.findMany({
         where: { projectId },
@@ -460,14 +529,125 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
         return false;
       }
     },
+    async listWorkflowTemplates(workspaceId) {
+      await ensureWorkflowCatalogForWorkspace(prisma, workspaceId);
+      const rows = await prisma.workflowTemplate.findMany({
+        where: { workspaceId },
+        include: { stages: { orderBy: { order: "asc" } } },
+        orderBy: { name: "asc" },
+      });
+      return rows.map(mapWorkflowTemplate);
+    },
+    async getWorkflowTemplate(id) {
+      const row = await loadWorkflowTemplate(prisma, id);
+      return row ? mapWorkflowTemplate(row) : null;
+    },
+    async createWorkflowTemplate(data: WorkflowTemplateCreateInput) {
+      await ensureWorkflowCatalogForWorkspace(prisma, data.workspaceId);
+      try {
+        const created = await prisma.$transaction(async (tx) => {
+          if (data.isDefault) {
+            await tx.workflowTemplate.updateMany({
+              where: { workspaceId: data.workspaceId, isDefault: true },
+              data: { isDefault: false },
+            });
+          }
+          return tx.workflowTemplate.create({
+            data: {
+              workspaceId: data.workspaceId,
+              key: data.key,
+              name: data.name,
+              isDefault: data.isDefault,
+              stages: {
+                create: data.stages.map((stage) => ({
+                  key: stage.key,
+                  label: stage.label,
+                  phase: stage.phase,
+                  order: stage.order,
+                  allowedNextKeys: stage.allowedNextKeys,
+                  entryCriteria: stage.entryCriteria,
+                  exitCriteria: stage.exitCriteria,
+                })),
+              },
+            },
+            include: { stages: { orderBy: { order: "asc" } } },
+          });
+        });
+        return mapWorkflowTemplate(created);
+      } catch {
+        return null;
+      }
+    },
+    async updateWorkflowTemplate(id, data: WorkflowTemplateUpdateInput) {
+      const current = await loadWorkflowTemplate(prisma, id);
+      if (!current) {
+        return null;
+      }
+      try {
+        const updated = await prisma.$transaction(async (tx) => {
+          if (data.isDefault === true) {
+            await tx.workflowTemplate.updateMany({
+              where: { workspaceId: current.workspaceId, isDefault: true, NOT: { id } },
+              data: { isDefault: false },
+            });
+          }
+          if (data.stages) {
+            await tx.stageTemplate.deleteMany({ where: { workflowTemplateId: id } });
+            await tx.stageTemplate.createMany({
+              data: data.stages.map((stage) => ({
+                workflowTemplateId: id,
+                key: stage.key,
+                label: stage.label,
+                phase: stage.phase,
+                order: stage.order,
+                allowedNextKeys: stage.allowedNextKeys,
+                entryCriteria: stage.entryCriteria,
+                exitCriteria: stage.exitCriteria,
+              })),
+            });
+          }
+          return tx.workflowTemplate.update({
+            where: { id },
+            data: {
+              ...(data.name !== undefined ? { name: data.name } : {}),
+              ...(data.isDefault !== undefined ? { isDefault: data.isDefault } : {}),
+            },
+            include: { stages: { orderBy: { order: "asc" } } },
+          });
+        });
+        return mapWorkflowTemplate(updated);
+      } catch {
+        return null;
+      }
+    },
+    async deleteWorkflowTemplate(id) {
+      const current = await loadWorkflowTemplate(prisma, id);
+      if (!current) {
+        return "not_found";
+      }
+      if (isCatalogWorkflowKey(current.key)) {
+        return "catalog";
+      }
+      const inUse = await prisma.project.count({ where: { workflowTemplateId: id } });
+      if (inUse > 0) {
+        return "in_use";
+      }
+      await prisma.workflowTemplate.delete({ where: { id } });
+      return "deleted";
+    },
     async backfillMissingStages(workspaceId, now) {
       const projects = await prisma.project.findMany({
         where: { workspaceId, stages: { none: {} } },
-        select: { id: true, workspaceId: true },
+        select: { id: true, workspaceId: true, workflowTemplateId: true },
       });
       for (const project of projects) {
         await prisma.$transaction(async (tx) => {
-          await copyStagesOntoProject(tx, project, now);
+          await copyStagesOntoProject(
+            tx,
+            project,
+            now,
+            project.workflowTemplateId ?? (await defaultTemplateId(tx, workspaceId)),
+          );
         });
       }
       return projects.length;

@@ -11,6 +11,7 @@ import type {
   ProjectDto,
   ProjectPriority,
   ProjectStatus,
+  WorkflowTemplateDto,
 } from "@/lib/domain-types";
 import { projectPriorityLabel, projectStatusLabel } from "@/lib/labels";
 import { serverApi } from "@/lib/server-api";
@@ -38,14 +39,16 @@ export default async function ProjetosPage({
   if (filters.priority) params.set("priority", filters.priority);
   const query = params.toString();
 
-  const [projectsRes, membersRes, clientsRes] = await Promise.all([
+  const [projectsRes, membersRes, clientsRes, templatesRes] = await Promise.all([
     serverApi<ProjectDto[]>(`/api/projects${query ? `?${query}` : ""}`),
     serverApi<MemberDto[]>("/api/workspace/members"),
     serverApi<ClientDto[]>("/api/clients"),
+    serverApi<WorkflowTemplateDto[]>("/api/workflow-templates"),
   ]);
   const projects = projectsRes.status === 200 && projectsRes.data ? projectsRes.data : [];
   const members = membersRes.status === 200 && membersRes.data ? membersRes.data : [];
   const clients = clientsRes.status === 200 && clientsRes.data ? clientsRes.data : [];
+  const templates = templatesRes.status === 200 && templatesRes.data ? templatesRes.data : [];
 
   return (
     <AppShell title="Projetos" pathname="/projetos">
@@ -90,7 +93,7 @@ export default async function ProjetosPage({
 
       <Card>
         <h3 className="font-display text-xl">Novo projeto</h3>
-        <ProjectCreateForm members={members} clients={clients} />
+        <ProjectCreateForm members={members} clients={clients} templates={templates} />
       </Card>
 
       <ProjectList projects={projects} />

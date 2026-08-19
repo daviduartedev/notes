@@ -99,4 +99,14 @@ Testes de domínio não exigem Postgres. Teste de persistência usa `DATABASE_UR
 - collection `GET /api/hoje` do workspace B com as quatro seções vazias
 - empty por seção (arrays vazios + copy na UI)
 
+## C11 obrigatório
+
+- Landing seed tem 4 etapas; SaaS tem 10 (não duplicar `saas_delivery`)
+- PATCH do molde não altera etapas já copiadas no projeto
+- `POST /api/projects` sem `workflowTemplateId` → 400; id de outro workspace → 404
+- member GET lista 200; POST/PATCH/DELETE → 403
+- collection do workspace B sem templates de A; GET id → 404
+- DELETE de key de catálogo → 409; custom sem projetos → 204
+- visitante `/workflows` → `/login` (route-guard)
+
 

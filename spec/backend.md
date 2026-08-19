@@ -6,7 +6,7 @@ API em `apps/api` (Hono + Prisma + Auth.js), porta **3014**.
 
 - Zod em todo input HTTP.
 - Sem `any` injustificado.
-- Sem generic repository / event bus / BPM.
+- Sem generic repository / event bus / BPM / canvas de workflow.
 
 ## Contratos C0 (Stage 4)
 
@@ -36,7 +36,7 @@ API em `apps/api` (Hono + Prisma + Auth.js), porta **3014**.
 
 | Método | Path | Auth | Notas |
 |--------|------|------|-------|
-| GET | `/api/pipeline` | sessão | `{ columns }`; filtros ownerUserId, clientId, priority; 10 colunas SaaS |
+| GET | `/api/pipeline` | sessão | `{ columns }`; filtros ownerUserId, clientId, priority; 10 colunas SaaS + extras C11 |
 
 ## Contratos C4
 
@@ -111,6 +111,18 @@ GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com m
 | Método | Path | Auth | Notas |
 |--------|------|------|-------|
 | GET | `/api/hoje` | sessão | `{ needs_attention, today, waiting_client, in_progress }`; evaluate on-read; máx. 20/seção; tenant B → seções vazias; `workspaceId` ignorado |
+
+## Contratos C11
+
+| Método | Path | Auth | Notas |
+|--------|------|------|-------|
+| GET | `/api/workflow-templates` | sessão | lista do workspace; seed on-list; member OK |
+| POST | `/api/workflow-templates` | owner | `key`, `name`, `isDefault?`, `stages[]`; member 403 |
+| GET | `/api/workflow-templates/:id` | sessão | 404 IDOR |
+| PATCH | `/api/workflow-templates/:id` | owner | não altera `key`; pode substituir `stages`; member 403 |
+| DELETE | `/api/workflow-templates/:id` | owner | 409 catálogo seed ou com projetos; custom sem projetos 204 |
+
+`POST /api/projects` exige `workflowTemplateId` do workspace da sessão (400 se ausente; 404 se de outro tenant).
 
 ## Erros
 

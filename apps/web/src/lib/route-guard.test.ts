@@ -20,6 +20,8 @@ describe("proteção de rotas", () => {
     expect(isProtectedPath("/lembretes/abc")).toBe(true);
     expect(isProtectedPath("/reunioes")).toBe(true);
     expect(isProtectedPath("/reunioes/abc")).toBe(true);
+    expect(isProtectedPath("/workflows")).toBe(true);
+    expect(isProtectedPath("/workflows/abc")).toBe(true);
     expect(isProtectedPath("/login")).toBe(false);
   });
 
@@ -57,6 +59,10 @@ describe("proteção de rotas", () => {
 
   it("redireciona visitante de /reunioes para /login", () => {
     expect(loginRedirect("/reunioes", false)).toBe("/login");
+  });
+
+  it("redireciona visitante de /workflows para /login", () => {
+    expect(loginRedirect("/workflows", false)).toBe("/login");
   });
 
   it("não redireciona visitante em /login", () => {

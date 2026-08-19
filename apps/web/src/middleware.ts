@@ -37,5 +37,7 @@ export const config = {
     "/lembretes",
     "/reunioes/:path*",
     "/reunioes",
+    "/workflows/:path*",
+    "/workflows",
   ],
 };

@@ -4,7 +4,7 @@ Quadro operacional agrupado por **`currentStage.key`**. Click-only: o card abre 
 
 ## Colunas
 
-Sempre as **10 keys** do template SaaS delivery, na ordem `order` do seed. Coluna vazia continua visível. Card cujo `currentStage.key` não está nessas keys é omitido. Projeto sem etapa atual (`currentStageId` nulo) é omitido.
+Sempre as **10 keys** do template SaaS delivery, na ordem `order` do seed. Coluna vazia continua visível. Card cujo `currentStage.key` **não** está nessas keys gera **coluna extra** no board (C11-D15). Projeto sem etapa atual (`currentStageId` nulo) é omitido.
 
 ## Envelope no board
 

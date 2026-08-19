@@ -1,6 +1,6 @@
 # Etapas e transições
 
-Template **SaaS delivery** seedado por workspace. Instância ≠ template: na criação do projeto as etapas são copiadas (key, phase, order, allowedNextKeys, label, critérios texto). Mutar o template depois **não** reescreve instâncias já copiadas.
+Catálogo de templates por workspace (C11); **SaaS delivery** continua o default (`isDefault`). Instância ≠ template: na criação do projeto as etapas são copiadas do molde escolhido (key, phase, order, allowedNextKeys, label, critérios texto). Mutar o template depois **não** reescreve instâncias já copiadas.
 
 Não há motor BPM. Envelope `Project.status` (C1) é distinto do pipeline de etapas.
 
@@ -45,6 +45,4 @@ Events no `ActivityEvent` do projeto: `stage.started`, `stage.transitioned` (`fr
 
 Quadro transversal em `/pipeline` (C3). Completar item de checklist **não** muda `Stage.status` (C4). `changes_requested` na validação **não** recua etapa (C5). Grant de Approval **não** avança etapa (C6). Blocker open a bloquear a etapa/projeto **rejeita** complete (C7); resolve não avança etapa. Etapa `waiting_client` alimenta a política de lembretes C8.
 
-## Fora deste cycle
-
-Editor de workflow e outros tipos (C11). Validações.
+CRUD de modelos e demais grafos: [workflows](../workflows/readme.md).

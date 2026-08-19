@@ -38,6 +38,7 @@ export const createProjectSchema = z.object({
   priority: projectPrioritySchema.optional(),
   progress: z.coerce.number().int().min(0).max(100).optional(),
   notes: blankToNull,
+  workflowTemplateId: z.string().trim().min(1),
   workspaceId: z.unknown().optional(),
   createdAt: z.unknown().optional(),
   currentStageId: z.unknown().optional(),

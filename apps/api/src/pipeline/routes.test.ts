@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createApp } from "../app";
 import { createTestDeps } from "../deps";
 import type { PipelineBoardDto, PipelineCardDto } from "../domain/pipeline-board";
+import { workflowTemplateIdOf } from "../test/templates";
 
 type StageActionDto = {
   action: string;
@@ -59,6 +60,7 @@ async function createProject(
       name: "Projeto",
       clientId,
       ownerUserId: "seed-user",
+      workflowTemplateId: await workflowTemplateIdOf(app, cookie),
       ...body,
     }),
   });

@@ -30,6 +30,13 @@ Seed: não cria clientes/projetos (fixtures nos testes; segundo workspace só no
 
 Seed C2: template SaaS no workspace; backfill de projetos sem etapas.
 
+## Modelos C11
+
+- `WorkflowTemplate.isDefault` — boolean; seed marca `saas_delivery` como default do workspace
+- Catálogo seed por workspace: `landing`, `institutional`, `saas_delivery`, `app`, `ecommerce`, `maintenance` (grafos lineares; keys EN, labels PT)
+
+Seed C11: `ensureWorkflowCatalogForWorkspace` na listagem e no seed do workspace. Backfill de projetos sem etapas usa o template do projeto ou o default.
+
 ## Modelos C4
 
 - `ChecklistTemplate` / `ChecklistTemplateItem` — seed `deploy_staging_saas` por workspace

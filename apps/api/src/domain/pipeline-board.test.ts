@@ -53,12 +53,14 @@ describe("buildPipelineBoard", () => {
     );
   });
 
-  it("omite key que não pertence ao template SaaS", () => {
+  it("anexa coluna extra para etapa fora do SaaS", () => {
     const board = buildPipelineBoard(
-      [card({ id: "p-x", name: "Fantasma", currentStageKey: "legacy_phase" })],
+      [card({ id: "p-land", name: "Landing", currentStageKey: "publication", currentStageLabel: "Publicação" })],
       now,
     );
-    expect(board.columns.every((column) => column.projects.length === 0)).toBe(true);
+    expect(board.columns).toHaveLength(11);
+    expect(board.columns.at(-1)).toMatchObject({ key: "publication", label: "Publicação" });
+    expect(board.columns.at(-1)?.projects.map((project) => project.id)).toEqual(["p-land"]);
   });
 
   it("ordena cards por prazo e marca overdue do envelope active", () => {

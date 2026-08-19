@@ -3,6 +3,7 @@ import { createApp } from "../app";
 import { createTestDeps } from "../deps";
 import { DEFAULT_SNOOZE_MS } from "../domain/reminder-status";
 import { PROPOSAL_WAITING_CLIENT_POLICY } from "../domain/follow-up-policy";
+import { workflowTemplateIdOf } from "../test/templates";
 
 type ProjectDetail = {
   id: string;
@@ -76,7 +77,7 @@ async function createProject(
   const projectRes = await app.request("/api/projects", {
     method: "POST",
     headers: { "Content-Type": "application/json", cookie },
-    body: JSON.stringify({ name, clientId: client.id, ownerUserId }),
+    body: JSON.stringify({ name, clientId: client.id, ownerUserId, workflowTemplateId: await workflowTemplateIdOf(app, cookie) }),
   });
   expect(projectRes.status).toBe(201);
   return (await projectRes.json()) as ProjectDetail;

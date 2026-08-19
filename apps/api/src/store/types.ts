@@ -96,10 +96,58 @@ export type PipelineFilters = {
   priority?: ProjectPriority;
 };
 
+export type StageTemplateRecord = {
+  id: string;
+  key: string;
+  label: string;
+  phase: StagePhase;
+  order: number;
+  allowedNextKeys: string[];
+  entryCriteria: string;
+  exitCriteria: string;
+};
+
+export type WorkflowTemplateRecord = {
+  id: string;
+  workspaceId: string;
+  key: string;
+  name: string;
+  isDefault: boolean;
+  stages: StageTemplateRecord[];
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type WorkflowTemplateStageInput = {
+  key: string;
+  label: string;
+  phase: StagePhase;
+  order: number;
+  allowedNextKeys: string[];
+  entryCriteria: string;
+  exitCriteria: string;
+};
+
+export type WorkflowTemplateCreateInput = {
+  workspaceId: string;
+  key: string;
+  name: string;
+  isDefault: boolean;
+  stages: WorkflowTemplateStageInput[];
+};
+
+export type WorkflowTemplateUpdateInput = {
+  name?: string;
+  isDefault?: boolean;
+  stages?: WorkflowTemplateStageInput[];
+};
+
+export type WorkflowTemplateDeleteResult = "deleted" | "not_found" | "catalog" | "in_use";
+
 export type ProjectCreateInput = Omit<
   ProjectRecord,
   "id" | "createdAt" | "updatedAt" | "workflowTemplateId" | "currentStageId"
->;
+> & { workflowTemplateId: string };
 export type ProjectUpdateInput = Partial<Omit<ProjectRecord, "id" | "workspaceId" | "createdAt">>;
 
 export type StageRecord = {
@@ -482,6 +530,14 @@ export type NotesStore = {
     key: string,
     allowedNextKeys: string[],
   ): Promise<boolean>;
+  listWorkflowTemplates(workspaceId: string): Promise<WorkflowTemplateRecord[]>;
+  getWorkflowTemplate(id: string): Promise<WorkflowTemplateRecord | null>;
+  createWorkflowTemplate(data: WorkflowTemplateCreateInput): Promise<WorkflowTemplateRecord | null>;
+  updateWorkflowTemplate(
+    id: string,
+    data: WorkflowTemplateUpdateInput,
+  ): Promise<WorkflowTemplateRecord | null>;
+  deleteWorkflowTemplate(id: string): Promise<WorkflowTemplateDeleteResult>;
   backfillMissingStages(workspaceId: string, now: Date): Promise<number>;
   listChecklistTemplates(workspaceId: string): Promise<ChecklistTemplateRecord[]>;
   getChecklistTemplate(id: string): Promise<ChecklistTemplateRecord | null>;

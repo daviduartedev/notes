@@ -10,6 +10,7 @@ import {
   createPrismaWorkspaceLookup,
 } from "./prisma-auth";
 import { createPrismaStore } from "./store/prisma";
+import { workflowTemplateIdOf } from "./test/templates";
 
 loadDotenv({ path: resolve(process.cwd(), "../../.env") });
 loadDotenv({ path: resolve(process.cwd(), ".env") });
@@ -38,6 +39,7 @@ async function cleanup(prisma: PrismaClient, emails: string[], workspaceIds: str
     .catch(() => undefined);
   await prisma.stage.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
   await prisma.project.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
+  await prisma.workflowTemplate.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
   await prisma.client.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
   await prisma.member.deleteMany({ where: { user: { email: { in: emails } } } });
   for (const id of workspaceIds) {
@@ -117,7 +119,7 @@ describe.skipIf(!databaseUrl)("C6 persistência aprovações", () => {
       const projectRes = await app.request("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json", cookie: cookieA },
-        body: JSON.stringify({ name: "Proj C6", clientId: client.id, ownerUserId: userA.id }),
+        body: JSON.stringify({ name: "Proj C6", clientId: client.id, ownerUserId: userA.id, workflowTemplateId: await workflowTemplateIdOf(app, cookieA) }),
       });
       const project = (await projectRes.json()) as {
         id: string;

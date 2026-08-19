@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "../app";
 import { createTestDeps } from "../deps";
+import { workflowTemplateIdOf } from "../test/templates";
 
 function cookieFrom(response: Response): string {
   const header = response.headers.getSetCookie?.()[0] ?? response.headers.get("set-cookie") ?? "";
@@ -36,12 +37,12 @@ describe("activity", () => {
     await app.request("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json", cookie },
-      body: JSON.stringify({ name: "P1", clientId: client.id, ownerUserId: "seed-user" }),
+      body: JSON.stringify({ name: "P1", clientId: client.id, ownerUserId: "seed-user", workflowTemplateId: await workflowTemplateIdOf(app, cookie) }),
     });
     await app.request("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json", cookie },
-      body: JSON.stringify({ name: "P2", clientId: client.id, ownerUserId: "seed-user" }),
+      body: JSON.stringify({ name: "P2", clientId: client.id, ownerUserId: "seed-user", workflowTemplateId: await workflowTemplateIdOf(app, cookie) }),
     });
 
     const history = await app.request(`/api/clients/${client.id}/activity`, { headers: { cookie } });

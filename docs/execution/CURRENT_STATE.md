@@ -1,16 +1,16 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-19 (C10 `66e4991005b13b42a495790dc0a5e82b164bc1f2`).
+Atualizado: 2026-08-19 (C11 — SHA no relatório).
 
 ## Produto
 
 - Nome interno de UI: **Notes**
 - Tipo: Software House Operating System / Delivery CRM
-- Entidade operacional: **Project** (C1 envelope + C2 etapas + C3 board + C4 checklists + C5 validações + C6 aprovações + C7 pendências + C8 lembretes + C9 reuniões + C10 hoje operacional)
+- Entidade operacional: **Project** (C1 envelope + C2 etapas + C3 board + C4 checklists + C5 validações + C6 aprovações + C7 pendências + C8 lembretes + C9 reuniões + C10 hoje operacional + C11 templates de workflow)
 - Tenant: `workspaceId` sempre da sessão, nunca do body
-- **MVP fechado** no C10
+- **MVP fechado** no C10; **roadmap desta execução fechado** no C11
 
-## Stack (C0 + C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8 + C9 + C10)
+## Stack (C0–C11)
 
 - Monorepo **pnpm** (Node 22)
 - `apps/web` — Next.js App Router + Tailwind — porta **3015**
@@ -22,10 +22,11 @@ Atualizado: 2026-08-19 (C10 `66e4991005b13b42a495790dc0a5e82b164bc1f2`).
 ## O que já existe no repo
 
 - Harness em `spec/` + `.cursor/commands/`
-- Auth credentials, seed 1 workspace + 1 owner + template SaaS delivery + checklist Deploy Staging SaaS
+- Auth credentials, seed 1 workspace + 1 owner + catálogo de 6 workflows (SaaS default) + checklist Deploy Staging SaaS
 - `/login`, `/hoje` quadro operacional (4 seções), `/design-system` (dev)
 - `/clientes`, `/clientes/:id`, `/projetos`, `/projetos/:id` (Etapas + Checklists + Validações + Aprovações + Pendências + Lembretes + Reuniões)
-- `/pipeline` board por etapa atual (click-only)
+- `/pipeline` board por etapa atual (click-only; colunas extras C11)
+- `/workflows` CRUD owner de templates (formulário; sem BPM)
 - `/checklists` lista de instâncias
 - `/validacoes`, `/validacoes/:id`
 - `/aprovacoes`, `/aprovacoes/:id`
@@ -37,15 +38,15 @@ Atualizado: 2026-08-19 (C10 `66e4991005b13b42a495790dc0a5e82b164bc1f2`).
 ## Auth / banco / módulos
 
 - Auth: credentials na API, cookie `authjs.session-token`
-- Banco: User, Workspace, Member, Client, Project, ActivityEvent, WorkflowTemplate, StageTemplate, Stage, ChecklistTemplate, ChecklistTemplateItem, ProjectChecklist, ChecklistItem, Validation, Approval, Blocker, Reminder, Meeting
-- Módulos: clientes, projetos, activity, etapas, pipeline board, checklists, validações, aprovações, pendências, lembretes, reuniões, hoje
+- Banco: User, Workspace, Member, Client, Project, ActivityEvent, WorkflowTemplate (`isDefault`), StageTemplate, Stage, ChecklistTemplate, ChecklistTemplateItem, ProjectChecklist, ChecklistItem, Validation, Approval, Blocker, Reminder, Meeting
+- Módulos: clientes, projetos, activity, etapas, pipeline board, workflows, checklists, validações, aprovações, pendências, lembretes, reuniões, hoje
 
 ## Contratos
 
 - C0: `GET /health`, login/logout, `/api/me`, `/api/workspace`
 - C1: `/api/clients`, `/api/projects`, `/api/workspace/members`, activity nas fichas
 - C2: `POST /api/projects/:id/stages/:stageId/transition`; GET ficha com `stages`
-- C3: `GET /api/pipeline` → `{ columns }`
+- C3: `GET /api/pipeline` → `{ columns }` (10 SaaS + extras)
 - C4: apply/list/patch checklists; `PATCH /api/checklist-items/:id`; templates owner-only
 - C5: create/list/get/patch validations; `POST /api/validations/:id/transition`
 - C6: `POST /api/approvals`; `POST /api/approvals/:id/decide`; GET lista/ficha/projeto
@@ -53,7 +54,8 @@ Atualizado: 2026-08-19 (C10 `66e4991005b13b42a495790dc0a5e82b164bc1f2`).
 - C8: `GET /api/reminders` (evaluate on-read); `POST /api/reminders/:id/decide`; GET lista/ficha/projeto
 - C9: `POST/GET/PATCH /api/meetings`; nested projeto/cliente; GET lista/ficha
 - C10: `GET /api/hoje` → `{ needs_attention, today, waiting_client, in_progress }`; máx. 20/seção; evaluate on-read
-- Cross-tenant → 404 vazio em recurso por id; collection pipeline/checklists/validations/approvals/blockers/reminders/meetings/hoje → vazio
+- C11: CRUD `/api/workflow-templates`; `POST /api/projects` exige `workflowTemplateId`; GET member+owner; mutação owner-only
+- Cross-tenant → 404 vazio em recurso por id; collection pipeline/checklists/validations/approvals/blockers/reminders/meetings/hoje/workflow-templates → vazio
 - Sem membership → 403
 - CORS inclui PATCH/PUT/DELETE
 - `visualState: overdue` para projeto `active` com prazo passado e para validação não terminal com prazo passado
@@ -64,6 +66,7 @@ Atualizado: 2026-08-19 (C10 `66e4991005b13b42a495790dc0a5e82b164bc1f2`).
 - Blocker open a bloquear etapa/projeto **rejeita** complete; resolve **não** avança etapa; Blocker ≠ Checklist
 - Reminder canal `internal`; política `proposalWaitingClientFollowUp`; draft não vai para o activity
 - Meeting **não** muda etapa nem gera Blocker; participantes externos → 400
+- Mutar WorkflowTemplate **não** reescreve instâncias já copiadas
 
 ## Como rodar
 

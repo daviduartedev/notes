@@ -79,7 +79,15 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 |------|------|----------------|
 | `/hoje` | autenticado | quatro colunas (Precisa de atenção / Hoje / Aguardando cliente / Projetos em andamento); post-its e setas leves; empty por seção |
 
-Nav: Hoje / Pipeline / Clientes / Projetos / Checklists / Validações / Aprovações / Pendências / Lembretes / Reuniões. Pipeline cards com pills Pendência / Aguardando cliente.
+## Rotas C11
+
+| Path | Quem | Comportamento |
+|------|------|----------------|
+| `/workflows` | autenticado | owner: CRUD de templates em formulário; member: copy de permissão; visitante → `/login` |
+
+Create de projeto: seletor obrigatório de `workflowTemplateId` (pré-seleciona o default).
+
+Nav: Hoje / Pipeline / Clientes / Projetos / Workflows / Checklists / Validações / Aprovações / Pendências / Lembretes / Reuniões. Pipeline cards com pills Pendência / Aguardando cliente.
 
 Primitivos: Button, Input, Card, StatusPill, Select, Textarea.
 

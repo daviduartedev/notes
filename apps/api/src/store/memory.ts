@@ -6,8 +6,8 @@ import {
   DEPLOY_STAGING_TEMPLATE_NAME,
 } from "../domain/deploy-staging-template.js";
 import { PIPELINE_BOARD_STATUSES, type PipelineCardRow } from "../domain/pipeline-board.js";
-import { SAAS_DELIVERY_STAGES } from "../domain/saas-delivery-template.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
+import { isCatalogWorkflowKey, WORKFLOW_CATALOG } from "../domain/workflow-catalog.js";
 import type { StagePhase } from "../domain/types.js";
 import type {
   ApprovalKind,
@@ -62,6 +62,10 @@ import type {
   MeetingFilters,
   MeetingRecord,
   MeetingUpdateInput,
+  WorkflowTemplateCreateInput,
+  WorkflowTemplateDeleteResult,
+  WorkflowTemplateRecord,
+  WorkflowTemplateUpdateInput,
   StagePersistPatch,
   StageRecord,
   ValidationCreateInput,
@@ -201,6 +205,9 @@ type TemplateRow = {
   workspaceId: string;
   key: string;
   name: string;
+  isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
   stages: Array<{
     id: string;
     key: string;
@@ -243,6 +250,31 @@ function cloneStage(row: StageRecord): StageRecord {
     completedAt: row.completedAt ? new Date(row.completedAt) : null,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
+  };
+}
+
+function cloneWorkflowTemplate(row: TemplateRow): WorkflowTemplateRecord {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    key: row.key,
+    name: row.name,
+    isDefault: row.isDefault,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+    stages: row.stages
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((stage) => ({
+        id: stage.id,
+        key: stage.key,
+        label: stage.label,
+        phase: stage.phase,
+        order: stage.order,
+        allowedNextKeys: [...stage.allowedNextKeys],
+        entryCriteria: stage.entryCriteria,
+        exitCriteria: stage.exitCriteria,
+      })),
   };
 }
 
@@ -360,32 +392,53 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
   const meetings = new Map<string, MeetingRow>();
   const activities: ActivityRecord[] = [];
 
-  function ensureTemplate(workspaceId: string): TemplateRow {
-    const existing = [...templates.values()].find(
-      (row) => row.workspaceId === workspaceId && row.key === "saas_delivery",
-    );
-    if (existing) {
-      return existing;
+  function ensureCatalog(workspaceId: string): TemplateRow[] {
+    const now = new Date();
+    const seeded: TemplateRow[] = [];
+    for (const item of WORKFLOW_CATALOG) {
+      const existing = [...templates.values()].find(
+        (row) => row.workspaceId === workspaceId && row.key === item.key,
+      );
+      if (existing) {
+        seeded.push(existing);
+        continue;
+      }
+      const templateId = crypto.randomUUID();
+      const row: TemplateRow = {
+        id: templateId,
+        workspaceId,
+        key: item.key,
+        name: item.name,
+        isDefault: item.isDefault,
+        createdAt: now,
+        updatedAt: now,
+        stages: item.stages.map((stage) => ({
+          id: crypto.randomUUID(),
+          key: stage.key,
+          label: stage.label,
+          phase: stage.phase,
+          order: stage.order,
+          allowedNextKeys: [...stage.allowedNextKeys],
+          entryCriteria: stage.entryCriteria,
+          exitCriteria: stage.exitCriteria,
+        })),
+      };
+      templates.set(templateId, row);
+      seeded.push(row);
     }
-    const templateId = crypto.randomUUID();
-    const row: TemplateRow = {
-      id: templateId,
-      workspaceId,
-      key: "saas_delivery",
-      name: "SaaS delivery",
-      stages: SAAS_DELIVERY_STAGES.map((stage) => ({
-        id: crypto.randomUUID(),
-        key: stage.key,
-        label: stage.label,
-        phase: stage.phase,
-        order: stage.order,
-        allowedNextKeys: [...stage.allowedNextKeys],
-        entryCriteria: stage.entryCriteria,
-        exitCriteria: stage.exitCriteria,
-      })),
-    };
-    templates.set(templateId, row);
-    return row;
+    return seeded;
+  }
+
+  function setDefaultTemplate(workspaceId: string, templateId: string) {
+    for (const row of templates.values()) {
+      if (row.workspaceId !== workspaceId) continue;
+      row.isDefault = row.id === templateId;
+      row.updatedAt = new Date();
+    }
+  }
+
+  function templateOf(id: string): TemplateRow | undefined {
+    return templates.get(id);
   }
 
   function actorName(userId: string | null): string | null {
@@ -599,8 +652,16 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
     return row;
   }
 
-  function copyStagesOntoProject(project: ProjectRecord, now: Date): StageRecord[] {
-    const template = ensureTemplate(project.workspaceId);
+  function copyStagesOntoProject(
+    project: ProjectRecord,
+    now: Date,
+    workflowTemplateId: string,
+  ): StageRecord[] {
+    ensureCatalog(project.workspaceId);
+    const template = templateOf(workflowTemplateId);
+    if (!template || template.workspaceId !== project.workspaceId) {
+      throw new Error("template inválido");
+    }
     const instanced = instantiateProjectStages(template.stages);
     const created: StageRecord[] = instanced.stages.map((stage) => ({
       id: stage.id,
@@ -628,6 +689,15 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
     project.updatedAt = now;
     projects.set(project.id, project);
     return created.map(cloneStage);
+  }
+
+  function defaultTemplateId(workspaceId: string): string {
+    const seeded = ensureCatalog(workspaceId);
+    const preferred = seeded.find((row) => row.isDefault) ?? seeded.find((row) => row.key === "saas_delivery");
+    if (!preferred) {
+      throw new Error("catálogo vazio");
+    }
+    return preferred.id;
   }
 
   function stagesOf(projectId: string): StageRecord[] {
@@ -750,13 +820,13 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
         ...data,
         lastInteractionAt: data.lastInteractionAt ?? null,
         id: crypto.randomUUID(),
-        workflowTemplateId: null,
+        workflowTemplateId: data.workflowTemplateId,
         currentStageId: null,
         createdAt: now,
         updatedAt: now,
       };
       projects.set(row.id, row);
-      copyStagesOntoProject(row, now);
+      copyStagesOntoProject(row, now, data.workflowTemplateId);
       return cloneProject(row);
     },
     async updateProject(id, data: ProjectUpdateInput) {
@@ -869,7 +939,11 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       if (existing.length > 0) {
         return existing;
       }
-      return copyStagesOntoProject(project, now);
+      return copyStagesOntoProject(
+        project,
+        now,
+        project.workflowTemplateId ?? defaultTemplateId(project.workspaceId),
+      );
     },
     async persistStageAction(input: {
       projectId: string;
@@ -908,12 +982,102 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       stage.allowedNextKeys = [...allowedNextKeys];
       return true;
     },
+    async listWorkflowTemplates(workspaceId) {
+      ensureCatalog(workspaceId);
+      return [...templates.values()]
+        .filter((row) => row.workspaceId === workspaceId)
+        .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+        .map(cloneWorkflowTemplate);
+    },
+    async getWorkflowTemplate(id) {
+      const row = templates.get(id);
+      return row ? cloneWorkflowTemplate(row) : null;
+    },
+    async createWorkflowTemplate(data: WorkflowTemplateCreateInput) {
+      ensureCatalog(data.workspaceId);
+      const duplicate = [...templates.values()].some(
+        (row) => row.workspaceId === data.workspaceId && row.key === data.key,
+      );
+      if (duplicate) {
+        return null;
+      }
+      const now = new Date();
+      const row: TemplateRow = {
+        id: crypto.randomUUID(),
+        workspaceId: data.workspaceId,
+        key: data.key,
+        name: data.name,
+        isDefault: data.isDefault,
+        createdAt: now,
+        updatedAt: now,
+        stages: data.stages.map((stage) => ({
+          id: crypto.randomUUID(),
+          key: stage.key,
+          label: stage.label,
+          phase: stage.phase,
+          order: stage.order,
+          allowedNextKeys: [...stage.allowedNextKeys],
+          entryCriteria: stage.entryCriteria,
+          exitCriteria: stage.exitCriteria,
+        })),
+      };
+      templates.set(row.id, row);
+      if (data.isDefault) {
+        setDefaultTemplate(data.workspaceId, row.id);
+      }
+      return cloneWorkflowTemplate(row);
+    },
+    async updateWorkflowTemplate(id, data: WorkflowTemplateUpdateInput) {
+      const current = templates.get(id);
+      if (!current) {
+        return null;
+      }
+      if (data.name !== undefined) current.name = data.name;
+      if (data.stages) {
+        current.stages = data.stages.map((stage) => ({
+          id: crypto.randomUUID(),
+          key: stage.key,
+          label: stage.label,
+          phase: stage.phase,
+          order: stage.order,
+          allowedNextKeys: [...stage.allowedNextKeys],
+          entryCriteria: stage.entryCriteria,
+          exitCriteria: stage.exitCriteria,
+        }));
+      }
+      current.updatedAt = new Date();
+      if (data.isDefault === true) {
+        setDefaultTemplate(current.workspaceId, current.id);
+      } else if (data.isDefault === false) {
+        current.isDefault = false;
+      }
+      return cloneWorkflowTemplate(current);
+    },
+    async deleteWorkflowTemplate(id): Promise<WorkflowTemplateDeleteResult> {
+      const current = templates.get(id);
+      if (!current) {
+        return "not_found";
+      }
+      if (isCatalogWorkflowKey(current.key)) {
+        return "catalog";
+      }
+      const inUse = [...projects.values()].some((project) => project.workflowTemplateId === id);
+      if (inUse) {
+        return "in_use";
+      }
+      templates.delete(id);
+      return "deleted";
+    },
     async backfillMissingStages(workspaceId, now) {
       let count = 0;
       for (const project of projects.values()) {
         if (project.workspaceId !== workspaceId) continue;
         if (stagesOf(project.id).length > 0) continue;
-        copyStagesOntoProject(project, now);
+        copyStagesOntoProject(
+          project,
+          now,
+          project.workflowTemplateId ?? defaultTemplateId(project.workspaceId),
+        );
         count += 1;
       }
       return count;

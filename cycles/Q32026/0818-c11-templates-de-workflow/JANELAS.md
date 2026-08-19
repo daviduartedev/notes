@@ -3,7 +3,7 @@
 **Pasta:** `cycles/Q32026/0818-c11-templates-de-workflow/`  
 **Tipo:** Medium  
 **Depende de:** C2 fechado (pós-MVP)  
-**Status:** `request.md` pronto → **Refine depois do MVP (C10), ou em paralelo após C2**
+**Status:** **fechado** (2026-08-19) — fecha o roadmap desta execução
 
 Abra um **chat novo** para cada janela. Cole o bloco. Padrão Elli: uma missão por contexto.
 

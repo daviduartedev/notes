@@ -372,3 +372,26 @@ export type HojeDashboardDto = {
   waiting_client: HojeCardDto[];
   in_progress: HojeCardDto[];
 };
+
+export type WorkflowStageTemplateDto = {
+  id: string;
+  key: string;
+  label: string;
+  phase: StagePhase;
+  order: number;
+  allowedNextKeys: string[];
+  entryCriteria: string;
+  exitCriteria: string;
+};
+
+export type WorkflowTemplateDto = {
+  id: string;
+  workspaceId: string;
+  key: string;
+  name: string;
+  isDefault: boolean;
+  isCatalog: boolean;
+  stages: WorkflowStageTemplateDto[];
+  createdAt: string;
+  updatedAt: string;
+};

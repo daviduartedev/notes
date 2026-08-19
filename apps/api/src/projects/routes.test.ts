@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "../app";
 import { createTestDeps } from "../deps";
+import { workflowTemplateIdOf } from "../test/templates";
 
 function cookieFrom(response: Response): string {
   const header = response.headers.getSetCookie?.()[0] ?? response.headers.get("set-cookie") ?? "";
@@ -37,6 +38,7 @@ describe("projetos", () => {
         name: "Site",
         clientId: client.id,
         ownerUserId: "seed-user",
+        workflowTemplateId: await workflowTemplateIdOf(app, cookie),
         workspaceId: "ws-evil",
       }),
     });
@@ -47,6 +49,7 @@ describe("projetos", () => {
         name: "App",
         clientId: client.id,
         ownerUserId: "member-user",
+        workflowTemplateId: await workflowTemplateIdOf(app, cookie),
         priority: "high",
       }),
     });
@@ -71,7 +74,7 @@ describe("projetos", () => {
     const created = await app.request("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json", cookie },
-      body: JSON.stringify({ name: "Draft", clientId: client.id, ownerUserId: "seed-user" }),
+      body: JSON.stringify({ name: "Draft", clientId: client.id, ownerUserId: "seed-user", workflowTemplateId: await workflowTemplateIdOf(app, cookie) }),
     });
     const project = (await created.json()) as { id: string };
     const invalid = await app.request(`/api/projects/${project.id}`, {
@@ -95,6 +98,7 @@ describe("projetos", () => {
         name: "Atrasado",
         clientId: client.id,
         ownerUserId: "seed-user",
+        workflowTemplateId: await workflowTemplateIdOf(app, cookie),
         dueDate: "2026-08-01",
       }),
     });
@@ -115,7 +119,7 @@ describe("projetos", () => {
     const created = await a.app.request("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json", cookie: a.cookie },
-      body: JSON.stringify({ name: "Privado", clientId: client.id, ownerUserId: "seed-user" }),
+      body: JSON.stringify({ name: "Privado", clientId: client.id, ownerUserId: "seed-user", workflowTemplateId: await workflowTemplateIdOf(a.app, a.cookie) }),
     });
     const project = (await created.json()) as { id: string };
     const loginB = await a.app.request("/api/auth/login", {

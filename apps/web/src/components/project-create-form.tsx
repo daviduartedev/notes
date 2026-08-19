@@ -7,18 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/api";
-import type { ClientDto, MemberDto, ProjectDto, ProjectPriority } from "@/lib/domain-types";
+import type { ClientDto, MemberDto, ProjectDto, ProjectPriority, WorkflowTemplateDto } from "@/lib/domain-types";
 import { projectPriorityLabel } from "@/lib/labels";
+import { WORKFLOW_CREATE_NEEDS_TEMPLATE, WORKFLOW_SELECT_LABEL } from "@/lib/workflow-copy";
 
 const priorities: ProjectPriority[] = ["low", "medium", "high", "urgent"];
 
 export function ProjectCreateForm({
   members,
   clients,
+  templates,
   defaultClientId,
 }: {
   members: MemberDto[];
   clients: ClientDto[];
+  templates: WorkflowTemplateDto[];
   defaultClientId?: string;
 }) {
   const router = useRouter();
@@ -44,6 +47,7 @@ export function ProjectCreateForm({
         priority: String(data.get("priority") ?? "medium"),
         progress: Number(progressRaw || 0),
         notes: String(data.get("notes") ?? ""),
+        workflowTemplateId: String(data.get("workflowTemplateId") ?? ""),
       }),
     });
     setPending(false);
@@ -58,6 +62,11 @@ export function ProjectCreateForm({
   if (clients.length === 0) {
     return <p className="mt-4 text-sm text-notes-muted">Crie um cliente antes de abrir um projeto.</p>;
   }
+  if (templates.length === 0) {
+    return <p className="mt-4 text-sm text-notes-muted">{WORKFLOW_CREATE_NEEDS_TEMPLATE}</p>;
+  }
+
+  const defaultTemplateId = templates.find((row) => row.isDefault)?.id ?? templates[0]?.id ?? "";
 
   return (
     <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={(event) => void onCreate(event)}>
@@ -85,6 +94,17 @@ export function ProjectCreateForm({
           {members.map((member) => (
             <option key={member.id} value={member.id}>
               {member.name ?? member.email}
+            </option>
+          ))}
+        </Select>
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        {WORKFLOW_SELECT_LABEL}
+        <Select name="workflowTemplateId" required defaultValue={defaultTemplateId}>
+          {templates.map((template) => (
+            <option key={template.id} value={template.id}>
+              {template.name}
+              {template.isDefault ? " (padrão)" : ""}
             </option>
           ))}
         </Select>

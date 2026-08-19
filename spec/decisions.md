@@ -625,3 +625,45 @@ Workspace B recebe as quatro seções vazias. `workspaceId` query/body ignorado.
 ### Consequências
 `/hoje` passa a ser SSR (`ƒ`). Playwright continua fora.
 
+---
+
+## ADR-0031 — Catálogo de seis workflows e create exige template (C11-D1–D9)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c11-templates-de-workflow/
+- **Status:** Accepted
+
+### Contexto
+C2 seedou só SaaS. Operadores precisam de grafos por tipo de entrega sem editor BPM.
+
+### Decisão
+Seedar `landing`, `institutional`, `saas_delivery` (default, sem duplicar), `app`, `ecommerce`, `maintenance`. Grafos lineares; keys EN, labels PT. `POST /api/projects` exige `workflowTemplateId` do workspace. Deep copy C2: mutar o molde não reescreve instâncias. `isDefault` marca SaaS.
+
+### Alternativas consideradas
+- Canvas/BPM — rejeitado (request + ORCH).
+- Recálculo de projetos antigos — rejeitado.
+
+### Consequências
+Projetos novos escolhem o molde. Pipeline C3 permanece com 10 colunas SaaS.
+
+---
+
+## ADR-0032 — CRUD owner, isolamento e colunas extras (C11-D10–D18)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c11-templates-de-workflow/
+- **Status:** Accepted
+
+### Contexto
+Member não deve alterar o catálogo. Keys de outros templates precisam aparecer no board.
+
+### Decisão
+GET lista/ficha: member+owner. POST/PATCH/DELETE: owner (member 403). DELETE de catálogo seed ou template com projetos → 409. UI `/workflows` em formulário. Board: colunas SaaS + extras para `currentStage.key` desconhecido.
+
+### Alternativas consideradas
+- Omitir keys desconhecidas no pipeline — supersede C3 (C11-D15).
+- Playwright E2E — ORCH-008.
+
+### Consequências
+`/workflows` é SSR (`ƒ`). Fecha o roadmap desta execução. Playwright continua fora.
+

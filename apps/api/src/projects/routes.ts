@@ -152,6 +152,15 @@ export function projectRoutes(deps: AppDeps) {
     if (!ownerOk) {
       return c.json({ error: "Dados inválidos" }, 400);
     }
+    const template = await lookupForSession(
+      gate.session,
+      parsed.data.workflowTemplateId,
+      (id) => deps.store.getWorkflowTemplate(id),
+      (row) => row.workspaceId,
+    );
+    if (!template) {
+      return emptyNotFound(c);
+    }
     const created = await deps.store.createProject({
       workspaceId,
       clientId: client.id,
@@ -165,6 +174,7 @@ export function projectRoutes(deps: AppDeps) {
       progress: parsed.data.progress ?? 0,
       notes: parsed.data.notes ?? null,
       lastInteractionAt: null,
+      workflowTemplateId: template.id,
     });
     await recordActivity(deps, {
       workspaceId,

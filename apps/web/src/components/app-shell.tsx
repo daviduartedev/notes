@@ -6,6 +6,7 @@ const links = [
   { href: "/pipeline", label: "Pipeline" },
   { href: "/clientes", label: "Clientes" },
   { href: "/projetos", label: "Projetos" },
+  { href: "/workflows", label: "Workflows" },
   { href: "/checklists", label: "Checklists" },
   { href: "/validacoes", label: "Validações" },
   { href: "/aprovacoes", label: "Aprovações" },

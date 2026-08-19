@@ -15,7 +15,7 @@ Ordem de execução (ORCH-011): **C0 → C1 → C2 → C3 → C4 → C5 → C6 �
 | C8 lembretes | done | Reminders + política 3 dias | sim | lint/typecheck/test/build 0 | `3d83e3c` | Sem Playwright; canal internal; fake clock |
 | C9 reunioes | done | Meetings | sim | lint/typecheck/test/build 0 | `fa9b7a9` | Sem Playwright; lista `/reunioes`; sem mutar etapa |
 | C10 hoje-dashboard | done | `/hoje` operacional (fecha MVP) | sim | lint/typecheck/test/build 0 | `66e4991` | Sem Playwright; 4 seções; tenant B vazio |
-| C11 templates-de-workflow | pending | CRUD templates (pós-MVP) | — | — | — | Depende C2 |
+| C11 templates-de-workflow | done | CRUD templates (fecha roadmap) | sim | lint/typecheck/test/build 0 | *(SHA no relatório)* | Sem Playwright; sem BPM; 6 seeds; create exige template |
 
 ## Contradições tratadas
 

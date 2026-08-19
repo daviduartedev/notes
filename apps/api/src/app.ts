@@ -12,6 +12,7 @@ import { blockerRoutes } from "./blockers/routes.js";
 import { reminderRoutes } from "./reminders/routes.js";
 import { hojeRoutes } from "./hoje/routes.js";
 import { meetingRoutes } from "./meetings/routes.js";
+import { workflowRoutes } from "./workflows/routes.js";
 import { validationRoutes } from "./validations/routes.js";
 import { workspaceRoutes } from "./workspace/routes.js";
 
@@ -45,6 +46,7 @@ export function createApp(deps: AppDeps) {
   app.route("/api", blockerRoutes(deps));
   app.route("/api", reminderRoutes(deps));
   app.route("/api", meetingRoutes(deps));
+  app.route("/api", workflowRoutes(deps));
   app.route("/api/projects", projectRoutes(deps));
 
   return app;

@@ -3,6 +3,7 @@ import { createApp } from "../app";
 import { createTestDeps } from "../deps";
 import { PROPOSAL_WAITING_CLIENT_POLICY } from "../domain/follow-up-policy";
 import type { HojeDashboard } from "../domain/hoje-dashboard";
+import { workflowTemplateIdOf } from "../test/templates";
 
 type ProjectDetail = {
   id: string;
@@ -61,7 +62,7 @@ async function createProject(
   const projectRes = await app.request("/api/projects", {
     method: "POST",
     headers: { "Content-Type": "application/json", cookie },
-    body: JSON.stringify({ name, clientId: client.id, ownerUserId: "seed-user", ...extra }),
+    body: JSON.stringify({ name, clientId: client.id, ownerUserId: "seed-user", workflowTemplateId: await workflowTemplateIdOf(app, cookie), ...extra }),
   });
   expect(projectRes.status).toBe(201);
   return (await projectRes.json()) as ProjectDetail;
