@@ -5,6 +5,8 @@ import type {
   StageAction,
   StagePhase,
   StageStatus,
+  ValidationStatus,
+  ValidationType,
 } from "./domain-types";
 
 export const clientStatusLabel: Record<ClientStatus, string> = {
@@ -49,6 +51,24 @@ export const stageActionLabel: Record<StageAction, string> = {
   block: "Bloquear",
   unblock: "Desbloquear",
   wait: "Aguardar",
+};
+
+export const validationStatusLabel: Record<ValidationStatus, string> = {
+  draft: "Rascunho",
+  requested: "Solicitada",
+  in_review: "Em revisão",
+  changes_requested: "Ajustes solicitados",
+  approved: "Aprovada",
+  rejected: "Recusada",
+  cancelled: "Cancelada",
+};
+
+export const validationTypeLabel: Record<ValidationType, string> = {
+  prototype: "Protótipo",
+  staging: "Staging",
+  production: "Produção",
+  feature: "Funcionalidade",
+  delivery: "Entrega",
 };
 
 export const stageKeyLabel: Record<string, string> = {

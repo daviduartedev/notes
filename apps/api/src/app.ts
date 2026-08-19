@@ -7,6 +7,7 @@ import { pipelineRoutes } from "./pipeline/routes.js";
 import { projectRoutes } from "./projects/routes.js";
 import type { AppDeps } from "./deps.js";
 import { clientErrorBody } from "./http/errors.js";
+import { validationRoutes } from "./validations/routes.js";
 import { workspaceRoutes } from "./workspace/routes.js";
 
 export const API_PORT = 3014;
@@ -33,6 +34,7 @@ export function createApp(deps: AppDeps) {
   app.route("/api/clients", clientRoutes(deps));
   app.route("/api/pipeline", pipelineRoutes(deps));
   app.route("/api", checklistRoutes(deps));
+  app.route("/api", validationRoutes(deps));
   app.route("/api/projects", projectRoutes(deps));
 
   return app;

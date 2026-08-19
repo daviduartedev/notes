@@ -27,5 +27,7 @@ export const config = {
     "/projetos",
     "/checklists/:path*",
     "/checklists",
+    "/validacoes/:path*",
+    "/validacoes",
   ],
 };

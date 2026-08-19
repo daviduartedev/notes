@@ -37,3 +37,10 @@ Seed C2: template SaaS no workspace; backfill de projetos sem etapas.
 - `ChecklistItem` — cópia dos títulos; `completedAt`, `completedByUserId`, `note`
 
 Seed C4: template **Deploy Staging SaaS** (8 itens) no workspace.
+
+## Modelos C5
+
+- `Validation` — status `draft|requested|in_review|changes_requested|approved|rejected|cancelled`; tipo `prototype|staging|production|feature|delivery`; `requesterUserId`; `reviewerUserId?`; `stageId?`; `checklistId?`; `dueDate?`; `notes`; `items` JSON; `resultNotes?`
+- `ProjectChecklist.validationId` pode ser preenchido quando a validação liga um checklist
+
+Sem modelo Approval neste cycle.

@@ -1,5 +1,9 @@
 import type { PipelineCardRow } from "../domain/pipeline-board.js";
 import type {
+  ValidationStatus,
+  ValidationType,
+} from "../domain/validation-status.js";
+import type {
   ActivityAction,
   ClientStatus,
   EntityType,
@@ -171,6 +175,67 @@ export type ChecklistTemplateUpdateInput = {
   items?: Array<{ id: string; title: string }>;
 };
 
+export type ValidationRecord = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  projectName: string;
+  clientId: string;
+  clientName: string;
+  stageId: string | null;
+  type: ValidationType;
+  reviewerUserId: string | null;
+  reviewerName: string | null;
+  requesterUserId: string;
+  requesterName: string | null;
+  environment: string | null;
+  status: ValidationStatus;
+  requestedAt: Date | null;
+  dueDate: Date | null;
+  notes: string | null;
+  items: string[];
+  resultNotes: string | null;
+  checklistId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type ValidationFilters = {
+  status?: ValidationStatus;
+  projectId?: string;
+  clientId?: string;
+  reviewerUserId?: string;
+  dueBefore?: Date;
+  dueAfter?: Date;
+};
+
+export type ValidationCreateInput = {
+  workspaceId: string;
+  projectId: string;
+  stageId: string | null;
+  type: ValidationType;
+  reviewerUserId: string | null;
+  requesterUserId: string;
+  environment: string | null;
+  dueDate: Date | null;
+  notes: string | null;
+  items: string[];
+  checklistId: string | null;
+  now: Date;
+};
+
+export type ValidationUpdateInput = {
+  type?: ValidationType;
+  reviewerUserId?: string | null;
+  environment?: string | null;
+  dueDate?: Date | null;
+  notes?: string | null;
+  items?: string[];
+  resultNotes?: string | null;
+  stageId?: string | null;
+  checklistId?: string | null;
+};
+
 export type NotesStore = {
   listMembers(workspaceId: string): Promise<MemberRecord[]>;
   memberExists(workspaceId: string, userId: string): Promise<boolean>;
@@ -231,4 +296,20 @@ export type NotesStore = {
       note: string | null;
     },
   ): Promise<ChecklistItemLookup | null>;
+  getProjectChecklist(id: string): Promise<ProjectChecklistRecord | null>;
+  setChecklistValidationId(
+    id: string,
+    validationId: string | null,
+  ): Promise<ProjectChecklistRecord | null>;
+  listValidations(workspaceId: string, filters: ValidationFilters): Promise<ValidationRecord[]>;
+  listProjectValidations(projectId: string): Promise<ValidationRecord[]>;
+  getValidation(id: string): Promise<ValidationRecord | null>;
+  createValidation(data: ValidationCreateInput): Promise<ValidationRecord | null>;
+  updateValidation(id: string, data: ValidationUpdateInput): Promise<ValidationRecord | null>;
+  persistValidationTransition(input: {
+    id: string;
+    status: ValidationStatus;
+    requestedAt: Date | null;
+    resultNotes?: string | null;
+  }): Promise<ValidationRecord | null>;
 };

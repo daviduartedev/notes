@@ -11,6 +11,11 @@ const actionLabel: Record<ActivityDto["action"], string> = {
   "stage.completed": "Etapa concluída",
   "checklist.applied": "Checklist aplicado",
   "checklist.item_completed": "Item de checklist concluído",
+  "validation.requested": "Validação solicitada",
+  "validation.in_review": "Validação em revisão",
+  "validation.changes_requested": "Ajustes de validação solicitados",
+  "validation.approved": "Validação aprovada",
+  "validation.rejected": "Validação recusada",
 };
 
 export function ActivityList({ events }: { events: ActivityDto[] }) {

@@ -49,6 +49,24 @@ enum StageStatus {
   skipped
 }
 
+enum ValidationStatus {
+  draft
+  requested
+  in_review
+  changes_requested
+  approved
+  rejected
+  cancelled
+}
+
+enum ValidationType {
+  prototype
+  staging
+  production
+  feature
+  delivery
+}
+
 model User {
   id             String   @id @default(cuid())
   email          String   @unique
@@ -62,6 +80,8 @@ model User {
   ownedProjects  Project[] @relation("ProjectOwner")
   activityEvents ActivityEvent[]
   completedChecklistItems ChecklistItem[]
+  requestedValidations Validation[] @relation("ValidationRequester")
+  reviewedValidations  Validation[] @relation("ValidationReviewer")
 }
 
 model Workspace {
@@ -77,6 +97,7 @@ model Workspace {
   stages    Stage[]
   checklistTemplates ChecklistTemplate[]
   projectChecklists ProjectChecklist[]
+  validations       Validation[]
 }
 
 model Client {
@@ -126,6 +147,7 @@ model Project {
   currentStage       Stage?           @relation("ProjectCurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
   stages             Stage[]          @relation("ProjectStages")
   checklists         ProjectChecklist[]
+  validations        Validation[]
 
   @@index([workspaceId])
   @@index([workspaceId, clientId])
@@ -184,6 +206,7 @@ model Stage {
   project         Project     @relation("ProjectStages", fields: [projectId], references: [id], onDelete: Cascade)
   currentFor      Project[]   @relation("ProjectCurrentStage")
   checklists      ProjectChecklist[]
+  validations     Validation[]
 
   @@unique([projectId, key])
   @@index([workspaceId, projectId])
@@ -263,6 +286,36 @@ model ChecklistItem {
   completedBy       User?            @relation(fields: [completedByUserId], references: [id], onDelete: SetNull)
 
   @@index([checklistId, order])
+}
+
+model Validation {
+  id              String           @id @default(cuid())
+  workspaceId     String
+  projectId       String
+  stageId         String?
+  type            ValidationType
+  reviewerUserId  String?
+  requesterUserId String
+  environment     String?
+  status          ValidationStatus @default(draft)
+  requestedAt     DateTime?
+  dueDate         DateTime?
+  notes           String?
+  items           Json             @default("[]")
+  resultNotes     String?
+  checklistId     String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stage           Stage?           @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  reviewer        User?            @relation("ValidationReviewer", fields: [reviewerUserId], references: [id], onDelete: SetNull)
+  requester       User             @relation("ValidationRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([workspaceId, status])
+  @@index([reviewerUserId])
 }
 
 model Member {

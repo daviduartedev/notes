@@ -44,3 +44,13 @@ Testes de domínio não exigem Postgres. Teste de persistência usa `DATABASE_UR
 - IDOR `PATCH` item outro workspace → 404 vazio
 - collection `GET /api/checklists` do workspace B vazia
 
+## C5 obrigatório
+
+- `in_review` → `changes_requested` grava `validation.changes_requested` e **não** emite `approval.*`
+- `changes_requested` não muda `Stage.status`
+- transição ilegal → 409 sem event
+- DTO overdue (`dueDate` passado + status não terminal)
+- IDOR GET/transition outro workspace → 404 vazio
+- collection `GET /api/validations` do workspace B vazia
+
+

@@ -49,9 +49,22 @@ API em `apps/api` (Hono + Prisma + Auth.js), porta **3014**.
 | GET | `/api/checklists` | sessão | lista do workspace; tenant B → `[]` |
 | PATCH | `/api/checklist-items/:id` | sessão | `{ completed, note? }`; 404 IDOR |
 
+Completar item de checklist **não** muda `Stage.status`.
+
+## Contratos C5
+
+| Método | Path | Auth | Notas |
+|--------|------|------|-------|
+| POST | `/api/projects/:id/validations` | sessão | create `draft`; `requesterUserId` da sessão |
+| GET | `/api/projects/:id/validations` | sessão | 404 IDOR |
+| GET | `/api/validations` | sessão | filtros status/projeto/cliente/revisor/prazo; tenant B → `[]` |
+| GET | `/api/validations/:id` | sessão | DTO `visualState`; 404 IDOR |
+| PATCH | `/api/validations/:id` | sessão | ignora `status` |
+| POST | `/api/validations/:id/transition` | sessão | body `{ to }`; 409 ilegal sem event |
+
 CORS: GET, POST, PATCH, PUT, DELETE, OPTIONS. `workspaceId` no body é ignorado. PATCH `currentStageId` é ignorado. Query `workspaceId` em `/api/pipeline` também é ignorada.
 
-GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR. Completar item de checklist **não** muda `Stage.status`.
+GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR. Completar item de checklist **não** muda `Stage.status`. `changes_requested` na validação **não** muda `Stage.status`.
 
 ## Erros
 

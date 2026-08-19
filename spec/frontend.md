@@ -24,7 +24,7 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 | `/clientes` | autenticado | lista + criação; filtros nome/responsável/status |
 | `/clientes/:id` | autenticado | ficha, projetos do cliente, histórico |
 | `/projetos` | autenticado | lista + criação; filtros responsável/status/cliente/prazo/prioridade |
-| `/projetos/:id` | autenticado | cabeçalho operacional + overdue + **seção Etapas** + **seção Checklists** + histórico |
+| `/projetos/:id` | autenticado | cabeçalho operacional + overdue + **seção Etapas** + **seção Checklists** + **seção Validações** + histórico |
 
 ## Rotas C3
 
@@ -38,7 +38,14 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 |------|------|----------------|
 | `/checklists` | autenticado | lista instâncias do workspace; visitante → `/login` |
 
-Nav: Hoje / Pipeline / Clientes / Projetos / Checklists. `/hoje` continua empty state.
+## Rotas C5
+
+| Path | Quem | Comportamento |
+|------|------|----------------|
+| `/validacoes` | autenticado | lista + filtros status/projeto/cliente/responsável/prazo; visitante → `/login` |
+| `/validacoes/:id` | autenticado | ficha + transições; StatusPill roxo; overdue vermelho |
+
+Nav: Hoje / Pipeline / Clientes / Projetos / Checklists / Validações. `/hoje` continua empty state.
 
 Primitivos: Button, Input, Card, StatusPill, Select, Textarea.
 

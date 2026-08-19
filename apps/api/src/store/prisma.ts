@@ -10,6 +10,7 @@ import type {
   StagePhase,
   StageStatus,
 } from "../domain/types.js";
+import type { ValidationStatus, ValidationType } from "../domain/validation-status.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
 import { ensureDeployStagingForWorkspace } from "../checklists/seed.js";
 import { ensureSaasDeliveryForWorkspace, type SaasTemplateRow } from "../projects/saas-seed.js";
@@ -29,6 +30,10 @@ import type {
   ProjectRecord,
   StagePersistPatch,
   StageRecord,
+  ValidationCreateInput,
+  ValidationFilters,
+  ValidationRecord,
+  ValidationUpdateInput,
 } from "./types.js";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
@@ -301,6 +306,7 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
     async deleteProject(id) {
       try {
         await prisma.$transaction(async (tx) => {
+          await tx.validation.deleteMany({ where: { projectId: id } });
           await tx.projectChecklist.deleteMany({ where: { projectId: id } });
           await tx.project.update({
             where: { id },
@@ -554,6 +560,169 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
         return null;
       }
     },
+    async getProjectChecklist(id) {
+      const row = await prisma.projectChecklist.findUnique({
+        where: { id },
+        include: checklistInclude,
+      });
+      return row ? mapProjectChecklist(row) : null;
+    },
+    async setChecklistValidationId(id, validationId) {
+      try {
+        const row = await prisma.projectChecklist.update({
+          where: { id },
+          data: { validationId },
+          include: checklistInclude,
+        });
+        return mapProjectChecklist(row);
+      } catch {
+        return null;
+      }
+    },
+    async listValidations(workspaceId, filters: ValidationFilters) {
+      const rows = await prisma.validation.findMany({
+        where: validationWhere(workspaceId, filters),
+        include: validationInclude,
+        orderBy: { createdAt: "desc" },
+      });
+      return rows.map(mapValidation);
+    },
+    async listProjectValidations(projectId) {
+      const rows = await prisma.validation.findMany({
+        where: { projectId },
+        include: validationInclude,
+        orderBy: { createdAt: "desc" },
+      });
+      return rows.map(mapValidation);
+    },
+    async getValidation(id) {
+      const row = await prisma.validation.findUnique({
+        where: { id },
+        include: validationInclude,
+      });
+      return row ? mapValidation(row) : null;
+    },
+    async createValidation(data: ValidationCreateInput) {
+      const project = await prisma.project.findUnique({ where: { id: data.projectId } });
+      if (!project || project.workspaceId !== data.workspaceId) {
+        return null;
+      }
+      if (data.stageId) {
+        const stage = await prisma.stage.findUnique({ where: { id: data.stageId } });
+        if (!stage || stage.projectId !== project.id) {
+          return null;
+        }
+      }
+      if (data.checklistId) {
+        const checklist = await prisma.projectChecklist.findUnique({ where: { id: data.checklistId } });
+        if (!checklist || checklist.projectId !== project.id) {
+          return null;
+        }
+      }
+      try {
+        const created = await prisma.$transaction(async (tx) => {
+          const row = await tx.validation.create({
+            data: {
+              workspaceId: data.workspaceId,
+              projectId: data.projectId,
+              stageId: data.stageId,
+              type: data.type,
+              reviewerUserId: data.reviewerUserId,
+              requesterUserId: data.requesterUserId,
+              environment: data.environment,
+              dueDate: data.dueDate,
+              notes: data.notes,
+              items: data.items,
+              checklistId: data.checklistId,
+              createdAt: data.now,
+              updatedAt: data.now,
+            },
+            include: validationInclude,
+          });
+          if (data.checklistId) {
+            await tx.projectChecklist.update({
+              where: { id: data.checklistId },
+              data: { validationId: row.id, updatedAt: data.now },
+            });
+          }
+          return row;
+        });
+        return mapValidation(created);
+      } catch {
+        return null;
+      }
+    },
+    async updateValidation(id, data: ValidationUpdateInput) {
+      const current = await prisma.validation.findUnique({ where: { id } });
+      if (!current) {
+        return null;
+      }
+      if (data.stageId) {
+        const stage = await prisma.stage.findUnique({ where: { id: data.stageId } });
+        if (!stage || stage.projectId !== current.projectId) {
+          return null;
+        }
+      }
+      if (data.checklistId) {
+        const checklist = await prisma.projectChecklist.findUnique({ where: { id: data.checklistId } });
+        if (!checklist || checklist.projectId !== current.projectId) {
+          return null;
+        }
+      }
+      try {
+        const updated = await prisma.$transaction(async (tx) => {
+          const row = await tx.validation.update({
+            where: { id },
+            data: {
+              ...(data.type !== undefined ? { type: data.type } : {}),
+              ...(data.reviewerUserId !== undefined ? { reviewerUserId: data.reviewerUserId } : {}),
+              ...(data.environment !== undefined ? { environment: data.environment } : {}),
+              ...(data.dueDate !== undefined ? { dueDate: data.dueDate } : {}),
+              ...(data.notes !== undefined ? { notes: data.notes } : {}),
+              ...(data.items !== undefined ? { items: data.items } : {}),
+              ...(data.resultNotes !== undefined ? { resultNotes: data.resultNotes } : {}),
+              ...(data.stageId !== undefined ? { stageId: data.stageId } : {}),
+              ...(data.checklistId !== undefined ? { checklistId: data.checklistId } : {}),
+            },
+            include: validationInclude,
+          });
+          if (data.checklistId !== undefined && data.checklistId !== current.checklistId) {
+            if (current.checklistId) {
+              await tx.projectChecklist.updateMany({
+                where: { id: current.checklistId, validationId: id },
+                data: { validationId: null },
+              });
+            }
+            if (data.checklistId) {
+              await tx.projectChecklist.update({
+                where: { id: data.checklistId },
+                data: { validationId: id },
+              });
+            }
+          }
+          return row;
+        });
+        return mapValidation(updated);
+      } catch {
+        return null;
+      }
+    },
+    async persistValidationTransition(input) {
+      try {
+        const row = await prisma.validation.update({
+          where: { id: input.id },
+          data: {
+            status: input.status,
+            requestedAt: input.requestedAt,
+            ...(input.resultNotes !== undefined ? { resultNotes: input.resultNotes } : {}),
+          },
+          include: validationInclude,
+        });
+        return mapValidation(row);
+      } catch {
+        return null;
+      }
+    },
   };
 }
 
@@ -691,5 +860,82 @@ function mapChecklistItemLookup(row: {
     ...mapChecklistItem(row),
     workspaceId: row.checklist.workspaceId,
     projectId: row.checklist.projectId,
+  };
+}
+
+const validationInclude = {
+  project: { include: { client: { select: { id: true, name: true } } } },
+  reviewer: { select: { name: true, email: true } },
+  requester: { select: { name: true, email: true } },
+} as const;
+
+function validationWhere(workspaceId: string, filters: ValidationFilters): Prisma.ValidationWhereInput {
+  return {
+    workspaceId,
+    ...(filters.status ? { status: filters.status } : {}),
+    ...(filters.projectId ? { projectId: filters.projectId } : {}),
+    ...(filters.reviewerUserId ? { reviewerUserId: filters.reviewerUserId } : {}),
+    ...(filters.clientId ? { project: { clientId: filters.clientId } } : {}),
+    ...(filters.dueBefore || filters.dueAfter
+      ? {
+          dueDate: {
+            ...(filters.dueBefore ? { lte: filters.dueBefore } : {}),
+            ...(filters.dueAfter ? { gte: filters.dueAfter } : {}),
+          },
+        }
+      : {}),
+  };
+}
+
+function displayName(user: { name: string | null; email: string } | null): string | null {
+  if (!user) return null;
+  return user.name ?? user.email;
+}
+
+function mapValidation(row: {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  stageId: string | null;
+  type: ValidationType;
+  reviewerUserId: string | null;
+  requesterUserId: string;
+  environment: string | null;
+  status: ValidationStatus;
+  requestedAt: Date | null;
+  dueDate: Date | null;
+  notes: string | null;
+  items: Prisma.JsonValue;
+  resultNotes: string | null;
+  checklistId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  project: { name: string; clientId: string; client: { id: string; name: string } };
+  reviewer: { name: string | null; email: string } | null;
+  requester: { name: string | null; email: string };
+}): ValidationRecord {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    projectId: row.projectId,
+    projectName: row.project.name,
+    clientId: row.project.client.id,
+    clientName: row.project.client.name,
+    stageId: row.stageId,
+    type: row.type,
+    reviewerUserId: row.reviewerUserId,
+    reviewerName: displayName(row.reviewer),
+    requesterUserId: row.requesterUserId,
+    requesterName: displayName(row.requester),
+    environment: row.environment,
+    status: row.status,
+    requestedAt: row.requestedAt,
+    dueDate: row.dueDate,
+    notes: row.notes,
+    items: asStringArray(row.items),
+    resultNotes: row.resultNotes,
+    checklistId: row.checklistId,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   };
 }

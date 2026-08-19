@@ -22,3 +22,4 @@ Verdade canônica do que foi **implementado e validado**. Propostas de cycle fic
 | [features/stages/](features/stages/readme.md) | Template SaaS, etapas, transições |
 | [features/pipeline/](features/pipeline/readme.md) | Board `/pipeline` por etapa atual |
 | [features/checklists/](features/checklists/readme.md) | Templates, instâncias, apply |
+| [features/validations/](features/validations/readme.md) | Máquina de validação, overdue, ≠ Approval |

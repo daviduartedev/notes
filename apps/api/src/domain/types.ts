@@ -40,6 +40,11 @@ export const ACTIVITY_ACTIONS = [
   "stage.completed",
   "checklist.applied",
   "checklist.item_completed",
+  "validation.requested",
+  "validation.in_review",
+  "validation.changes_requested",
+  "validation.approved",
+  "validation.rejected",
 ] as const;
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
 

@@ -7,6 +7,7 @@ const links = [
   { href: "/clientes", label: "Clientes" },
   { href: "/projetos", label: "Projetos" },
   { href: "/checklists", label: "Checklists" },
+  { href: "/validacoes", label: "Validações" },
 ];
 
 export function AppShell({

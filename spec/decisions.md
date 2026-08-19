@@ -353,6 +353,48 @@ C5 pode preencher `validationId` sem mudar o apply.
 
 ---
 
+## ADR-0019 — Máquina de Validation.status (C5-D1–D10/D16)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c5-validacoes/
+- **Status:** Accepted
+
+### Contexto
+Validação precisa de estados explícitos sem PATCH direto de status e sem virar Approval.
+
+### Decisão
+Máquina `draft→requested|cancelled`; `requested→in_review|cancelled`; `in_review→changes_requested|approved|rejected`; `changes_requested→in_review|cancelled`. Só `POST /api/validations/:id/transition`. Events `validation.requested|in_review|changes_requested|approved|rejected`. Overdue no DTO se prazo vencido e status não terminal. Tipos `prototype|staging|production|feature|delivery`. UI StatusPill roxo.
+
+### Alternativas consideradas
+- PATCH de status — rejeitado (igual C2).
+- Recuar etapa em `changes_requested` — rejeitado.
+
+### Consequências
+C6 não pode tratar `approved` de validação como Approval. Playwright continua fora.
+
+---
+
+## ADR-0020 — Validação ≠ Approval; checklist opcional (C5-D11–D20)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c5-validacoes/
+- **Status:** Accepted
+
+### Contexto
+C4 deixou `validationId` null. C5 precisa ligar checklist sem criar Approval.
+
+### Decisão
+`checklistId` opcional na Validation; preenche `ProjectChecklist.validationId`. Isolamento: GET por id → 404; collection → `[]`. Sem modelo/rota Approval. Qualquer member/owner transiciona.
+
+### Alternativas consideradas
+- Checklist obrigatório — rejeitado.
+- Entidade Approval neste Medium — C6.
+
+### Consequências
+C6 cria Approval do zero. Playwright continua fora.
+
+---
+
 ## ADR-0018 — Completar item não muda Stage.status (C4-D7–D16)
 
 - **Data:** 2026-08-19

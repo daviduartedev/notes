@@ -14,6 +14,11 @@
 - `stage.completed`
 - `checklist.applied`
 - `checklist.item_completed`
+- `validation.requested`
+- `validation.in_review`
+- `validation.changes_requested`
+- `validation.approved`
+- `validation.rejected`
 
 Payload consultável **sem** telefone/e-mail. Sanitizer remove essas chaves.
 

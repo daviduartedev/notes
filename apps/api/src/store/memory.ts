@@ -10,6 +10,10 @@ import { SAAS_DELIVERY_STAGES } from "../domain/saas-delivery-template.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
 import type { StagePhase } from "../domain/types.js";
 import type {
+  ValidationStatus,
+  ValidationType,
+} from "../domain/validation-status.js";
+import type {
   ActivityCreateInput,
   ActivityRecord,
   ChecklistItemLookup,
@@ -30,6 +34,10 @@ import type {
   ProjectUpdateInput,
   StagePersistPatch,
   StageRecord,
+  ValidationCreateInput,
+  ValidationFilters,
+  ValidationRecord,
+  ValidationUpdateInput,
 } from "./types.js";
 
 type ChecklistTemplateRow = {
@@ -61,6 +69,26 @@ type ChecklistItemRow = {
   completedAt: Date | null;
   completedByUserId: string | null;
   note: string | null;
+};
+
+type ValidationRow = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  stageId: string | null;
+  type: ValidationType;
+  reviewerUserId: string | null;
+  requesterUserId: string;
+  environment: string | null;
+  status: ValidationStatus;
+  requestedAt: Date | null;
+  dueDate: Date | null;
+  notes: string | null;
+  items: string[];
+  resultNotes: string | null;
+  checklistId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 type TemplateRow = {
@@ -143,6 +171,24 @@ function matchesProjectFilters(row: ProjectRecord, filters: ProjectFilters): boo
   return true;
 }
 
+function matchesValidationFilters(
+  row: ValidationRow,
+  project: ProjectRecord | undefined,
+  filters: ValidationFilters,
+): boolean {
+  if (filters.status && row.status !== filters.status) return false;
+  if (filters.projectId && row.projectId !== filters.projectId) return false;
+  if (filters.reviewerUserId && row.reviewerUserId !== filters.reviewerUserId) return false;
+  if (filters.clientId && project?.clientId !== filters.clientId) return false;
+  if (filters.dueBefore && (!row.dueDate || row.dueDate.getTime() > filters.dueBefore.getTime())) {
+    return false;
+  }
+  if (filters.dueAfter && (!row.dueDate || row.dueDate.getTime() < filters.dueAfter.getTime())) {
+    return false;
+  }
+  return true;
+}
+
 export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore {
   const members = [...seedMembers];
   const clients = new Map<string, ClientRecord>();
@@ -152,6 +198,7 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
   const checklistTemplates = new Map<string, ChecklistTemplateRow>();
   const checklists = new Map<string, ChecklistRow>();
   const checklistItems = new Map<string, ChecklistItemRow>();
+  const validations = new Map<string, ValidationRow>();
   const activities: ActivityRecord[] = [];
 
   function ensureTemplate(workspaceId: string): TemplateRow {
@@ -228,6 +275,36 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       ...toItemRecord(row),
       workspaceId: checklist.workspaceId,
       projectId: checklist.projectId,
+    };
+  }
+
+  function toValidationRecord(row: ValidationRow): ValidationRecord | null {
+    const project = projects.get(row.projectId);
+    if (!project) return null;
+    const client = clients.get(project.clientId);
+    return {
+      id: row.id,
+      workspaceId: row.workspaceId,
+      projectId: row.projectId,
+      projectName: project.name,
+      clientId: project.clientId,
+      clientName: client?.name ?? "",
+      stageId: row.stageId,
+      type: row.type,
+      reviewerUserId: row.reviewerUserId,
+      reviewerName: actorName(row.reviewerUserId),
+      requesterUserId: row.requesterUserId,
+      requesterName: actorName(row.requesterUserId),
+      environment: row.environment,
+      status: row.status,
+      requestedAt: row.requestedAt ? new Date(row.requestedAt) : null,
+      dueDate: row.dueDate ? new Date(row.dueDate) : null,
+      notes: row.notes,
+      items: [...row.items],
+      resultNotes: row.resultNotes,
+      checklistId: row.checklistId,
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
     };
   }
 
@@ -442,6 +519,11 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
             checklists.delete(checklistId);
           }
         }
+        for (const [validationId, validation] of validations) {
+          if (validation.projectId === id) {
+            validations.delete(validationId);
+          }
+        }
       }
       return projects.delete(id);
     },
@@ -647,6 +729,147 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       });
       const updated = checklistItems.get(id);
       return updated ? toItemLookup(updated) : null;
+    },
+    async getProjectChecklist(id) {
+      const row = checklists.get(id);
+      return row ? toChecklistRecord(row) : null;
+    },
+    async setChecklistValidationId(id, validationId) {
+      const current = checklists.get(id);
+      if (!current) {
+        return null;
+      }
+      current.validationId = validationId;
+      current.updatedAt = new Date();
+      return toChecklistRecord(current);
+    },
+    async listValidations(workspaceId, filters: ValidationFilters) {
+      return [...validations.values()]
+        .filter((row) => row.workspaceId === workspaceId)
+        .filter((row) => matchesValidationFilters(row, projects.get(row.projectId), filters))
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .map(toValidationRecord)
+        .filter((row): row is ValidationRecord => row !== null);
+    },
+    async listProjectValidations(projectId) {
+      return [...validations.values()]
+        .filter((row) => row.projectId === projectId)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .map(toValidationRecord)
+        .filter((row): row is ValidationRecord => row !== null);
+    },
+    async getValidation(id) {
+      const row = validations.get(id);
+      return row ? toValidationRecord(row) : null;
+    },
+    async createValidation(data: ValidationCreateInput) {
+      const project = projects.get(data.projectId);
+      if (!project || project.workspaceId !== data.workspaceId) {
+        return null;
+      }
+      if (data.stageId) {
+        const stage = stages.get(data.stageId);
+        if (!stage || stage.projectId !== project.id) {
+          return null;
+        }
+      }
+      if (data.checklistId) {
+        const checklist = checklists.get(data.checklistId);
+        if (!checklist || checklist.projectId !== project.id) {
+          return null;
+        }
+      }
+      const id = crypto.randomUUID();
+      const row: ValidationRow = {
+        id,
+        workspaceId: data.workspaceId,
+        projectId: data.projectId,
+        stageId: data.stageId,
+        type: data.type,
+        reviewerUserId: data.reviewerUserId,
+        requesterUserId: data.requesterUserId,
+        environment: data.environment,
+        status: "draft",
+        requestedAt: null,
+        dueDate: data.dueDate,
+        notes: data.notes,
+        items: [...data.items],
+        resultNotes: null,
+        checklistId: data.checklistId,
+        createdAt: data.now,
+        updatedAt: data.now,
+      };
+      validations.set(id, row);
+      if (data.checklistId) {
+        const checklist = checklists.get(data.checklistId);
+        if (checklist) {
+          checklist.validationId = id;
+          checklist.updatedAt = data.now;
+        }
+      }
+      return toValidationRecord(row);
+    },
+    async updateValidation(id, data: ValidationUpdateInput) {
+      const current = validations.get(id);
+      if (!current) {
+        return null;
+      }
+      if (data.stageId) {
+        const stage = stages.get(data.stageId);
+        if (!stage || stage.projectId !== current.projectId) {
+          return null;
+        }
+      }
+      if (data.checklistId) {
+        const checklist = checklists.get(data.checklistId);
+        if (!checklist || checklist.projectId !== current.projectId) {
+          return null;
+        }
+      }
+      const previousChecklistId = current.checklistId;
+      const next: ValidationRow = {
+        ...current,
+        type: data.type ?? current.type,
+        reviewerUserId: data.reviewerUserId !== undefined ? data.reviewerUserId : current.reviewerUserId,
+        environment: data.environment !== undefined ? data.environment : current.environment,
+        dueDate: data.dueDate !== undefined ? data.dueDate : current.dueDate,
+        notes: data.notes !== undefined ? data.notes : current.notes,
+        items: data.items !== undefined ? [...data.items] : current.items,
+        resultNotes: data.resultNotes !== undefined ? data.resultNotes : current.resultNotes,
+        stageId: data.stageId !== undefined ? data.stageId : current.stageId,
+        checklistId: data.checklistId !== undefined ? data.checklistId : current.checklistId,
+        updatedAt: new Date(),
+      };
+      validations.set(id, next);
+      if (data.checklistId !== undefined && data.checklistId !== previousChecklistId) {
+        if (previousChecklistId) {
+          const previous = checklists.get(previousChecklistId);
+          if (previous && previous.validationId === id) {
+            previous.validationId = null;
+          }
+        }
+        if (data.checklistId) {
+          const checklist = checklists.get(data.checklistId);
+          if (checklist) {
+            checklist.validationId = id;
+            checklist.updatedAt = next.updatedAt;
+          }
+        }
+      }
+      return toValidationRecord(next);
+    },
+    async persistValidationTransition(input) {
+      const current = validations.get(input.id);
+      if (!current) {
+        return null;
+      }
+      current.status = input.status;
+      current.requestedAt = input.requestedAt;
+      if (input.resultNotes !== undefined) {
+        current.resultNotes = input.resultNotes;
+      }
+      current.updatedAt = new Date();
+      return toValidationRecord(current);
     },
   };
 }

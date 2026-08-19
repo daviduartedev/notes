@@ -10,6 +10,15 @@ export type StageStatus =
   | "completed"
   | "skipped";
 export type StageAction = "complete" | "block" | "unblock" | "wait";
+export type ValidationStatus =
+  | "draft"
+  | "requested"
+  | "in_review"
+  | "changes_requested"
+  | "approved"
+  | "rejected"
+  | "cancelled";
+export type ValidationType = "prototype" | "staging" | "production" | "feature" | "delivery";
 
 export type MemberDto = {
   id: string;
@@ -122,7 +131,12 @@ export type ActivityDto = {
     | "stage.transitioned"
     | "stage.completed"
     | "checklist.applied"
-    | "checklist.item_completed";
+    | "checklist.item_completed"
+    | "validation.requested"
+    | "validation.in_review"
+    | "validation.changes_requested"
+    | "validation.approved"
+    | "validation.rejected";
   payload: Record<string, unknown>;
   createdAt: string;
 };
@@ -163,6 +177,33 @@ export type ProjectChecklistDto = {
   name: string;
   validationId: string | null;
   items: ChecklistItemDto[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ValidationDto = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  projectName: string;
+  clientId: string;
+  clientName: string;
+  stageId: string | null;
+  type: ValidationType;
+  reviewerUserId: string | null;
+  reviewerName: string | null;
+  requesterUserId: string;
+  requesterName: string | null;
+  environment: string | null;
+  status: ValidationStatus;
+  requestedAt: string | null;
+  dueDate: string | null;
+  notes: string | null;
+  items: string[];
+  resultNotes: string | null;
+  checklistId: string | null;
+  visualState: "overdue" | null;
+  allowedTransitions: ValidationStatus[];
   createdAt: string;
   updatedAt: string;
 };

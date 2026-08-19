@@ -14,7 +14,7 @@ Sem CRUD UI de templates neste cycle (seed + apply). Só `owner` edita o molde v
 
 - Sempre ligada a `projectId`
 - `stageId` opcional (etapa do mesmo projeto; senão 404)
-- `validationId` nullable e **sempre null** neste cycle
+- `validationId` nullable; C5 pode preenchê-lo ao ligar um checklist
 - Cada apply cria uma instância nova (deep copy)
 
 ## Item
