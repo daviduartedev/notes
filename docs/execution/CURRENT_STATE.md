@@ -1,6 +1,6 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-19 (C3, SHA no `c3-report.md`).
+Atualizado: 2026-08-19 (C3 `37b15280b61bd02670cfa8bd1630db77cd713c6d`).
 
 ## Produto
 

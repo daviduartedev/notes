@@ -21,8 +21,8 @@ Flat Medium: domínio, store joins, `GET /api/pipeline`, persistência, UI `/pip
 ## Commit / push
 
 - Mensagem: `cycle(03): pipeline board`
-- SHA: *(preenchido após commit)*
-- Push `origin main`: *(preenchido após push)*
+- SHA: `37b15280b61bd02670cfa8bd1630db77cd713c6d`
+- Push `origin main`: pending
 
 ## Decisões
 

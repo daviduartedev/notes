@@ -7,7 +7,7 @@ Ordem de execução (ORCH-011): **C0 → C1 → C2 → C3 → C4 → C5 → C6 �
 | C0 foundation | done | Repo, harness, CI, shell, auth, workspace, `/hoje` vazio | sim | lint/typecheck/test/build 0 | `7d99a98` + harden `173781e` | Verify PASS; Postgres local :5433 |
 | C1 clientes-e-projetos | done | Clientes, projetos, activity log | sim | lint/typecheck/test/build 0 | `ee9461d` | Sem Playwright; overdue no DTO |
 | C2 etapas-e-transicoes | done | Template SaaS, stages, transições | sim | lint/typecheck/test/build 0 | `81d9e4a` | Sem Playwright; matriz de domínio |
-| C3 pipeline | done | Board `/pipeline` | sim | lint/typecheck/test/build 0 | ver `c3-report.md` | Click-only; sem Playwright |
+| C3 pipeline | done | Board `/pipeline` | sim | lint/typecheck/test/build 0 | `37b1528` | Click-only; sem Playwright |
 | C4 checklists | pending | Templates e instâncias de checklist | — | — | — | Depende C2 |
 | C5 validacoes | pending | Máquina de validação | — | — | — | Depende C2; libera C6 |
 | C6 aprovacoes | pending | Approvals + snapshot | — | — | — | Após C5 |
