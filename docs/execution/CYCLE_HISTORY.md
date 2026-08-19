@@ -9,7 +9,7 @@ Ordem de execução (ORCH-011): **C0 → C1 → C2 → C3 → C4 → C5 → C6 �
 | C2 etapas-e-transicoes | done | Template SaaS, stages, transições | sim | lint/typecheck/test/build 0 | `81d9e4a` | Sem Playwright; matriz de domínio |
 | C3 pipeline | done | Board `/pipeline` | sim | lint/typecheck/test/build 0 | `37b1528` | Click-only; sem Playwright |
 | C4 checklists | done | Templates e instâncias de checklist | sim | lint/typecheck/test/build 0 | `3b30055` | Deep copy; não muda Stage.status |
-| C5 validacoes | done | Máquina de validação | sim | lint/typecheck/test/build 0 | _(SHA no c5-report)_ | Sem Playwright; ≠ Approval |
+| C5 validacoes | done | Máquina de validação | sim | lint/typecheck/test/build 0 | `db3e972` | Sem Playwright; ≠ Approval |
 | C6 aprovacoes | pending | Approvals + snapshot | — | — | — | Após C5 |
 | C7 pendencias | pending | Blockers | — | — | — | Depende C2 |
 | C8 lembretes | pending | Reminders + política 3 dias | — | — | — | Depende C1+C2 |

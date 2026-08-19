@@ -21,8 +21,8 @@ Flat Medium: domínio da máquina, Prisma, HTTP transition, persistência, UI fi
 ## Commit / push
 
 - Mensagem: `cycle(05): validations`
-- SHA: _(preencher após commit)_
-- Push `origin main`: _(preencher após push)_
+- SHA: `db3e9728996f91215b54fb457c50a14125df03dd`
+- Push `origin main`: ok (`6d9b720..db3e972`)
 
 ## Decisões
 
