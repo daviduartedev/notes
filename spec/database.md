@@ -58,3 +58,7 @@ Sem modelo Approval neste cycle C5; C6 adiciona Approval.
 - `Client.lastInteractionAt` e `Project.lastInteractionAt` (atualizados em events relevantes)
 - `Reminder` — `subjectType`/`subjectId`; `clientId`/`projectId` denormalizados; `channel` `internal`; `policyKey`; status `scheduled|due|done|snoozed|cancelled`; `dueAt`; `snoozedUntil`; `doneAt`; `cancelledAt`; `draftMessage`
 
+## Modelos C9
+
+- `Meeting` — tipo `kickoff|scope_alignment|prototype_review|staging_validation|production_validation|delivery`; `startsAt`; `participantUserIds` JSON; notas/decisões/próximos passos; `clientId?`; `projectId?`; `stageId?`; `validationId?`
+

@@ -1,5 +1,5 @@
 import type { StatusTone } from "@/components/ui/status-pill";
-import type { ClientStatus, ProjectStatus, StageStatus, ValidationStatus, ApprovalStatus, BlockerStatus, ReminderStatus } from "@/lib/domain-types";
+import type { ClientStatus, ProjectStatus, StageStatus, ValidationStatus, ApprovalStatus, BlockerStatus, ReminderStatus, MeetingType } from "@/lib/domain-types";
 
 export const clientStatusTone: Record<ClientStatus, StatusTone> = {
   lead: "blue",
@@ -55,4 +55,13 @@ export const reminderStatusTone: Record<ReminderStatus, StatusTone> = {
   done: "green",
   snoozed: "purple",
   cancelled: "purple",
+};
+
+export const meetingTypeTone: Record<MeetingType, StatusTone> = {
+  kickoff: "blue",
+  scope_alignment: "purple",
+  prototype_review: "purple",
+  staging_validation: "yellow",
+  production_validation: "yellow",
+  delivery: "green",
 };

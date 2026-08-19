@@ -43,3 +43,5 @@ Events no projeto: `blocker.opened`, `blocker.resolved`. Cancel sem event.
 ## Fora
 
 Checklist → blocker automático, kanban de tickets, portal do cliente, FK de reunião, Playwright.
+
+Reunião (C9) **não** gera Blocker. `sourceMeetingId` permanece nullable sem FK.

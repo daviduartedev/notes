@@ -35,6 +35,13 @@ export type ReminderStatus = "scheduled" | "due" | "done" | "snoozed" | "cancell
 export type ReminderAction = "complete" | "snooze" | "cancel";
 export type ReminderChannel = "internal";
 export type ReminderSubjectType = "project" | "client";
+export type MeetingType =
+  | "kickoff"
+  | "scope_alignment"
+  | "prototype_review"
+  | "staging_validation"
+  | "production_validation"
+  | "delivery";
 
 export type MemberDto = {
   id: string;
@@ -165,7 +172,8 @@ export type ActivityDto = {
     | "blocker.opened"
     | "blocker.resolved"
     | "reminder.created"
-    | "reminder.completed";
+    | "reminder.completed"
+    | "meeting.created";
   payload: Record<string, unknown>;
   createdAt: string;
 };
@@ -315,6 +323,32 @@ export type ReminderDto = {
   draftMessage: string;
   visualState: "overdue" | null;
   allowedActions: ReminderAction[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MeetingParticipantDto = {
+  userId: string;
+  name: string | null;
+};
+
+export type MeetingDto = {
+  id: string;
+  workspaceId: string;
+  title: string;
+  type: MeetingType;
+  startsAt: string;
+  participantUserIds: string[];
+  participants: MeetingParticipantDto[];
+  notes: string | null;
+  decisions: string | null;
+  nextSteps: string | null;
+  clientId: string | null;
+  clientName: string | null;
+  projectId: string | null;
+  projectName: string | null;
+  stageId: string | null;
+  validationId: string | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -15,6 +15,7 @@ import type {
   BlockerAction,
   ReminderStatus,
   ReminderAction,
+  MeetingType,
 } from "./domain-types";
 
 export const clientStatusLabel: Record<ClientStatus, string> = {
@@ -131,6 +132,15 @@ export const reminderActionLabel: Record<ReminderAction, string> = {
   complete: "Marcar enviado",
   snooze: "Adiar",
   cancel: "Cancelar",
+};
+
+export const meetingTypeLabel: Record<MeetingType, string> = {
+  kickoff: "Kickoff",
+  scope_alignment: "Alinhamento de escopo",
+  prototype_review: "Revisão de protótipo",
+  staging_validation: "Validação staging",
+  production_validation: "Validação produção",
+  delivery: "Entrega",
 };
 
 export const WAITING_ON_CLIENT_COPY = "Aguardando cliente";

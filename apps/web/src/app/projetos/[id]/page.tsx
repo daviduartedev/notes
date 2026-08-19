@@ -5,6 +5,7 @@ import { ProjectBlockers } from "@/components/project-blockers";
 import { ProjectChecklists } from "@/components/project-checklists";
 import { ProjectEditForm } from "@/components/project-edit-form";
 import { ProjectReminders } from "@/components/project-reminders";
+import { ProjectMeetings } from "@/components/project-meetings";
 import { ProjectValidations } from "@/components/project-validations";
 import { StageBoard } from "@/components/stage-board";
 import { Card } from "@/components/ui/card";
@@ -19,6 +20,7 @@ import type {
   ProjectChecklistDto,
   ProjectDto,
   ReminderDto,
+  MeetingDto,
   ValidationDto,
 } from "@/lib/domain-types";
 import { projectPriorityLabel, projectStatusLabel } from "@/lib/labels";
@@ -31,7 +33,7 @@ export default async function ProjetoFichaPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [detail, membersRes, clientsRes, activityRes, templatesRes, checklistsRes, validationsRes, approvalsRes, blockersRes, remindersRes] =
+  const [detail, membersRes, clientsRes, activityRes, templatesRes, checklistsRes, validationsRes, approvalsRes, blockersRes, remindersRes, meetingsRes] =
     await Promise.all([
     serverApi<ProjectDto>(`/api/projects/${id}`),
     serverApi<MemberDto[]>("/api/workspace/members"),
@@ -43,6 +45,7 @@ export default async function ProjetoFichaPage({
     serverApi<ApprovalDto[]>(`/api/projects/${id}/approvals`),
     serverApi<BlockerDto[]>(`/api/projects/${id}/blockers`),
     serverApi<ReminderDto[]>(`/api/projects/${id}/reminders`),
+    serverApi<MeetingDto[]>(`/api/projects/${id}/meetings`),
   ]);
   const project = detail.status === 200 ? detail.data : null;
   const members = membersRes.status === 200 && membersRes.data ? membersRes.data : [];
@@ -54,6 +57,7 @@ export default async function ProjetoFichaPage({
   const approvals = approvalsRes.status === 200 && approvalsRes.data ? approvalsRes.data : [];
   const blockers = blockersRes.status === 200 && blockersRes.data ? blockersRes.data : [];
   const reminders = remindersRes.status === 200 && remindersRes.data ? remindersRes.data : [];
+  const meetings = meetingsRes.status === 200 && meetingsRes.data ? meetingsRes.data : [];
 
   return (
     <AppShell title={project?.name ?? "Projeto"} pathname="/projetos">
@@ -108,6 +112,15 @@ export default async function ProjetoFichaPage({
         <Card>
           <h3 className="mb-4 font-display text-xl">Lembretes</h3>
           <ProjectReminders reminders={reminders} />
+        </Card>
+        <Card>
+          <h3 className="mb-4 font-display text-xl">Reuniões</h3>
+          <ProjectMeetings
+            project={project}
+            members={members}
+            validations={validations}
+            meetings={meetings}
+          />
         </Card>
         <Card>
           <h3 className="mb-4 font-display text-xl">Histórico</h3>

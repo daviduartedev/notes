@@ -3,7 +3,7 @@
 **Pasta:** `cycles/Q32026/0818-c9-reunioes/`  
 **Tipo:** Medium  
 **Depende de:** C1 e C2 fechados  
-**Status:** `request.md` pronto → **Refine depois de C1+C2**
+**Status:** `fechado` (2026-08-19)
 
 Abra um **chat novo** para cada janela. Cole o bloco. Padrão Elli: uma missão por contexto.
 

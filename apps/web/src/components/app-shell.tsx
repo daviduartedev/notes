@@ -11,6 +11,7 @@ const links = [
   { href: "/aprovacoes", label: "Aprovações" },
   { href: "/pendencias", label: "Pendências" },
   { href: "/lembretes", label: "Lembretes" },
+  { href: "/reunioes", label: "Reuniões" },
 ];
 
 export function AppShell({

@@ -12,6 +12,7 @@ const INTERACTION_ACTIONS = new Set<ActivityAction>([
   "stage.transitioned",
   "stage.completed",
   "reminder.completed",
+  "meeting.created",
 ]);
 
 export async function recordActivity(

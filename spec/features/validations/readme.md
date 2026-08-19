@@ -36,3 +36,5 @@ Events no `ActivityEvent` do projeto: `validation.requested`, `validation.in_rev
 ## Web
 
 `/validacoes` (filtros status/projeto/cliente/responsável/prazo), `/validacoes/:id` (transições). Seção **Validações** em `/projetos/:id`. StatusPill **purple**. Visitante → `/login`.
+
+`Meeting.validationId` (C9) é link opcional; criar reunião **não** transiciona a validação.

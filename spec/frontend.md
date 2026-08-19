@@ -24,7 +24,7 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 | `/clientes` | autenticado | lista + criação; filtros nome/responsável/status |
 | `/clientes/:id` | autenticado | ficha, projetos do cliente, histórico |
 | `/projetos` | autenticado | lista + criação; filtros responsável/status/cliente/prazo/prioridade |
-| `/projetos/:id` | autenticado | cabeçalho operacional + overdue + **seção Etapas** + **seção Checklists** + **seção Validações** + **seção Aprovações** + **seção Pendências** + **seção Lembretes** + histórico |
+| `/projetos/:id` | autenticado | cabeçalho operacional + overdue + **seção Etapas** + **seção Checklists** + **seção Validações** + **seção Aprovações** + **seção Pendências** + **seção Lembretes** + **seção Reuniões** + histórico |
 
 ## Rotas C3
 
@@ -66,7 +66,14 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 | `/lembretes` | autenticado | lista + filtros status/projeto/cliente; visitante → `/login` |
 | `/lembretes/:id` | autenticado | ficha; copiar draft, marcar enviado, adiar |
 
-Nav: Hoje / Pipeline / Clientes / Projetos / Checklists / Validações / Aprovações / Pendências / Lembretes. `/hoje` continua empty state. Pipeline cards com pills Pendência / Aguardando cliente.
+## Rotas C9
+
+| Path | Quem | Comportamento |
+|------|------|----------------|
+| `/reunioes` | autenticado | lista + filtros tipo/projeto/cliente; visitante → `/login` |
+| `/reunioes/:id` | autenticado | ficha com notas, decisões e próximos passos |
+
+Nav: Hoje / Pipeline / Clientes / Projetos / Checklists / Validações / Aprovações / Pendências / Lembretes / Reuniões. `/hoje` continua empty state. Pipeline cards com pills Pendência / Aguardando cliente.
 
 Primitivos: Button, Input, Card, StatusPill, Select, Textarea.
 

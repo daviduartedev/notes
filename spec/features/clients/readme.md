@@ -29,4 +29,4 @@ nome, empresa, WhatsApp (string), e-mail, responsável interno (`ownerUserId` me
 
 ## Web
 
-`/clientes`, `/clientes/:id`. Filtros: nome, responsável, status. Ficha lista projetos do cliente.
+`/clientes`, `/clientes/:id`. Filtros: nome, responsável, status. Ficha lista projetos do cliente e **seção Reuniões**.

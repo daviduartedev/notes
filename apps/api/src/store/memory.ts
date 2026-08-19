@@ -24,6 +24,7 @@ import type {
   ReminderStatus,
   ReminderSubjectType,
 } from "../domain/reminder-status.js";
+import type { MeetingType } from "../domain/meeting-type.js";
 import type {
   ValidationStatus,
   ValidationType,
@@ -57,6 +58,10 @@ import type {
   ReminderCreateInput,
   ReminderFilters,
   ReminderRecord,
+  MeetingCreateInput,
+  MeetingFilters,
+  MeetingRecord,
+  MeetingUpdateInput,
   StagePersistPatch,
   StageRecord,
   ValidationCreateInput,
@@ -169,6 +174,24 @@ type ReminderRow = {
   doneAt: Date | null;
   cancelledAt: Date | null;
   draftMessage: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type MeetingRow = {
+  id: string;
+  workspaceId: string;
+  title: string;
+  type: MeetingType;
+  startsAt: Date;
+  participantUserIds: string[];
+  notes: string | null;
+  decisions: string | null;
+  nextSteps: string | null;
+  clientId: string | null;
+  projectId: string | null;
+  stageId: string | null;
+  validationId: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -313,6 +336,14 @@ function matchesReminderFilters(row: ReminderRow, filters: ReminderFilters): boo
   return true;
 }
 
+function matchesMeetingFilters(row: MeetingRow, filters: MeetingFilters): boolean {
+  if (filters.type && row.type !== filters.type) return false;
+  if (filters.projectId && row.projectId !== filters.projectId) return false;
+  if (filters.clientId && row.clientId !== filters.clientId) return false;
+  if (filters.validationId && row.validationId !== filters.validationId) return false;
+  return true;
+}
+
 export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore {
   const members = [...seedMembers];
   const clients = new Map<string, ClientRecord>();
@@ -326,6 +357,7 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
   const approvals = new Map<string, ApprovalRow>();
   const blockers = new Map<string, BlockerRow>();
   const reminders = new Map<string, ReminderRow>();
+  const meetings = new Map<string, MeetingRow>();
   const activities: ActivityRecord[] = [];
 
   function ensureTemplate(workspaceId: string): TemplateRow {
@@ -512,6 +544,32 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       doneAt: row.doneAt ? new Date(row.doneAt) : null,
       cancelledAt: row.cancelledAt ? new Date(row.cancelledAt) : null,
       draftMessage: row.draftMessage,
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+    };
+  }
+
+  function toMeetingRecord(row: MeetingRow): MeetingRecord | null {
+    const client = row.clientId ? clients.get(row.clientId) : null;
+    const project = row.projectId ? projects.get(row.projectId) : null;
+    if (row.clientId && !client) return null;
+    if (row.projectId && !project) return null;
+    return {
+      id: row.id,
+      workspaceId: row.workspaceId,
+      title: row.title,
+      type: row.type,
+      startsAt: new Date(row.startsAt),
+      participantUserIds: [...row.participantUserIds],
+      notes: row.notes,
+      decisions: row.decisions,
+      nextSteps: row.nextSteps,
+      clientId: row.clientId,
+      clientName: client?.name ?? null,
+      projectId: row.projectId,
+      projectName: project?.name ?? null,
+      stageId: row.stageId,
+      validationId: row.validationId,
       createdAt: new Date(row.createdAt),
       updatedAt: new Date(row.updatedAt),
     };
@@ -1344,6 +1402,83 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
         count += 1;
       }
       return count;
+    },
+    async listMeetings(workspaceId, filters: MeetingFilters) {
+      return [...meetings.values()]
+        .filter((row) => row.workspaceId === workspaceId)
+        .filter((row) => matchesMeetingFilters(row, filters))
+        .sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime())
+        .map(toMeetingRecord)
+        .filter((row): row is MeetingRecord => row !== null);
+    },
+    async listProjectMeetings(projectId) {
+      return [...meetings.values()]
+        .filter((row) => row.projectId === projectId)
+        .sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime())
+        .map(toMeetingRecord)
+        .filter((row): row is MeetingRecord => row !== null);
+    },
+    async listClientMeetings(clientId) {
+      return [...meetings.values()]
+        .filter((row) => row.clientId === clientId)
+        .sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime())
+        .map(toMeetingRecord)
+        .filter((row): row is MeetingRecord => row !== null);
+    },
+    async getMeeting(id) {
+      const row = meetings.get(id);
+      return row ? toMeetingRecord(row) : null;
+    },
+    async createMeeting(data: MeetingCreateInput) {
+      if (data.clientId) {
+        const client = clients.get(data.clientId);
+        if (!client || client.workspaceId !== data.workspaceId) {
+          return null;
+        }
+      }
+      if (data.projectId) {
+        const project = projects.get(data.projectId);
+        if (!project || project.workspaceId !== data.workspaceId) {
+          return null;
+        }
+      }
+      const id = crypto.randomUUID();
+      const row: MeetingRow = {
+        id,
+        workspaceId: data.workspaceId,
+        title: data.title,
+        type: data.type,
+        startsAt: data.startsAt,
+        participantUserIds: [...data.participantUserIds],
+        notes: data.notes,
+        decisions: data.decisions,
+        nextSteps: data.nextSteps,
+        clientId: data.clientId,
+        projectId: data.projectId,
+        stageId: data.stageId,
+        validationId: data.validationId,
+        createdAt: data.now,
+        updatedAt: data.now,
+      };
+      meetings.set(id, row);
+      return toMeetingRecord(row);
+    },
+    async updateMeeting(id, data: MeetingUpdateInput) {
+      const current = meetings.get(id);
+      if (!current) {
+        return null;
+      }
+      if (data.title !== undefined) current.title = data.title;
+      if (data.type !== undefined) current.type = data.type;
+      if (data.startsAt !== undefined) current.startsAt = data.startsAt;
+      if (data.participantUserIds !== undefined) {
+        current.participantUserIds = [...data.participantUserIds];
+      }
+      if (data.notes !== undefined) current.notes = data.notes;
+      if (data.decisions !== undefined) current.decisions = data.decisions;
+      if (data.nextSteps !== undefined) current.nextSteps = data.nextSteps;
+      current.updatedAt = new Date();
+      return toMeetingRecord(current);
     },
   };
 }

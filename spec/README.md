@@ -26,3 +26,4 @@ Verdade canônica do que foi **implementado e validado**. Propostas de cycle fic
 | [features/approvals/](features/approvals/readme.md) | Aprovações formais, snapshot, ≠ Validation |
 | [features/blockers/](features/blockers/readme.md) | Pendências circunstanciais, ≠ Checklist |
 | [features/reminders/](features/reminders/readme.md) | Lembretes internos, política 3 dias |
+| [features/meetings/](features/meetings/readme.md) | Reuniões, tipos, participantes do workspace |

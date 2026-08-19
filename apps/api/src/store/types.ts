@@ -17,6 +17,7 @@ import type {
   ReminderStatus,
   ReminderSubjectType,
 } from "../domain/reminder-status.js";
+import type { MeetingType } from "../domain/meeting-type.js";
 import type {
   ActivityAction,
   ClientStatus,
@@ -370,6 +371,59 @@ export type ReminderCreateInput = {
   now: Date;
 };
 
+export type MeetingRecord = {
+  id: string;
+  workspaceId: string;
+  title: string;
+  type: MeetingType;
+  startsAt: Date;
+  participantUserIds: string[];
+  notes: string | null;
+  decisions: string | null;
+  nextSteps: string | null;
+  clientId: string | null;
+  clientName: string | null;
+  projectId: string | null;
+  projectName: string | null;
+  stageId: string | null;
+  validationId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type MeetingFilters = {
+  type?: MeetingType;
+  projectId?: string;
+  clientId?: string;
+  validationId?: string;
+};
+
+export type MeetingCreateInput = {
+  workspaceId: string;
+  title: string;
+  type: MeetingType;
+  startsAt: Date;
+  participantUserIds: string[];
+  notes: string | null;
+  decisions: string | null;
+  nextSteps: string | null;
+  clientId: string | null;
+  projectId: string | null;
+  stageId: string | null;
+  validationId: string | null;
+  now: Date;
+};
+
+export type MeetingUpdateInput = {
+  title?: string;
+  type?: MeetingType;
+  startsAt?: Date;
+  participantUserIds?: string[];
+  notes?: string | null;
+  decisions?: string | null;
+  nextSteps?: string | null;
+};
+
 export type FollowUpCandidate = {
   id: string;
   workspaceId: string;
@@ -511,4 +565,10 @@ export type NotesStore = {
     snoozedUntil: Date | null;
   }): Promise<ReminderRecord | null>;
   promoteDueReminders(workspaceId: string, now: Date): Promise<number>;
+  listMeetings(workspaceId: string, filters: MeetingFilters): Promise<MeetingRecord[]>;
+  listProjectMeetings(projectId: string): Promise<MeetingRecord[]>;
+  listClientMeetings(clientId: string): Promise<MeetingRecord[]>;
+  getMeeting(id: string): Promise<MeetingRecord | null>;
+  createMeeting(data: MeetingCreateInput): Promise<MeetingRecord | null>;
+  updateMeeting(id: string, data: MeetingUpdateInput): Promise<MeetingRecord | null>;
 };

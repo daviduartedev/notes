@@ -26,6 +26,7 @@
 - `blocker.resolved`
 - `reminder.created`
 - `reminder.completed`
+- `meeting.created`
 
 Payload consultável **sem** telefone/e-mail. Sanitizer remove essas chaves e o texto de draft de lembrete.
 

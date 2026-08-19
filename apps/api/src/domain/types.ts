@@ -52,6 +52,7 @@ export const ACTIVITY_ACTIONS = [
   "blocker.resolved",
   "reminder.created",
   "reminder.completed",
+  "meeting.created",
 ] as const;
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
 

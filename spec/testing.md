@@ -83,4 +83,13 @@ Testes de domínio não exigem Postgres. Teste de persistência usa `DATABASE_UR
 - IDOR GET/decide outro workspace → 404 vazio
 - collection `GET /api/reminders` do workspace B vazia
 
+## C9 obrigatório
+
+- reunião `staging_validation` com decisão aparece no nested do projeto e em `meeting.created`
+- payload de activity sem notas/decisões
+- participante de outro workspace → 400
+- create não muda `Stage.status` nem abre Blocker
+- IDOR GET/PATCH outro workspace → 404 vazio
+- collection `GET /api/meetings` do workspace B vazia
+
 

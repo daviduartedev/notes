@@ -21,6 +21,7 @@ import type {
   ReminderStatus,
   ReminderSubjectType,
 } from "../domain/reminder-status.js";
+import type { MeetingType } from "../domain/meeting-type.js";
 import type { ValidationStatus, ValidationType } from "../domain/validation-status.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
 import { ensureDeployStagingForWorkspace } from "../checklists/seed.js";
@@ -48,6 +49,10 @@ import type {
   ReminderCreateInput,
   ReminderFilters,
   ReminderRecord,
+  MeetingCreateInput,
+  MeetingFilters,
+  MeetingRecord,
+  MeetingUpdateInput,
   StagePersistPatch,
   StageRecord,
   ValidationCreateInput,
@@ -1033,6 +1038,97 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
       });
       return result.count;
     },
+    async listMeetings(workspaceId, filters: MeetingFilters) {
+      const rows = await prisma.meeting.findMany({
+        where: meetingWhere(workspaceId, filters),
+        include: meetingInclude,
+        orderBy: { startsAt: "desc" },
+      });
+      return rows.map(mapMeeting);
+    },
+    async listProjectMeetings(projectId) {
+      const rows = await prisma.meeting.findMany({
+        where: { projectId },
+        include: meetingInclude,
+        orderBy: { startsAt: "desc" },
+      });
+      return rows.map(mapMeeting);
+    },
+    async listClientMeetings(clientId) {
+      const rows = await prisma.meeting.findMany({
+        where: { clientId },
+        include: meetingInclude,
+        orderBy: { startsAt: "desc" },
+      });
+      return rows.map(mapMeeting);
+    },
+    async getMeeting(id) {
+      const row = await prisma.meeting.findUnique({
+        where: { id },
+        include: meetingInclude,
+      });
+      return row ? mapMeeting(row) : null;
+    },
+    async createMeeting(data: MeetingCreateInput) {
+      if (data.clientId) {
+        const client = await prisma.client.findUnique({ where: { id: data.clientId } });
+        if (!client || client.workspaceId !== data.workspaceId) {
+          return null;
+        }
+      }
+      if (data.projectId) {
+        const project = await prisma.project.findUnique({ where: { id: data.projectId } });
+        if (!project || project.workspaceId !== data.workspaceId) {
+          return null;
+        }
+      }
+      try {
+        const row = await prisma.meeting.create({
+          data: {
+            workspaceId: data.workspaceId,
+            title: data.title,
+            type: data.type,
+            startsAt: data.startsAt,
+            participantUserIds: data.participantUserIds,
+            notes: data.notes,
+            decisions: data.decisions,
+            nextSteps: data.nextSteps,
+            clientId: data.clientId,
+            projectId: data.projectId,
+            stageId: data.stageId,
+            validationId: data.validationId,
+            createdAt: data.now,
+            updatedAt: data.now,
+          },
+          include: meetingInclude,
+        });
+        return mapMeeting(row);
+      } catch {
+        return null;
+      }
+    },
+    async updateMeeting(id, data: MeetingUpdateInput) {
+      try {
+        const row = await prisma.meeting.update({
+          where: { id },
+          data: {
+            ...(data.title !== undefined ? { title: data.title } : {}),
+            ...(data.type !== undefined ? { type: data.type } : {}),
+            ...(data.startsAt !== undefined ? { startsAt: data.startsAt } : {}),
+            ...(data.participantUserIds !== undefined
+              ? { participantUserIds: data.participantUserIds }
+              : {}),
+            ...(data.notes !== undefined ? { notes: data.notes } : {}),
+            ...(data.decisions !== undefined ? { decisions: data.decisions } : {}),
+            ...(data.nextSteps !== undefined ? { nextSteps: data.nextSteps } : {}),
+          },
+          include: meetingInclude,
+        });
+        return mapMeeting(row);
+      } catch {
+        return null;
+      }
+    },
   };
 }
 
@@ -1437,6 +1533,66 @@ function mapReminder(row: {
     doneAt: row.doneAt,
     cancelledAt: row.cancelledAt,
     draftMessage: row.draftMessage,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+const meetingInclude = {
+  client: { select: { id: true, name: true } },
+  project: { select: { id: true, name: true } },
+} as const;
+
+function meetingWhere(workspaceId: string, filters: MeetingFilters): Prisma.MeetingWhereInput {
+  return {
+    workspaceId,
+    ...(filters.type ? { type: filters.type } : {}),
+    ...(filters.projectId ? { projectId: filters.projectId } : {}),
+    ...(filters.clientId ? { clientId: filters.clientId } : {}),
+    ...(filters.validationId ? { validationId: filters.validationId } : {}),
+  };
+}
+
+function jsonStringArray(value: Prisma.JsonValue): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+function mapMeeting(row: {
+  id: string;
+  workspaceId: string;
+  title: string;
+  type: MeetingType;
+  startsAt: Date;
+  participantUserIds: Prisma.JsonValue;
+  notes: string | null;
+  decisions: string | null;
+  nextSteps: string | null;
+  clientId: string | null;
+  projectId: string | null;
+  stageId: string | null;
+  validationId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  client: { id: string; name: string } | null;
+  project: { id: string; name: string } | null;
+}): MeetingRecord {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    title: row.title,
+    type: row.type,
+    startsAt: row.startsAt,
+    participantUserIds: jsonStringArray(row.participantUserIds),
+    notes: row.notes,
+    decisions: row.decisions,
+    nextSteps: row.nextSteps,
+    clientId: row.clientId,
+    clientName: row.client?.name ?? null,
+    projectId: row.projectId,
+    projectName: row.project?.name ?? null,
+    stageId: row.stageId,
+    validationId: row.validationId,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

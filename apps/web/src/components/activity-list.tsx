@@ -23,6 +23,7 @@ const actionLabel: Record<ActivityDto["action"], string> = {
   "blocker.resolved": "Pendência resolvida",
   "reminder.created": "Lembrete criado",
   "reminder.completed": "Lembrete enviado",
+  "meeting.created": "Reunião registrada",
 };
 
 export function ActivityList({ events }: { events: ActivityDto[] }) {

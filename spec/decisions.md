@@ -522,6 +522,48 @@ Playwright continua fora. WhatsApp/e-mail/Calendar fora.
 
 ---
 
+## ADR-0027 — Lista e tipos de Meeting (C9-D1–D10)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c9-reunioes/
+- **Status:** Accepted
+
+### Contexto
+Reuniões precisam aparecer na ficha e numa lista dedicada neste Medium.
+
+### Decisão
+Lista `/reunioes` + ficha. Tipos `kickoff`, `scope_alignment`, `prototype_review`, `staging_validation`, `production_validation`, `delivery`. `validationId` opcional (C5 no disco). Exigir `projectId` ou `clientId`.
+
+### Alternativas consideradas
+- Só seção na ficha, sem lista — rejeitado (brief).
+- Google Calendar — fora.
+
+### Consequências
+C10 pode listar reuniões do dia. Calendar permanece fora.
+
+---
+
+## ADR-0028 — Isolamento e efeitos colaterais de Meeting (C9-D11–D20)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c9-reunioes/
+- **Status:** Accepted
+
+### Contexto
+Reunião não pode avançar pipeline nem inventar pendência.
+
+### Decisão
+Create/PATCH não mutam `Stage.status`. Não geram Blocker. Participantes só de membros do workspace (400 se externo). GET/PATCH outro tenant → 404; collection → `[]`. Event `meeting.created` sem notas/decisões.
+
+### Alternativas consideradas
+- Gerar blockers a partir de próximos passos — rejeitado (brief).
+- Playwright E2E — ORCH-008.
+
+### Consequências
+`sourceMeetingId` no Blocker continua nullable sem FK. Playwright continua fora.
+
+---
+
 ## ADR-0018 — Completar item não muda Stage.status (C4-D7–D16)
 
 - **Data:** 2026-08-19

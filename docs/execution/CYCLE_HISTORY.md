@@ -13,8 +13,7 @@ Ordem de execução (ORCH-011): **C0 → C1 → C2 → C3 → C4 → C5 → C6 �
 | C6 aprovacoes | done | Approvals + snapshot | sim | lint/typecheck/test/build 0 | `98c25a6` | Sem Playwright; grant ≠ etapa |
 | C7 pendencias | done | Blockers | sim | lint/typecheck/test/build 0 | `124c0c7` | Sem Playwright; ≠ Checklist |
 | C8 lembretes | done | Reminders + política 3 dias | sim | lint/typecheck/test/build 0 | `3d83e3c` | Sem Playwright; canal internal; fake clock |
-| C9 reunioes | pending | Meetings | — | — | — | Depende C1+C2 |
-| C9 reunioes | pending | Meetings | — | — | — | Depende C1+C2 |
+| C9 reunioes | done | Meetings | sim | lint/typecheck/test/build 0 | (neste commit) | Sem Playwright; lista `/reunioes`; sem mutar etapa |
 | C10 hoje-dashboard | pending | `/hoje` operacional (fecha MVP) | — | — | — | Depende C3–C9 |
 | C11 templates-de-workflow | pending | CRUD templates (pós-MVP) | — | — | — | Depende C2 |
 
