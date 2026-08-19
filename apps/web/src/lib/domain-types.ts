@@ -120,7 +120,49 @@ export type ActivityDto = {
     | "project.status_changed"
     | "stage.started"
     | "stage.transitioned"
-    | "stage.completed";
+    | "stage.completed"
+    | "checklist.applied"
+    | "checklist.item_completed";
   payload: Record<string, unknown>;
   createdAt: string;
+};
+
+export type ChecklistTemplateItemDto = {
+  id: string;
+  title: string;
+  order: number;
+};
+
+export type ChecklistTemplateDto = {
+  id: string;
+  workspaceId: string;
+  key: string;
+  name: string;
+  description: string | null;
+  items: ChecklistTemplateItemDto[];
+};
+
+export type ChecklistItemDto = {
+  id: string;
+  checklistId: string;
+  title: string;
+  order: number;
+  completedAt: string | null;
+  completedByUserId: string | null;
+  completedByName: string | null;
+  note: string | null;
+};
+
+export type ProjectChecklistDto = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  projectName: string;
+  stageId: string | null;
+  templateId: string | null;
+  name: string;
+  validationId: string | null;
+  items: ChecklistItemDto[];
+  createdAt: string;
+  updatedAt: string;
 };

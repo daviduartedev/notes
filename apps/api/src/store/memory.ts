@@ -1,3 +1,10 @@
+import { instantiateProjectChecklist } from "../domain/checklist-instance.js";
+import {
+  DEPLOY_STAGING_ITEMS,
+  DEPLOY_STAGING_TEMPLATE_DESCRIPTION,
+  DEPLOY_STAGING_TEMPLATE_KEY,
+  DEPLOY_STAGING_TEMPLATE_NAME,
+} from "../domain/deploy-staging-template.js";
 import { PIPELINE_BOARD_STATUSES, type PipelineCardRow } from "../domain/pipeline-board.js";
 import { SAAS_DELIVERY_STAGES } from "../domain/saas-delivery-template.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
@@ -5,6 +12,10 @@ import type { StagePhase } from "../domain/types.js";
 import type {
   ActivityCreateInput,
   ActivityRecord,
+  ChecklistItemLookup,
+  ChecklistItemRecord,
+  ChecklistTemplateRecord,
+  ChecklistTemplateUpdateInput,
   ClientCreateInput,
   ClientFilters,
   ClientRecord,
@@ -12,6 +23,7 @@ import type {
   MemberRecord,
   NotesStore,
   PipelineFilters,
+  ProjectChecklistRecord,
   ProjectCreateInput,
   ProjectFilters,
   ProjectRecord,
@@ -19,6 +31,37 @@ import type {
   StagePersistPatch,
   StageRecord,
 } from "./types.js";
+
+type ChecklistTemplateRow = {
+  id: string;
+  workspaceId: string;
+  key: string;
+  name: string;
+  description: string | null;
+  items: Array<{ id: string; title: string; order: number }>;
+};
+
+type ChecklistRow = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  stageId: string | null;
+  templateId: string | null;
+  name: string;
+  validationId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type ChecklistItemRow = {
+  id: string;
+  checklistId: string;
+  title: string;
+  order: number;
+  completedAt: Date | null;
+  completedByUserId: string | null;
+  note: string | null;
+};
 
 type TemplateRow = {
   id: string;
@@ -68,6 +111,20 @@ function cloneStage(row: StageRecord): StageRecord {
   };
 }
 
+function cloneChecklistTemplate(row: ChecklistTemplateRow): ChecklistTemplateRecord {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    key: row.key,
+    name: row.name,
+    description: row.description,
+    items: row.items
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((item) => ({ ...item })),
+  };
+}
+
 function matchesName(name: string, query: string): boolean {
   return name.toLocaleLowerCase("pt-BR").includes(query.toLocaleLowerCase("pt-BR"));
 }
@@ -92,6 +149,9 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
   const projects = new Map<string, ProjectRecord>();
   const stages = new Map<string, StageRecord>();
   const templates = new Map<string, TemplateRow>();
+  const checklistTemplates = new Map<string, ChecklistTemplateRow>();
+  const checklists = new Map<string, ChecklistRow>();
+  const checklistItems = new Map<string, ChecklistItemRow>();
   const activities: ActivityRecord[] = [];
 
   function ensureTemplate(workspaceId: string): TemplateRow {
@@ -119,6 +179,79 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       })),
     };
     templates.set(templateId, row);
+    return row;
+  }
+
+  function actorName(userId: string | null): string | null {
+    if (!userId) return null;
+    const member = members.find((item) => item.userId === userId);
+    return member?.name ?? member?.email ?? null;
+  }
+
+  function toItemRecord(row: ChecklistItemRow): ChecklistItemRecord {
+    return {
+      id: row.id,
+      checklistId: row.checklistId,
+      title: row.title,
+      order: row.order,
+      completedAt: row.completedAt ? new Date(row.completedAt) : null,
+      completedByUserId: row.completedByUserId,
+      completedByName: actorName(row.completedByUserId),
+      note: row.note,
+    };
+  }
+
+  function toChecklistRecord(row: ChecklistRow): ProjectChecklistRecord {
+    const project = projects.get(row.projectId);
+    return {
+      id: row.id,
+      workspaceId: row.workspaceId,
+      projectId: row.projectId,
+      projectName: project?.name ?? "",
+      stageId: row.stageId,
+      templateId: row.templateId,
+      name: row.name,
+      validationId: row.validationId,
+      items: [...checklistItems.values()]
+        .filter((item) => item.checklistId === row.id)
+        .sort((a, b) => a.order - b.order)
+        .map(toItemRecord),
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+    };
+  }
+
+  function toItemLookup(row: ChecklistItemRow): ChecklistItemLookup | null {
+    const checklist = checklists.get(row.checklistId);
+    if (!checklist) return null;
+    return {
+      ...toItemRecord(row),
+      workspaceId: checklist.workspaceId,
+      projectId: checklist.projectId,
+    };
+  }
+
+  function ensureChecklistTemplate(workspaceId: string): ChecklistTemplateRow {
+    const existing = [...checklistTemplates.values()].find(
+      (row) => row.workspaceId === workspaceId && row.key === DEPLOY_STAGING_TEMPLATE_KEY,
+    );
+    if (existing) {
+      return existing;
+    }
+    const templateId = crypto.randomUUID();
+    const row: ChecklistTemplateRow = {
+      id: templateId,
+      workspaceId,
+      key: DEPLOY_STAGING_TEMPLATE_KEY,
+      name: DEPLOY_STAGING_TEMPLATE_NAME,
+      description: DEPLOY_STAGING_TEMPLATE_DESCRIPTION,
+      items: DEPLOY_STAGING_ITEMS.map((item) => ({
+        id: crypto.randomUUID(),
+        title: item.title,
+        order: item.order,
+      })),
+    };
+    checklistTemplates.set(templateId, row);
     return row;
   }
 
@@ -299,6 +432,16 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
             stages.delete(stageId);
           }
         }
+        for (const [checklistId, checklist] of checklists) {
+          if (checklist.projectId === id) {
+            for (const [itemId, item] of checklistItems) {
+              if (item.checklistId === checklistId) {
+                checklistItems.delete(itemId);
+              }
+            }
+            checklists.delete(checklistId);
+          }
+        }
       }
       return projects.delete(id);
     },
@@ -402,6 +545,108 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
         count += 1;
       }
       return count;
+    },
+    async listChecklistTemplates(workspaceId) {
+      ensureChecklistTemplate(workspaceId);
+      return [...checklistTemplates.values()]
+        .filter((row) => row.workspaceId === workspaceId)
+        .map(cloneChecklistTemplate);
+    },
+    async getChecklistTemplate(id) {
+      const row = checklistTemplates.get(id);
+      return row ? cloneChecklistTemplate(row) : null;
+    },
+    async updateChecklistTemplate(id, data: ChecklistTemplateUpdateInput) {
+      const current = checklistTemplates.get(id);
+      if (!current) {
+        return null;
+      }
+      if (data.name !== undefined) current.name = data.name;
+      if (data.description !== undefined) current.description = data.description;
+      if (data.items) {
+        for (const patch of data.items) {
+          const item = current.items.find((entry) => entry.id === patch.id);
+          if (item) item.title = patch.title;
+        }
+      }
+      return cloneChecklistTemplate(current);
+    },
+    async applyChecklist(input) {
+      const project = projects.get(input.projectId);
+      if (!project || project.workspaceId !== input.workspaceId) {
+        return null;
+      }
+      const template = checklistTemplates.get(input.templateId);
+      if (!template || template.workspaceId !== input.workspaceId) {
+        return null;
+      }
+      if (input.stageId) {
+        const stage = stages.get(input.stageId);
+        if (!stage || stage.projectId !== project.id) {
+          return null;
+        }
+      }
+      const copy = instantiateProjectChecklist({
+        id: template.id,
+        name: template.name,
+        items: template.items.map((item) => ({ title: item.title, order: item.order })),
+      });
+      const checklistId = crypto.randomUUID();
+      const row: ChecklistRow = {
+        id: checklistId,
+        workspaceId: input.workspaceId,
+        projectId: project.id,
+        stageId: input.stageId,
+        templateId: template.id,
+        name: copy.name,
+        validationId: copy.validationId,
+        createdAt: input.now,
+        updatedAt: input.now,
+      };
+      checklists.set(checklistId, row);
+      for (const item of copy.items) {
+        const itemId = crypto.randomUUID();
+        checklistItems.set(itemId, {
+          id: itemId,
+          checklistId,
+          title: item.title,
+          order: item.order,
+          completedAt: null,
+          completedByUserId: null,
+          note: null,
+        });
+      }
+      return toChecklistRecord(row);
+    },
+    async listProjectChecklists(projectId) {
+      return [...checklists.values()]
+        .filter((row) => row.projectId === projectId)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .map(toChecklistRecord);
+    },
+    async listWorkspaceChecklists(workspaceId) {
+      return [...checklists.values()]
+        .filter((row) => row.workspaceId === workspaceId)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .map(toChecklistRecord);
+    },
+    async getChecklistItem(id) {
+      const row = checklistItems.get(id);
+      return row ? toItemLookup(row) : null;
+    },
+    async updateChecklistItem(id, data) {
+      const current = checklistItems.get(id);
+      if (!current) {
+        return null;
+      }
+      checklistItems.set(id, {
+        ...current,
+        completedAt: data.completedAt,
+        completedByUserId: data.completedByUserId,
+        note: data.note,
+      });
+      const updated = checklistItems.get(id);
+      return updated ? toItemLookup(updated) : null;
     },
   };
 }

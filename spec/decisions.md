@@ -330,3 +330,45 @@ Precisávamos de um endpoint de quadro sem N+1 e sem vazar tenant.
 ### Consequências
 C10 pode reutilizar o DTO de card. Playwright continua fora.
 
+---
+
+## ADR-0017 — Template de checklist ≠ instância (C4-D1–D6/D11/D17)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c4-checklists/
+- **Status:** Accepted
+
+### Contexto
+Checklist é trabalho previsto. Mutar o molde não pode corromper o que já foi aplicado.
+
+### Decisão
+Apply faz deep copy para `ProjectChecklist` + `ChecklistItem`. Seed `Deploy Staging SaaS` (`deploy_staging_saas`) por workspace. Sem CRUD UI neste cycle. Só `owner` edita o molde via API; `member` aplica e marca itens. `validationId` sempre null.
+
+### Alternativas consideradas
+- Sync molde → instâncias — rejeitado.
+- CRUD UI de templates neste Medium — adiado.
+
+### Consequências
+C5 pode preencher `validationId` sem mudar o apply.
+
+---
+
+## ADR-0018 — Completar item não muda Stage.status (C4-D7–D16)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c4-checklists/
+- **Status:** Accepted
+
+### Contexto
+Checklist não é etapa nem pendência.
+
+### Decisão
+`PATCH /api/checklist-items/:id` grava `completedByUserId` da sessão, `completedAt` e `note`. Não altera `Stage.status`. Events `checklist.applied` e `checklist.item_completed`. IDOR → 404. Collection de outro tenant → lista vazia.
+
+### Alternativas consideradas
+- Completar checklist avança a etapa — rejeitado.
+- Playwright E2E — ORCH-008.
+
+### Consequências
+Transição de etapa continua só no contrato C2. Playwright continua fora.
+

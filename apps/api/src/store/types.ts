@@ -120,6 +120,57 @@ export type ActivityRecord = {
 
 export type ActivityCreateInput = Omit<ActivityRecord, "id" | "createdAt">;
 
+export type ChecklistTemplateItemRecord = {
+  id: string;
+  title: string;
+  order: number;
+};
+
+export type ChecklistTemplateRecord = {
+  id: string;
+  workspaceId: string;
+  key: string;
+  name: string;
+  description: string | null;
+  items: ChecklistTemplateItemRecord[];
+};
+
+export type ChecklistItemRecord = {
+  id: string;
+  checklistId: string;
+  title: string;
+  order: number;
+  completedAt: Date | null;
+  completedByUserId: string | null;
+  completedByName: string | null;
+  note: string | null;
+};
+
+export type ProjectChecklistRecord = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  projectName: string;
+  stageId: string | null;
+  templateId: string | null;
+  name: string;
+  validationId: string | null;
+  items: ChecklistItemRecord[];
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type ChecklistItemLookup = ChecklistItemRecord & {
+  workspaceId: string;
+  projectId: string;
+};
+
+export type ChecklistTemplateUpdateInput = {
+  name?: string;
+  description?: string | null;
+  items?: Array<{ id: string; title: string }>;
+};
+
 export type NotesStore = {
   listMembers(workspaceId: string): Promise<MemberRecord[]>;
   memberExists(workspaceId: string, userId: string): Promise<boolean>;
@@ -156,4 +207,28 @@ export type NotesStore = {
     allowedNextKeys: string[],
   ): Promise<boolean>;
   backfillMissingStages(workspaceId: string, now: Date): Promise<number>;
+  listChecklistTemplates(workspaceId: string): Promise<ChecklistTemplateRecord[]>;
+  getChecklistTemplate(id: string): Promise<ChecklistTemplateRecord | null>;
+  updateChecklistTemplate(
+    id: string,
+    data: ChecklistTemplateUpdateInput,
+  ): Promise<ChecklistTemplateRecord | null>;
+  applyChecklist(input: {
+    workspaceId: string;
+    projectId: string;
+    templateId: string;
+    stageId: string | null;
+    now: Date;
+  }): Promise<ProjectChecklistRecord | null>;
+  listProjectChecklists(projectId: string): Promise<ProjectChecklistRecord[]>;
+  listWorkspaceChecklists(workspaceId: string): Promise<ProjectChecklistRecord[]>;
+  getChecklistItem(id: string): Promise<ChecklistItemLookup | null>;
+  updateChecklistItem(
+    id: string,
+    data: {
+      completedAt: Date | null;
+      completedByUserId: string | null;
+      note: string | null;
+    },
+  ): Promise<ChecklistItemLookup | null>;
 };

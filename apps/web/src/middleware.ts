@@ -25,5 +25,7 @@ export const config = {
     "/clientes",
     "/projetos/:path*",
     "/projetos",
+    "/checklists/:path*",
+    "/checklists",
   ],
 };

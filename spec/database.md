@@ -29,3 +29,11 @@ Seed: não cria clientes/projetos (fixtures nos testes; segundo workspace só no
 - `Stage` — instância copiada no projeto; `Project.currentStageId`, `Project.workflowTemplateId`
 
 Seed C2: template SaaS no workspace; backfill de projetos sem etapas.
+
+## Modelos C4
+
+- `ChecklistTemplate` / `ChecklistTemplateItem` — seed `deploy_staging_saas` por workspace
+- `ProjectChecklist` — instância copiada no apply (`projectId`, `stageId?`, `templateId?`, `validationId` sempre null neste cycle)
+- `ChecklistItem` — cópia dos títulos; `completedAt`, `completedByUserId`, `note`
+
+Seed C4: template **Deploy Staging SaaS** (8 itens) no workspace.

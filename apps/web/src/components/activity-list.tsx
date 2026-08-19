@@ -9,6 +9,8 @@ const actionLabel: Record<ActivityDto["action"], string> = {
   "stage.started": "Etapa iniciada",
   "stage.transitioned": "Etapa avançada",
   "stage.completed": "Etapa concluída",
+  "checklist.applied": "Checklist aplicado",
+  "checklist.item_completed": "Item de checklist concluído",
 };
 
 export function ActivityList({ events }: { events: ActivityDto[] }) {

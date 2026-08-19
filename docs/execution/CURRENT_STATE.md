@@ -1,15 +1,15 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-19 (C3 `37b15280b61bd02670cfa8bd1630db77cd713c6d`).
+Atualizado: 2026-08-19 (C4 — SHA no relatório).
 
 ## Produto
 
 - Nome interno de UI: **Notes**
 - Tipo: Software House Operating System / Delivery CRM
-- Entidade operacional: **Project** (C1 envelope + C2 etapas + C3 board)
+- Entidade operacional: **Project** (C1 envelope + C2 etapas + C3 board + C4 checklists)
 - Tenant: `workspaceId` sempre da sessão, nunca do body
 
-## Stack (C0 + C1 + C2 + C3)
+## Stack (C0 + C1 + C2 + C3 + C4)
 
 - Monorepo **pnpm** (Node 22)
 - `apps/web` — Next.js App Router + Tailwind — porta **3015**
@@ -21,17 +21,18 @@ Atualizado: 2026-08-19 (C3 `37b15280b61bd02670cfa8bd1630db77cd713c6d`).
 ## O que já existe no repo
 
 - Harness em `spec/` + `.cursor/commands/`
-- Auth credentials, seed 1 workspace + 1 owner + template SaaS delivery
+- Auth credentials, seed 1 workspace + 1 owner + template SaaS delivery + checklist Deploy Staging SaaS
 - `/login`, `/hoje` empty state, `/design-system` (dev)
-- `/clientes`, `/clientes/:id`, `/projetos`, `/projetos/:id` (seção Etapas)
+- `/clientes`, `/clientes/:id`, `/projetos`, `/projetos/:id` (Etapas + Checklists)
 - `/pipeline` board por etapa atual (click-only)
+- `/checklists` lista de instâncias
 - CI GitHub Actions (lint, typecheck, test, build + migrate)
 
 ## Auth / banco / módulos
 
 - Auth: credentials na API, cookie `authjs.session-token`
-- Banco: User, Workspace, Member, Client, Project, ActivityEvent, WorkflowTemplate, StageTemplate, Stage
-- Módulos: clientes, projetos, activity, etapas, pipeline board
+- Banco: User, Workspace, Member, Client, Project, ActivityEvent, WorkflowTemplate, StageTemplate, Stage, ChecklistTemplate, ChecklistTemplateItem, ProjectChecklist, ChecklistItem
+- Módulos: clientes, projetos, activity, etapas, pipeline board, checklists
 
 ## Contratos
 
@@ -39,11 +40,13 @@ Atualizado: 2026-08-19 (C3 `37b15280b61bd02670cfa8bd1630db77cd713c6d`).
 - C1: `/api/clients`, `/api/projects`, `/api/workspace/members`, activity nas fichas
 - C2: `POST /api/projects/:id/stages/:stageId/transition`; GET ficha com `stages`
 - C3: `GET /api/pipeline` → `{ columns }`
-- Cross-tenant → 404 vazio em recurso por id; collection pipeline → colunas vazias
+- C4: apply/list checklists; `PATCH /api/checklist-items/:id`; templates owner-only
+- Cross-tenant → 404 vazio em recurso por id; collection pipeline/checklists → vazio
 - Sem membership → 403
 - CORS inclui PATCH/PUT/DELETE
 - `visualState: overdue` para projeto `active` com prazo passado
 - PATCH `currentStageId` ignorado
+- Completar checklist **não** muda `Stage.status`
 
 ## Como rodar
 

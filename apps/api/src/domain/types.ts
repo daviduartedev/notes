@@ -38,6 +38,8 @@ export const ACTIVITY_ACTIONS = [
   "stage.started",
   "stage.transitioned",
   "stage.completed",
+  "checklist.applied",
+  "checklist.item_completed",
 ] as const;
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
 

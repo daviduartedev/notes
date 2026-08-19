@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { authRoutes } from "./auth/routes.js";
+import { checklistRoutes } from "./checklists/routes.js";
 import { clientRoutes } from "./clients/routes.js";
 import { pipelineRoutes } from "./pipeline/routes.js";
 import { projectRoutes } from "./projects/routes.js";
@@ -31,6 +32,7 @@ export function createApp(deps: AppDeps) {
   app.route("/api", workspaceRoutes(deps));
   app.route("/api/clients", clientRoutes(deps));
   app.route("/api/pipeline", pipelineRoutes(deps));
+  app.route("/api", checklistRoutes(deps));
   app.route("/api/projects", projectRoutes(deps));
 
   return app;

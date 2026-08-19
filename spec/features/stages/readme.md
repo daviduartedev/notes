@@ -43,8 +43,8 @@ Events no `ActivityEvent` do projeto: `stage.started`, `stage.transitioned` (`fr
 
 `/projetos/:id` seção Etapas (board vertical, labels Caveat). Botões disabled com motivo. Visual waiting / blocked; overdue do C1 no cabeçalho.
 
-Quadro transversal em `/pipeline` (C3).
+Quadro transversal em `/pipeline` (C3). Completar item de checklist **não** muda `Stage.status` (C4).
 
 ## Fora deste cycle
 
-Editor de workflow e outros tipos (C11). Checklists, validações, entidade Blocker.
+Editor de workflow e outros tipos (C11). Validações, entidade Blocker.

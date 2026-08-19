@@ -12,6 +12,8 @@
 - `stage.started`
 - `stage.transitioned`
 - `stage.completed`
+- `checklist.applied`
+- `checklist.item_completed`
 
 Payload consultável **sem** telefone/e-mail. Sanitizer remove essas chaves.
 

@@ -38,9 +38,20 @@ API em `apps/api` (Hono + Prisma + Auth.js), porta **3014**.
 |--------|------|------|-------|
 | GET | `/api/pipeline` | sessão | `{ columns }`; filtros ownerUserId, clientId, priority; 10 colunas SaaS |
 
+## Contratos C4
+
+| Método | Path | Auth | Notas |
+|--------|------|------|-------|
+| GET | `/api/checklist-templates` | sessão | seed Deploy Staging SaaS |
+| PATCH | `/api/checklist-templates/:id` | sessão owner | 403 member; 404 IDOR |
+| POST | `/api/projects/:id/checklists/apply` | sessão | body `templateId`, `stageId?`; deep copy |
+| GET | `/api/projects/:id/checklists` | sessão | 404 IDOR |
+| GET | `/api/checklists` | sessão | lista do workspace; tenant B → `[]` |
+| PATCH | `/api/checklist-items/:id` | sessão | `{ completed, note? }`; 404 IDOR |
+
 CORS: GET, POST, PATCH, PUT, DELETE, OPTIONS. `workspaceId` no body é ignorado. PATCH `currentStageId` é ignorado. Query `workspaceId` em `/api/pipeline` também é ignorada.
 
-GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR.
+GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR. Completar item de checklist **não** muda `Stage.status`.
 
 ## Erros
 

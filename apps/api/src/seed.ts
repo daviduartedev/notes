@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { loadEnv } from "./env.js";
 import { logInfo } from "./logger.js";
 import { prisma } from "./prisma.js";
+import { ensureDeployStagingForWorkspace } from "./checklists/seed.js";
 import { ensureSaasDeliveryForWorkspace } from "./projects/saas-seed.js";
 import { createPrismaStore } from "./store/prisma.js";
 
@@ -43,6 +44,7 @@ async function seed() {
       ).id;
 
   await ensureSaasDeliveryForWorkspace(prisma, workspaceId);
+  await ensureDeployStagingForWorkspace(prisma, workspaceId);
   await createPrismaStore(prisma).backfillMissingStages(workspaceId, new Date());
 
   logInfo("seed ok", { email: env.SEED_OWNER_EMAIL, workspaceId });

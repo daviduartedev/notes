@@ -1,10 +1,18 @@
 import { ActivityList } from "@/components/activity-list";
 import { AppShell } from "@/components/app-shell";
+import { ProjectChecklists } from "@/components/project-checklists";
 import { ProjectEditForm } from "@/components/project-edit-form";
 import { StageBoard } from "@/components/stage-board";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
-import type { ActivityDto, ClientDto, MemberDto, ProjectDto } from "@/lib/domain-types";
+import type {
+  ActivityDto,
+  ChecklistTemplateDto,
+  ClientDto,
+  MemberDto,
+  ProjectChecklistDto,
+  ProjectDto,
+} from "@/lib/domain-types";
 import { projectPriorityLabel, projectStatusLabel } from "@/lib/labels";
 import { serverApi } from "@/lib/server-api";
 import { projectStatusTone } from "@/lib/status-tone";
@@ -15,16 +23,20 @@ export default async function ProjetoFichaPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [detail, membersRes, clientsRes, activityRes] = await Promise.all([
+  const [detail, membersRes, clientsRes, activityRes, templatesRes, checklistsRes] = await Promise.all([
     serverApi<ProjectDto>(`/api/projects/${id}`),
     serverApi<MemberDto[]>("/api/workspace/members"),
     serverApi<ClientDto[]>("/api/clients"),
     serverApi<ActivityDto[]>(`/api/projects/${id}/activity`),
+    serverApi<ChecklistTemplateDto[]>("/api/checklist-templates"),
+    serverApi<ProjectChecklistDto[]>(`/api/projects/${id}/checklists`),
   ]);
   const project = detail.status === 200 ? detail.data : null;
   const members = membersRes.status === 200 && membersRes.data ? membersRes.data : [];
   const clients = clientsRes.status === 200 && clientsRes.data ? clientsRes.data : [];
   const events = activityRes.status === 200 && activityRes.data ? activityRes.data : [];
+  const templates = templatesRes.status === 200 && templatesRes.data ? templatesRes.data : [];
+  const checklists = checklistsRes.status === 200 && checklistsRes.data ? checklistsRes.data : [];
 
   return (
     <AppShell title={project?.name ?? "Projeto"} pathname="/projetos">
@@ -48,6 +60,10 @@ export default async function ProjetoFichaPage({
         <Card>
           <h3 className="mb-4 font-display text-xl">Etapas</h3>
           <StageBoard project={project} />
+        </Card>
+        <Card>
+          <h3 className="mb-4 font-display text-xl">Checklists</h3>
+          <ProjectChecklists project={project} templates={templates} checklists={checklists} />
         </Card>
         <Card>
           <h3 className="mb-4 font-display text-xl">Histórico</h3>

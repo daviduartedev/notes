@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
+import { instantiateProjectChecklist } from "../domain/checklist-instance.js";
 import { PIPELINE_BOARD_STATUSES, type PipelineCardRow } from "../domain/pipeline-board.js";
 import type {
   ActivityAction,
@@ -10,14 +11,19 @@ import type {
   StageStatus,
 } from "../domain/types.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
+import { ensureDeployStagingForWorkspace } from "../checklists/seed.js";
 import { ensureSaasDeliveryForWorkspace, type SaasTemplateRow } from "../projects/saas-seed.js";
 import type {
   ActivityRecord,
+  ChecklistItemLookup,
+  ChecklistItemRecord,
+  ChecklistTemplateRecord,
   ClientCreateInput,
   ClientFilters,
   ClientRecord,
   NotesStore,
   PipelineFilters,
+  ProjectChecklistRecord,
   ProjectCreateInput,
   ProjectFilters,
   ProjectRecord,
@@ -295,6 +301,7 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
     async deleteProject(id) {
       try {
         await prisma.$transaction(async (tx) => {
+          await tx.projectChecklist.deleteMany({ where: { projectId: id } });
           await tx.project.update({
             where: { id },
             data: { currentStageId: null },
@@ -425,6 +432,128 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
       }
       return projects.length;
     },
+    async listChecklistTemplates(workspaceId) {
+      await ensureDeployStagingForWorkspace(prisma, workspaceId);
+      const rows = await prisma.checklistTemplate.findMany({
+        where: { workspaceId },
+        include: { items: { orderBy: { order: "asc" } } },
+        orderBy: { name: "asc" },
+      });
+      return rows.map(mapChecklistTemplate);
+    },
+    async getChecklistTemplate(id) {
+      const row = await prisma.checklistTemplate.findUnique({
+        where: { id },
+        include: { items: { orderBy: { order: "asc" } } },
+      });
+      return row ? mapChecklistTemplate(row) : null;
+    },
+    async updateChecklistTemplate(id, data) {
+      try {
+        if (data.items) {
+          for (const item of data.items) {
+            await prisma.checklistTemplateItem.update({
+              where: { id: item.id },
+              data: { title: item.title },
+            });
+          }
+        }
+        const row = await prisma.checklistTemplate.update({
+          where: { id },
+          data: {
+            ...(data.name !== undefined ? { name: data.name } : {}),
+            ...(data.description !== undefined ? { description: data.description } : {}),
+          },
+          include: { items: { orderBy: { order: "asc" } } },
+        });
+        return mapChecklistTemplate(row);
+      } catch {
+        return null;
+      }
+    },
+    async applyChecklist(input) {
+      const project = await prisma.project.findUnique({ where: { id: input.projectId } });
+      if (!project || project.workspaceId !== input.workspaceId) {
+        return null;
+      }
+      const template = await prisma.checklistTemplate.findUnique({
+        where: { id: input.templateId },
+        include: { items: { orderBy: { order: "asc" } } },
+      });
+      if (!template || template.workspaceId !== input.workspaceId) {
+        return null;
+      }
+      if (input.stageId) {
+        const stage = await prisma.stage.findUnique({ where: { id: input.stageId } });
+        if (!stage || stage.projectId !== project.id) {
+          return null;
+        }
+      }
+      const copy = instantiateProjectChecklist({
+        id: template.id,
+        name: template.name,
+        items: template.items.map((item) => ({ title: item.title, order: item.order })),
+      });
+      const created = await prisma.projectChecklist.create({
+        data: {
+          workspaceId: input.workspaceId,
+          projectId: project.id,
+          stageId: input.stageId,
+          templateId: template.id,
+          name: copy.name,
+          validationId: copy.validationId,
+          createdAt: input.now,
+          updatedAt: input.now,
+          items: {
+            create: copy.items.map((item) => ({
+              title: item.title,
+              order: item.order,
+            })),
+          },
+        },
+        include: checklistInclude,
+      });
+      return mapProjectChecklist(created);
+    },
+    async listProjectChecklists(projectId) {
+      const rows = await prisma.projectChecklist.findMany({
+        where: { projectId },
+        include: checklistInclude,
+        orderBy: { createdAt: "desc" },
+      });
+      return rows.map(mapProjectChecklist);
+    },
+    async listWorkspaceChecklists(workspaceId) {
+      const rows = await prisma.projectChecklist.findMany({
+        where: { workspaceId },
+        include: checklistInclude,
+        orderBy: { createdAt: "desc" },
+      });
+      return rows.map(mapProjectChecklist);
+    },
+    async getChecklistItem(id) {
+      const row = await prisma.checklistItem.findUnique({
+        where: { id },
+        include: itemLookupInclude,
+      });
+      return row ? mapChecklistItemLookup(row) : null;
+    },
+    async updateChecklistItem(id, data) {
+      try {
+        const row = await prisma.checklistItem.update({
+          where: { id },
+          data: {
+            completedAt: data.completedAt,
+            completedByUserId: data.completedByUserId,
+            note: data.note,
+          },
+          include: itemLookupInclude,
+        });
+        return mapChecklistItemLookup(row);
+      } catch {
+        return null;
+      }
+    },
   };
 }
 
@@ -455,4 +584,112 @@ function jsonObject(value: Prisma.JsonValue): Record<string, unknown> {
     return value as Record<string, unknown>;
   }
   return {};
+}
+
+const checklistInclude = {
+  project: { select: { name: true } },
+  items: {
+    orderBy: { order: "asc" as const },
+    include: { completedBy: { select: { name: true, email: true } } },
+  },
+};
+
+const itemLookupInclude = {
+  completedBy: { select: { name: true, email: true } },
+  checklist: { select: { workspaceId: true, projectId: true } },
+};
+
+function mapChecklistTemplate(row: {
+  id: string;
+  workspaceId: string;
+  key: string;
+  name: string;
+  description: string | null;
+  items: Array<{ id: string; title: string; order: number }>;
+}): ChecklistTemplateRecord {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    key: row.key,
+    name: row.name,
+    description: row.description,
+    items: row.items.map((item) => ({ id: item.id, title: item.title, order: item.order })),
+  };
+}
+
+function mapChecklistItem(row: {
+  id: string;
+  checklistId: string;
+  title: string;
+  order: number;
+  completedAt: Date | null;
+  completedByUserId: string | null;
+  note: string | null;
+  completedBy: { name: string | null; email: string } | null;
+}): ChecklistItemRecord {
+  return {
+    id: row.id,
+    checklistId: row.checklistId,
+    title: row.title,
+    order: row.order,
+    completedAt: row.completedAt,
+    completedByUserId: row.completedByUserId,
+    completedByName: row.completedBy?.name ?? row.completedBy?.email ?? null,
+    note: row.note,
+  };
+}
+
+function mapProjectChecklist(row: {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  stageId: string | null;
+  templateId: string | null;
+  name: string;
+  validationId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  project: { name: string };
+  items: Array<{
+    id: string;
+    checklistId: string;
+    title: string;
+    order: number;
+    completedAt: Date | null;
+    completedByUserId: string | null;
+    note: string | null;
+    completedBy: { name: string | null; email: string } | null;
+  }>;
+}): ProjectChecklistRecord {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    projectId: row.projectId,
+    projectName: row.project.name,
+    stageId: row.stageId,
+    templateId: row.templateId,
+    name: row.name,
+    validationId: row.validationId,
+    items: row.items.map(mapChecklistItem),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function mapChecklistItemLookup(row: {
+  id: string;
+  checklistId: string;
+  title: string;
+  order: number;
+  completedAt: Date | null;
+  completedByUserId: string | null;
+  note: string | null;
+  completedBy: { name: string | null; email: string } | null;
+  checklist: { workspaceId: string; projectId: string };
+}): ChecklistItemLookup {
+  return {
+    ...mapChecklistItem(row),
+    workspaceId: row.checklist.workspaceId,
+    projectId: row.checklist.projectId,
+  };
 }

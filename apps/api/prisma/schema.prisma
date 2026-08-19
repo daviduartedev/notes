@@ -61,6 +61,7 @@ model User {
   ownedClients   Client[] @relation("ClientOwner")
   ownedProjects  Project[] @relation("ProjectOwner")
   activityEvents ActivityEvent[]
+  completedChecklistItems ChecklistItem[]
 }
 
 model Workspace {
@@ -74,6 +75,8 @@ model Workspace {
   activityEvents ActivityEvent[]
   workflowTemplates WorkflowTemplate[]
   stages    Stage[]
+  checklistTemplates ChecklistTemplate[]
+  projectChecklists ProjectChecklist[]
 }
 
 model Client {
@@ -122,6 +125,7 @@ model Project {
   workflowTemplate   WorkflowTemplate? @relation(fields: [workflowTemplateId], references: [id], onDelete: SetNull)
   currentStage       Stage?           @relation("ProjectCurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
   stages             Stage[]          @relation("ProjectStages")
+  checklists         ProjectChecklist[]
 
   @@index([workspaceId])
   @@index([workspaceId, clientId])
@@ -179,6 +183,7 @@ model Stage {
   workspace       Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   project         Project     @relation("ProjectStages", fields: [projectId], references: [id], onDelete: Cascade)
   currentFor      Project[]   @relation("ProjectCurrentStage")
+  checklists      ProjectChecklist[]
 
   @@unique([projectId, key])
   @@index([workspaceId, projectId])
@@ -198,6 +203,66 @@ model ActivityEvent {
 
   @@index([workspaceId, entityType, entityId])
   @@index([workspaceId, createdAt])
+}
+
+model ChecklistTemplate {
+  id          String                   @id @default(cuid())
+  workspaceId String
+  key         String
+  name        String
+  description String?
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  workspace   Workspace                @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  items       ChecklistTemplateItem[]
+  checklists  ProjectChecklist[]
+
+  @@unique([workspaceId, key])
+  @@index([workspaceId])
+}
+
+model ChecklistTemplateItem {
+  id         String            @id @default(cuid())
+  templateId String
+  title      String
+  order      Int
+  template   ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId, order])
+}
+
+model ProjectChecklist {
+  id           String             @id @default(cuid())
+  workspaceId  String
+  projectId    String
+  stageId      String?
+  templateId   String?
+  name         String
+  validationId String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  workspace    Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project      Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stage        Stage?             @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  template     ChecklistTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  items        ChecklistItem[]
+
+  @@index([workspaceId])
+  @@index([projectId])
+}
+
+model ChecklistItem {
+  id                String           @id @default(cuid())
+  checklistId       String
+  title             String
+  order             Int
+  completedAt       DateTime?
+  completedByUserId String?
+  note              String?
+  checklist         ProjectChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  completedBy       User?            @relation(fields: [completedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([checklistId, order])
 }
 
 model Member {

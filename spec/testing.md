@@ -36,3 +36,11 @@ Testes de domínio não exigem Postgres. Teste de persistência usa `DATABASE_UR
 - collection do workspace B não contém cards do A (colunas vazias)
 - `completed`/`cancelled` e projeto sem etapa atual não entram no board
 
+## C4 obrigatório
+
+- mesmo template em dois projetos; mutar o molde não altera instâncias
+- marcar item grava `completedByUserId` + `completedAt`; event `checklist.item_completed`
+- completar item não muda `Stage.status`
+- IDOR `PATCH` item outro workspace → 404 vazio
+- collection `GET /api/checklists` do workspace B vazia
+
