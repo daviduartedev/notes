@@ -21,7 +21,7 @@ Flat Medium: catálogo de 6 grafos, CRUD owner, `project.create` exige `workflow
 ## Commit / push
 
 - Mensagem: `cycle(11): workflow templates`
-- SHA: *(preenchido após commit)*
+- SHA: `8a76103f8d11219bfb9e4eccb155a13fad522dcc`
 - Push `origin main`: *(preenchido após push)*
 
 ## Decisões
