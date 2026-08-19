@@ -1,6 +1,6 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-19 (C7 — SHA após commit).
+Atualizado: 2026-08-19 (C7 `124c0c72b4534d1fefcc593e689b3d9e5aeb42a7`).
 
 ## Produto
 

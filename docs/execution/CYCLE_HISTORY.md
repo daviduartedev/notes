@@ -11,7 +11,7 @@ Ordem de execução (ORCH-011): **C0 → C1 → C2 → C3 → C4 → C5 → C6 �
 | C4 checklists | done | Templates e instâncias de checklist | sim | lint/typecheck/test/build 0 | `3b30055` | Deep copy; não muda Stage.status |
 | C5 validacoes | done | Máquina de validação | sim | lint/typecheck/test/build 0 | `db3e972` | Sem Playwright; ≠ Approval |
 | C6 aprovacoes | done | Approvals + snapshot | sim | lint/typecheck/test/build 0 | `98c25a6` | Sem Playwright; grant ≠ etapa |
-| C7 pendencias | done | Blockers | sim | lint/typecheck/test/build 0 | (SHA) | Sem Playwright; ≠ Checklist |
+| C7 pendencias | done | Blockers | sim | lint/typecheck/test/build 0 | `124c0c7` | Sem Playwright; ≠ Checklist |
 | C8 lembretes | pending | Reminders + política 3 dias | — | — | — | Depende C1+C2 |
 | C9 reunioes | pending | Meetings | — | — | — | Depende C1+C2 |
 | C10 hoje-dashboard | pending | `/hoje` operacional (fecha MVP) | — | — | — | Depende C3–C9 |

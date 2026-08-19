@@ -21,8 +21,8 @@ Flat Medium: domínio da máquina + invariante complete, Prisma Blocker, HTTP de
 ## Commit / push
 
 - Mensagem: `cycle(07): blockers`
-- SHA: (preencher após commit)
-- Push `origin main`: (preencher após push)
+- SHA: `124c0c72b4534d1fefcc593e689b3d9e5aeb42a7`
+- Push `origin main`: (após push)
 
 ## Decisões
 
