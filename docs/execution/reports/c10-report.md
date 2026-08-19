@@ -21,8 +21,8 @@ Flat Medium: domínio do aggregator, `GET /api/hoje`, persistência, UI `/hoje` 
 ## Commit / push
 
 - Mensagem: `cycle(10): operational today dashboard`
-- SHA: (preenchido após commit)
-- Push `origin main`: (preenchido após push)
+- SHA: `66e4991005b13b42a495790dc0a5e82b164bc1f2`
+- Push `origin main`: (após push)
 
 ## Decisões
 
