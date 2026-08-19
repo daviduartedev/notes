@@ -22,7 +22,7 @@ Flat Medium: domínio do aggregator, `GET /api/hoje`, persistência, UI `/hoje` 
 
 - Mensagem: `cycle(10): operational today dashboard`
 - SHA: `66e4991005b13b42a495790dc0a5e82b164bc1f2`
-- Push `origin main`: (após push)
+- Push `origin main`: ok (`fe6ab23..2df7054`)
 
 ## Decisões
 
