@@ -30,3 +30,9 @@ Testes de domínio não exigem Postgres. Teste de persistência usa `DATABASE_UR
 - template editado não altera instâncias já copiadas
 - IDOR na transição → 404 vazio
 
+## C3 obrigatório
+
+- dois projetos em `currentStage.key` diferentes aparecem só na coluna certa
+- collection do workspace B não contém cards do A (colunas vazias)
+- `completed`/`cancelled` e projeto sem etapa atual não entram no board
+

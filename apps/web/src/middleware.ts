@@ -19,6 +19,8 @@ export const config = {
     "/hoje/:path*",
     "/hoje",
     "/login",
+    "/pipeline/:path*",
+    "/pipeline",
     "/clientes/:path*",
     "/clientes",
     "/projetos/:path*",

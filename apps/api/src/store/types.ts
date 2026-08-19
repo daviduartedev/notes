@@ -1,3 +1,4 @@
+import type { PipelineCardRow } from "../domain/pipeline-board.js";
 import type {
   ActivityAction,
   ClientStatus,
@@ -68,6 +69,12 @@ export type ProjectFilters = {
   priority?: ProjectPriority;
 };
 
+export type PipelineFilters = {
+  ownerUserId?: string;
+  clientId?: string;
+  priority?: ProjectPriority;
+};
+
 export type ProjectCreateInput = Omit<
   ProjectRecord,
   "id" | "createdAt" | "updatedAt" | "workflowTemplateId" | "currentStageId"
@@ -123,6 +130,7 @@ export type NotesStore = {
   countProjectsForClient(clientId: string): Promise<number>;
   deleteClient(id: string): Promise<boolean>;
   listProjects(workspaceId: string, filters: ProjectFilters): Promise<ProjectRecord[]>;
+  listPipelineCards(workspaceId: string, filters: PipelineFilters): Promise<PipelineCardRow[]>;
   getProject(id: string): Promise<ProjectRecord | null>;
   createProject(data: ProjectCreateInput): Promise<ProjectRecord>;
   updateProject(id: string, data: ProjectUpdateInput): Promise<ProjectRecord | null>;

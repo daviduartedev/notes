@@ -27,4 +27,4 @@ Se `status === active` e `dueDate < now`, o DTO inclui `visualState: "overdue"`.
 
 ## Web
 
-`/projetos`, `/projetos/:id` (cabeçalho operacional + seção Etapas C2; sem abas de checklist/validação). Lista também em `/clientes/:id`.
+`/projetos`, `/projetos/:id` (cabeçalho operacional + seção Etapas C2; sem abas de checklist/validação). Lista também em `/clientes/:id`. Board operacional em `/pipeline` (C3); `completed`/`cancelled` não entram no quadro.

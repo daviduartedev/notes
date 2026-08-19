@@ -3,6 +3,7 @@ import { LogoutButton } from "@/components/logout-button";
 
 const links = [
   { href: "/hoje", label: "Hoje" },
+  { href: "/pipeline", label: "Pipeline" },
   { href: "/clientes", label: "Clientes" },
   { href: "/projetos", label: "Projetos" },
 ];
@@ -16,8 +17,11 @@ export function AppShell({
   pathname: string;
   children: ReactNode;
 }) {
+  const wide = pathname === "/pipeline" || pathname.startsWith("/pipeline/");
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-10">
+    <main
+      className={`mx-auto flex min-h-screen flex-col gap-6 px-6 py-10 ${wide ? "max-w-none" : "max-w-5xl"}`}
+    >
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-notes-border pb-4">
         <div className="flex flex-wrap items-center gap-6">
           <h1 className="font-display text-4xl">Notes</h1>

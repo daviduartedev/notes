@@ -79,6 +79,33 @@ export type ProjectDto = {
   updatedAt: string;
 };
 
+export type PipelineCardDto = {
+  id: string;
+  name: string;
+  clientId: string;
+  clientName: string;
+  ownerUserId: string;
+  ownerName: string;
+  dueDate: string | null;
+  priority: ProjectPriority;
+  status: ProjectStatus;
+  currentStageKey: string;
+  currentStageLabel: string;
+  stageStatus: StageStatus;
+  visualState: "overdue" | null;
+};
+
+export type PipelineColumnDto = {
+  key: string;
+  label: string;
+  order: number;
+  projects: PipelineCardDto[];
+};
+
+export type PipelineBoardDto = {
+  columns: PipelineColumnDto[];
+};
+
 export type ActivityDto = {
   id: string;
   workspaceId: string;

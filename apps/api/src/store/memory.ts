@@ -1,3 +1,4 @@
+import { PIPELINE_BOARD_STATUSES, type PipelineCardRow } from "../domain/pipeline-board.js";
 import { SAAS_DELIVERY_STAGES } from "../domain/saas-delivery-template.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
 import type { StagePhase } from "../domain/types.js";
@@ -10,6 +11,7 @@ import type {
   ClientUpdateInput,
   MemberRecord,
   NotesStore,
+  PipelineFilters,
   ProjectCreateInput,
   ProjectFilters,
   ProjectRecord,
@@ -219,6 +221,40 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
         .filter((row) => matchesProjectFilters(row, filters))
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
         .map(cloneProject);
+    },
+    async listPipelineCards(workspaceId, filters: PipelineFilters) {
+      const boardStatuses = new Set<string>(PIPELINE_BOARD_STATUSES);
+      const memberByUser = new Map(
+        members.filter((member) => member.workspaceId === workspaceId).map((member) => [member.userId, member]),
+      );
+      const cards: PipelineCardRow[] = [];
+      for (const project of projects.values()) {
+        if (project.workspaceId !== workspaceId) continue;
+        if (!boardStatuses.has(project.status)) continue;
+        if (!project.currentStageId) continue;
+        if (filters.ownerUserId && project.ownerUserId !== filters.ownerUserId) continue;
+        if (filters.clientId && project.clientId !== filters.clientId) continue;
+        if (filters.priority && project.priority !== filters.priority) continue;
+        const stage = stages.get(project.currentStageId);
+        if (!stage) continue;
+        const client = clients.get(project.clientId);
+        const owner = memberByUser.get(project.ownerUserId);
+        cards.push({
+          id: project.id,
+          name: project.name,
+          clientId: project.clientId,
+          clientName: client?.name ?? "",
+          ownerUserId: project.ownerUserId,
+          ownerName: owner?.name ?? owner?.email ?? "",
+          dueDate: project.dueDate ? new Date(project.dueDate) : null,
+          priority: project.priority,
+          status: project.status,
+          currentStageKey: stage.key,
+          currentStageLabel: stage.label,
+          stageStatus: stage.status,
+        });
+      }
+      return cards;
     },
     async getProject(id) {
       const row = projects.get(id);

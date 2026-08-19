@@ -288,3 +288,45 @@ Actions `stage.started`, `stage.transitioned`, `stage.completed` no `ActivityEve
 ### Consequências
 Histórico da ficha exibe o avanço do pipeline.
 
+---
+
+## ADR-0015 — Colunas do pipeline por currentStage.key (C3-D1/D2/D7)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c3-pipeline/
+- **Status:** Accepted
+
+### Contexto
+O request C3 deixava aberto agrupar por `key` fino vs `phase`, e se haveria drag neste Medium.
+
+### Decisão
+Dez colunas = keys do template SaaS, ordem `order`. Sempre presentes, mesmo vazias. Click-only para `/projetos/:id`. Sem `@dnd-kit`.
+
+### Alternativas consideradas
+- Colunas por `phase` (3) — pouco operacional.
+- Drag neste Medium — classificado Large; adiado.
+
+### Consequências
+O board não transiciona etapa. Transição continua na ficha (C2).
+
+---
+
+## ADR-0016 — GET /api/pipeline scoped com filtros (C3-D3–D15)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c3-pipeline/
+- **Status:** Accepted
+
+### Contexto
+Precisávamos de um endpoint de quadro sem N+1 e sem vazar tenant.
+
+### Decisão
+`GET /api/pipeline` devolve `{ columns }`. Envelopes `draft|active|on_hold`. Omitir sem etapa. Filtros `ownerUserId`, `clientId`, `priority`. Collection de outro workspace: colunas vazias. Prisma `include` client/currentStage/owner.
+
+### Alternativas consideradas
+- Reusar `GET /api/projects` e agrupar no client — N+1 de stages.
+- 404 na collection cross-tenant — inadequado para listagem.
+
+### Consequências
+C10 pode reutilizar o DTO de card. Playwright continua fora.
+

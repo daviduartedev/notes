@@ -26,7 +26,13 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 | `/projetos` | autenticado | lista + criação; filtros responsável/status/cliente/prazo/prioridade |
 | `/projetos/:id` | autenticado | cabeçalho operacional + overdue + **seção Etapas** + histórico |
 
-Nav: Hoje / Clientes / Projetos. `/hoje` continua empty state.
+## Rotas C3
+
+| Path | Quem | Comportamento |
+|------|------|----------------|
+| `/pipeline` | autenticado | board horizontal por etapa atual; filtros responsável/cliente/prioridade; card → `/projetos/:id` |
+
+Nav: Hoje / Pipeline / Clientes / Projetos. `/hoje` continua empty state.
 
 Primitivos: Button, Input, Card, StatusPill, Select, Textarea.
 

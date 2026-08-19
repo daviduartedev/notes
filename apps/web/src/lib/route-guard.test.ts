@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { isProtectedPath, loginRedirect } from "./route-guard";
 
 describe("proteção de rotas", () => {
-  it("protege /hoje, /clientes e /projetos", () => {
+  it("protege /hoje, /pipeline, /clientes e /projetos", () => {
     expect(isProtectedPath("/hoje")).toBe(true);
+    expect(isProtectedPath("/pipeline")).toBe(true);
+    expect(isProtectedPath("/pipeline/x")).toBe(true);
     expect(isProtectedPath("/clientes")).toBe(true);
     expect(isProtectedPath("/clientes/abc")).toBe(true);
     expect(isProtectedPath("/projetos")).toBe(true);
@@ -12,6 +14,10 @@ describe("proteção de rotas", () => {
 
   it("redireciona visitante de /hoje para /login", () => {
     expect(loginRedirect("/hoje", false)).toBe("/login");
+  });
+
+  it("redireciona visitante de /pipeline para /login", () => {
+    expect(loginRedirect("/pipeline", false)).toBe("/login");
   });
 
   it("redireciona visitante de /clientes para /login", () => {

@@ -3,7 +3,7 @@
 **Pasta:** `cycles/Q32026/0818-c3-pipeline/`  
 **Tipo:** Medium  
 **Depende de:** C2 fechado  
-**Status:** `request.md` pronto → **Refine depois de C2**
+**Status:** **fechado** (2026-08-19)
 
 Abra um **chat novo** para cada janela. Cole o bloco. Padrão Elli: uma missão por contexto.
 

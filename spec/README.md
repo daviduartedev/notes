@@ -20,3 +20,4 @@ Verdade canônica do que foi **implementado e validado**. Propostas de cycle fic
 | [features/projects/](features/projects/readme.md) | CRUD projeto, overdue |
 | [features/activity/](features/activity/readme.md) | Histórico de mutações |
 | [features/stages/](features/stages/readme.md) | Template SaaS, etapas, transições |
+| [features/pipeline/](features/pipeline/readme.md) | Board `/pipeline` por etapa atual |

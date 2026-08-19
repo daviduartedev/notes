@@ -2,6 +2,8 @@ export function isProtectedPath(pathname: string): boolean {
   return (
     pathname === "/hoje" ||
     pathname.startsWith("/hoje/") ||
+    pathname === "/pipeline" ||
+    pathname.startsWith("/pipeline/") ||
     pathname === "/clientes" ||
     pathname.startsWith("/clientes/") ||
     pathname === "/projetos" ||

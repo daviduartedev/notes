@@ -32,7 +32,13 @@ API em `apps/api` (Hono + Prisma + Auth.js), porta **3014**.
 | GET | `/api/projects/:id/activity` | sessão | |
 | POST | `/api/projects/:id/stages/:stageId/transition` | sessão | body `action` e/ou `to`; 409 ilegal sem event |
 
-CORS: GET, POST, PATCH, PUT, DELETE, OPTIONS. `workspaceId` no body é ignorado. PATCH `currentStageId` é ignorado.
+## Contratos C3
+
+| Método | Path | Auth | Notas |
+|--------|------|------|-------|
+| GET | `/api/pipeline` | sessão | `{ columns }`; filtros ownerUserId, clientId, priority; 10 colunas SaaS |
+
+CORS: GET, POST, PATCH, PUT, DELETE, OPTIONS. `workspaceId` no body é ignorado. PATCH `currentStageId` é ignorado. Query `workspaceId` em `/api/pipeline` também é ignorada.
 
 GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR.
 

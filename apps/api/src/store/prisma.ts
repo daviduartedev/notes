@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
+import { PIPELINE_BOARD_STATUSES, type PipelineCardRow } from "../domain/pipeline-board.js";
 import type {
   ActivityAction,
   ClientStatus,
@@ -16,6 +17,7 @@ import type {
   ClientFilters,
   ClientRecord,
   NotesStore,
+  PipelineFilters,
   ProjectCreateInput,
   ProjectFilters,
   ProjectRecord,
@@ -228,6 +230,42 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
         orderBy: { createdAt: "desc" },
       });
       return rows.map(mapProject);
+    },
+    async listPipelineCards(workspaceId, filters: PipelineFilters) {
+      const rows = await prisma.project.findMany({
+        where: {
+          workspaceId,
+          status: { in: [...PIPELINE_BOARD_STATUSES] },
+          currentStageId: { not: null },
+          ...(filters.ownerUserId ? { ownerUserId: filters.ownerUserId } : {}),
+          ...(filters.clientId ? { clientId: filters.clientId } : {}),
+          ...(filters.priority ? { priority: filters.priority } : {}),
+        },
+        include: {
+          client: { select: { name: true } },
+          currentStage: { select: { key: true, label: true, status: true } },
+          owner: { select: { name: true, email: true } },
+        },
+      });
+      const cards: PipelineCardRow[] = [];
+      for (const row of rows) {
+        if (!row.currentStage) continue;
+        cards.push({
+          id: row.id,
+          name: row.name,
+          clientId: row.clientId,
+          clientName: row.client.name,
+          ownerUserId: row.ownerUserId,
+          ownerName: row.owner.name ?? row.owner.email,
+          dueDate: row.dueDate,
+          priority: row.priority,
+          status: row.status,
+          currentStageKey: row.currentStage.key,
+          currentStageLabel: row.currentStage.label,
+          stageStatus: row.currentStage.status,
+        });
+      }
+      return cards;
     },
     async getProject(id) {
       const row = await prisma.project.findUnique({ where: { id } });
