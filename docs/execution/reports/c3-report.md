@@ -22,7 +22,7 @@ Flat Medium: domínio, store joins, `GET /api/pipeline`, persistência, UI `/pip
 
 - Mensagem: `cycle(03): pipeline board`
 - SHA: `37b15280b61bd02670cfa8bd1630db77cd713c6d`
-- Push `origin main`: pending
+- Push `origin main`: ok (`3cdc65d..4d6d16a`)
 
 ## Decisões
 
