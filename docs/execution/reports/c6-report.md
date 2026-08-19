@@ -21,8 +21,8 @@ Flat Medium: domínio da máquina, Prisma, HTTP decide, persistência, UI ficha 
 ## Commit / push
 
 - Mensagem: `cycle(06): approvals`
-- SHA: (preenchido após commit)
-- Push `origin main`: (preenchido após push)
+- SHA: `98c25a6254347739d79aa99edec2e2e22c663855`
+- Push `origin main`: ok (`8cdac5c..98c25a6`)
 
 ## Decisões
 

@@ -1,6 +1,6 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-19 (C6 pending SHA).
+Atualizado: 2026-08-19 (C6 `98c25a6254347739d79aa99edec2e2e22c663855`).
 
 ## Produto
 
