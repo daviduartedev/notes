@@ -22,7 +22,7 @@ Flat Medium: catálogo de 6 grafos, CRUD owner, `project.create` exige `workflow
 
 - Mensagem: `cycle(11): workflow templates`
 - SHA: `8a76103f8d11219bfb9e4eccb155a13fad522dcc`
-- Push `origin main`: *(preenchido após push)*
+- Push `origin main`: ok (`31cd1c0..553c1d7`)
 
 ## Decisões
 
