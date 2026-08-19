@@ -1,6 +1,6 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-19 (C8 fechado).
+Atualizado: 2026-08-19 (C8 `3d83e3c792541c78b71816749ebc20806c07cbee`).
 
 ## Produto
 

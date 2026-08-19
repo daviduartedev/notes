@@ -21,7 +21,7 @@ Flat Medium: domínio da máquina + política com fake clock, Prisma Reminder + 
 ## Commit / push
 
 - Mensagem: `cycle(08): reminders`
-- SHA: (HEAD após o commit deste close)
+- SHA: `3d83e3c792541c78b71816749ebc20806c07cbee`
 - Push `origin main`: (após push)
 
 ## Decisões
