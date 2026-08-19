@@ -13,6 +13,8 @@ import type {
   BlockerStatus,
   BlockerAssigneeKind,
   BlockerAction,
+  ReminderStatus,
+  ReminderAction,
 } from "./domain-types";
 
 export const clientStatusLabel: Record<ClientStatus, string> = {
@@ -114,6 +116,20 @@ export const blockerAssigneeKindLabel: Record<BlockerAssigneeKind, string> = {
 
 export const blockerActionLabel: Record<BlockerAction, string> = {
   resolve: "Resolver",
+  cancel: "Cancelar",
+};
+
+export const reminderStatusLabel: Record<ReminderStatus, string> = {
+  scheduled: "Agendado",
+  due: "Vencido",
+  done: "Enviado",
+  snoozed: "Adiado",
+  cancelled: "Cancelado",
+};
+
+export const reminderActionLabel: Record<ReminderAction, string> = {
+  complete: "Marcar enviado",
+  snooze: "Adiar",
   cancel: "Cancelar",
 };
 

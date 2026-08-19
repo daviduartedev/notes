@@ -53,3 +53,8 @@ Sem modelo Approval neste cycle C5; C6 adiciona Approval.
 
 - `Blocker` — status `open|resolved|cancelled`; `assigneeKind` `internal|client`; `assigneeUserId` nullable (null se cliente); `blocksStageId` nullable; `blocksProject`; `dueDate`; `openedAt`; `resolvedAt`; `cancelledAt`; `sourceMeetingId` nullable sem FK; `notes`
 
+## Modelos C8
+
+- `Client.lastInteractionAt` e `Project.lastInteractionAt` (atualizados em events relevantes)
+- `Reminder` — `subjectType`/`subjectId`; `clientId`/`projectId` denormalizados; `channel` `internal`; `policyKey`; status `scheduled|due|done|snoozed|cancelled`; `dueAt`; `snoozedUntil`; `doneAt`; `cancelledAt`; `draftMessage`
+

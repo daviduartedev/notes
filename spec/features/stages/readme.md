@@ -43,7 +43,7 @@ Events no `ActivityEvent` do projeto: `stage.started`, `stage.transitioned` (`fr
 
 `/projetos/:id` seção Etapas (board vertical, labels Caveat). Botões disabled com motivo. Visual waiting / blocked; overdue do C1 no cabeçalho.
 
-Quadro transversal em `/pipeline` (C3). Completar item de checklist **não** muda `Stage.status` (C4). `changes_requested` na validação **não** recua etapa (C5). Grant de Approval **não** avança etapa (C6). Blocker open a bloquear a etapa/projeto **rejeita** complete (C7); resolve não avança etapa.
+Quadro transversal em `/pipeline` (C3). Completar item de checklist **não** muda `Stage.status` (C4). `changes_requested` na validação **não** recua etapa (C5). Grant de Approval **não** avança etapa (C6). Blocker open a bloquear a etapa/projeto **rejeita** complete (C7); resolve não avança etapa. Etapa `waiting_client` alimenta a política de lembretes C8.
 
 ## Fora deste cycle
 

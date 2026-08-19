@@ -64,7 +64,7 @@ Completar item de checklist **não** muda `Stage.status`.
 
 CORS: GET, POST, PATCH, PUT, DELETE, OPTIONS. `workspaceId` no body é ignorado. PATCH `currentStageId` é ignorado. Query `workspaceId` em `/api/pipeline` também é ignorada.
 
-GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR. Completar item de checklist **não** muda `Stage.status`. `changes_requested` na validação **não** muda `Stage.status`. Grant de Approval **não** muda `Stage.status`. Blocker open a bloquear a etapa/projeto **rejeita** complete.
+GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR. Completar item de checklist **não** muda `Stage.status`. `changes_requested` na validação **não** muda `Stage.status`. Grant de Approval **não** muda `Stage.status`. Blocker open a bloquear a etapa/projeto **rejeita** complete. Reminder **não** envia mensagem para fora (`channel=internal`).
 
 ## Contratos C6
 
@@ -85,6 +85,15 @@ GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com m
 | GET | `/api/projects/:id/blockers` | sessão | 404 IDOR |
 | GET | `/api/blockers/:id` | sessão | 404 IDOR |
 | POST | `/api/blockers/:id/decide` | sessão | body `{ action, notes? }`; 409 ilegal; resolve não avança etapa |
+
+## Contratos C8
+
+| Método | Path | Auth | Notas |
+|--------|------|------|-------|
+| GET | `/api/reminders` | sessão | evaluate on-read; filtros status/projeto/cliente; tenant B → `[]` |
+| GET | `/api/projects/:id/reminders` | sessão | 404 IDOR; evaluate |
+| GET | `/api/reminders/:id` | sessão | 404 IDOR |
+| POST | `/api/reminders/:id/decide` | sessão | body `{ action: complete\|snooze\|cancel, snoozeUntil? }`; 409 ilegal |
 
 ## Erros
 

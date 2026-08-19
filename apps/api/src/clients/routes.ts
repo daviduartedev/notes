@@ -69,6 +69,7 @@ export function clientRoutes(deps: AppDeps) {
       status: "lead",
       lastContactAt: toDateOrNull(parsed.data.lastContactAt) ?? null,
       nextFollowUpAt: toDateOrNull(parsed.data.nextFollowUpAt) ?? null,
+      lastInteractionAt: null,
     });
     await recordActivity(deps, {
       workspaceId,

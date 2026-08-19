@@ -33,5 +33,7 @@ export const config = {
     "/aprovacoes",
     "/pendencias/:path*",
     "/pendencias",
+    "/lembretes/:path*",
+    "/lembretes",
   ],
 };

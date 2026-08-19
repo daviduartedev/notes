@@ -76,6 +76,7 @@ export function serializeProject(
     currentStageKey: current?.key ?? null,
     openBlockerCount: openBlockers.length,
     waitingOnClient,
+    lastInteractionAt: row.lastInteractionAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     ...(stages

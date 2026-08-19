@@ -74,4 +74,13 @@ Testes de domínio não exigem Postgres. Teste de persistência usa `DATABASE_UR
 - IDOR GET/decide outro workspace → 404 vazio
 - collection `GET /api/blockers` do workspace B vazia
 
+## C8 obrigatório
+
+- política `proposalWaitingClientFollowUp` com relógio fake: `waiting_client` + 3 dias cria Reminder
+- segundo GET não duplica scheduled/due
+- snooze volta para scheduled com +7 dias; complete → done
+- activity `reminder.created` sem texto do draft
+- IDOR GET/decide outro workspace → 404 vazio
+- collection `GET /api/reminders` do workspace B vazia
+
 

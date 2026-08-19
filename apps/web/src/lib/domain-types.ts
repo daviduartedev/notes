@@ -31,6 +31,10 @@ export type ApprovalAction = "grant" | "reject" | "cancel" | "revoke";
 export type BlockerStatus = "open" | "resolved" | "cancelled";
 export type BlockerAssigneeKind = "internal" | "client";
 export type BlockerAction = "resolve" | "cancel";
+export type ReminderStatus = "scheduled" | "due" | "done" | "snoozed" | "cancelled";
+export type ReminderAction = "complete" | "snooze" | "cancel";
+export type ReminderChannel = "internal";
+export type ReminderSubjectType = "project" | "client";
 
 export type MemberDto = {
   id: string;
@@ -50,6 +54,7 @@ export type ClientDto = {
   status: ClientStatus;
   lastContactAt: string | null;
   nextFollowUpAt: string | null;
+  lastInteractionAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -98,6 +103,7 @@ export type ProjectDto = {
   stages?: StageDto[];
   openBlockerCount?: number;
   waitingOnClient?: boolean;
+  lastInteractionAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -157,7 +163,9 @@ export type ActivityDto = {
     | "approval.rejected"
     | "approval.revoked"
     | "blocker.opened"
-    | "blocker.resolved";
+    | "blocker.resolved"
+    | "reminder.created"
+    | "reminder.completed";
   payload: Record<string, unknown>;
   createdAt: string;
 };
@@ -284,6 +292,29 @@ export type BlockerDto = {
   notes: string | null;
   visualState: "overdue" | null;
   allowedActions: BlockerAction[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ReminderDto = {
+  id: string;
+  workspaceId: string;
+  subjectType: ReminderSubjectType;
+  subjectId: string;
+  clientId: string;
+  clientName: string;
+  projectId: string | null;
+  projectName: string | null;
+  channel: ReminderChannel;
+  policyKey: string | null;
+  status: ReminderStatus;
+  dueAt: string;
+  snoozedUntil: string | null;
+  doneAt: string | null;
+  cancelledAt: string | null;
+  draftMessage: string;
+  visualState: "overdue" | null;
+  allowedActions: ReminderAction[];
   createdAt: string;
   updatedAt: string;
 };

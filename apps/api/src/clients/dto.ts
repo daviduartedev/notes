@@ -13,6 +13,7 @@ export function serializeClient(row: ClientRecord) {
     status: row.status,
     lastContactAt: row.lastContactAt?.toISOString() ?? null,
     nextFollowUpAt: row.nextFollowUpAt?.toISOString() ?? null,
+    lastInteractionAt: row.lastInteractionAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

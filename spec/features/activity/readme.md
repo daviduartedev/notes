@@ -24,7 +24,9 @@
 - `approval.revoked`
 - `blocker.opened`
 - `blocker.resolved`
+- `reminder.created`
+- `reminder.completed`
 
-Payload consultável **sem** telefone/e-mail. Sanitizer remove essas chaves.
+Payload consultável **sem** telefone/e-mail. Sanitizer remove essas chaves e o texto de draft de lembrete.
 
 GET `/api/clients/:id/activity` agrega eventos do cliente e dos projetos daquele cliente. GET `/api/projects/:id/activity` só do projeto. Cross-tenant → 404 vazio.

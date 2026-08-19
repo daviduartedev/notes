@@ -5,6 +5,10 @@ const FORBIDDEN_KEYS = new Set([
   "telefone",
   "e-mail",
   "e_mail",
+  "draftmessage",
+  "draft",
+  "mensagem",
+  "message",
 ]);
 
 export function sanitizeActivityPayload(

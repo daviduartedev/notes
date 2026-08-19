@@ -480,6 +480,48 @@ Playwright continua fora. Checklist não vira Blocker automático.
 
 ---
 
+## ADR-0025 — Reminder interno e política nomeada (C8-D1–D12)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c8-lembretes/
+- **Status:** Accepted
+
+### Contexto
+Follow-up da proposta parada no cliente não pode depender de WhatsApp nem de motor genérico de automações.
+
+### Decisão
+Tabela `Reminder` polimórfica (`subjectType`/`subjectId`) com `channel=internal`. Política nomeada `proposalWaitingClientFollowUp`: etapa `waiting_client` + 3 dias sem `lastInteractionAt`. Avaliação on-read de `GET /api/reminders` com relógio injetável. Draft pt-BR; texto completo fora do activity.
+
+### Alternativas consideradas
+- `POST /api/reminders/evaluate` — rejeitado (brief: on-read).
+- Engine WHEN/THEN — rejeitado.
+
+### Consequências
+C10 pode listar reminders due em `/hoje`. Envio externo permanece fora.
+
+---
+
+## ADR-0026 — Máquina e isolamento de Reminder (C8-D13–D25)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c8-lembretes/
+- **Status:** Accepted
+
+### Contexto
+Mesmo padrão de tenant e mass assignment dos cycles anteriores.
+
+### Decisão
+Estados `scheduled → due → done|snoozed|cancelled`; snooze persiste `scheduled` com `dueAt` +7d. Status só via `POST /api/reminders/:id/decide`. GET/decide outro tenant → 404; collection → `[]`. UI `/lembretes` + seção na ficha.
+
+### Alternativas consideradas
+- POST create manual — fora deste cycle.
+- Playwright E2E — ORCH-008.
+
+### Consequências
+Playwright continua fora. WhatsApp/e-mail/Calendar fora.
+
+---
+
 ## ADR-0018 — Completar item não muda Stage.status (C4-D7–D16)
 
 - **Data:** 2026-08-19

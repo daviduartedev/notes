@@ -10,6 +10,7 @@ const links = [
   { href: "/validacoes", label: "Validações" },
   { href: "/aprovacoes", label: "Aprovações" },
   { href: "/pendencias", label: "Pendências" },
+  { href: "/lembretes", label: "Lembretes" },
 ];
 
 export function AppShell({

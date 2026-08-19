@@ -13,6 +13,11 @@ import type {
   ValidationType,
 } from "../domain/validation-status.js";
 import type {
+  ReminderChannel,
+  ReminderStatus,
+  ReminderSubjectType,
+} from "../domain/reminder-status.js";
+import type {
   ActivityAction,
   ClientStatus,
   EntityType,
@@ -41,6 +46,7 @@ export type ClientRecord = {
   status: ClientStatus;
   lastContactAt: Date | null;
   nextFollowUpAt: Date | null;
+  lastInteractionAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -69,6 +75,7 @@ export type ProjectRecord = {
   notes: string | null;
   workflowTemplateId: string | null;
   currentStageId: string | null;
+  lastInteractionAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -322,6 +329,58 @@ export type BlockerCreateInput = {
   now: Date;
 };
 
+export type ReminderRecord = {
+  id: string;
+  workspaceId: string;
+  subjectType: ReminderSubjectType;
+  subjectId: string;
+  clientId: string;
+  clientName: string;
+  projectId: string | null;
+  projectName: string | null;
+  channel: ReminderChannel;
+  policyKey: string | null;
+  status: ReminderStatus;
+  dueAt: Date;
+  snoozedUntil: Date | null;
+  doneAt: Date | null;
+  cancelledAt: Date | null;
+  draftMessage: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type ReminderFilters = {
+  status?: ReminderStatus;
+  projectId?: string;
+  clientId?: string;
+};
+
+export type ReminderCreateInput = {
+  workspaceId: string;
+  subjectType: ReminderSubjectType;
+  subjectId: string;
+  clientId: string;
+  projectId: string | null;
+  channel: ReminderChannel;
+  policyKey: string | null;
+  status: ReminderStatus;
+  dueAt: Date;
+  draftMessage: string;
+  now: Date;
+};
+
+export type FollowUpCandidate = {
+  id: string;
+  workspaceId: string;
+  clientId: string;
+  name: string;
+  clientName: string;
+  currentStageKey: string | null;
+  lastInteractionAt: Date | null;
+  createdAt: Date;
+};
+
 export type ValidationUpdateInput = {
   type?: ValidationType;
   reviewerUserId?: string | null;
@@ -433,4 +492,23 @@ export type NotesStore = {
     cancelledAt: Date | null;
     notes: string | null;
   }): Promise<BlockerRecord | null>;
+  touchLastInteraction(input: {
+    entityType: EntityType;
+    entityId: string;
+    now: Date;
+  }): Promise<void>;
+  listFollowUpCandidates(workspaceId: string): Promise<FollowUpCandidate[]>;
+  listReminders(workspaceId: string, filters: ReminderFilters): Promise<ReminderRecord[]>;
+  listProjectReminders(projectId: string): Promise<ReminderRecord[]>;
+  getReminder(id: string): Promise<ReminderRecord | null>;
+  createReminder(data: ReminderCreateInput): Promise<ReminderRecord | null>;
+  persistReminderDecision(input: {
+    id: string;
+    status: ReminderStatus;
+    dueAt: Date;
+    doneAt: Date | null;
+    cancelledAt: Date | null;
+    snoozedUntil: Date | null;
+  }): Promise<ReminderRecord | null>;
+  promoteDueReminders(workspaceId: string, now: Date): Promise<number>;
 };

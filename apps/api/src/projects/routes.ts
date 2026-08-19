@@ -164,6 +164,7 @@ export function projectRoutes(deps: AppDeps) {
       priority: parsed.data.priority ?? "medium",
       progress: parsed.data.progress ?? 0,
       notes: parsed.data.notes ?? null,
+      lastInteractionAt: null,
     });
     await recordActivity(deps, {
       workspaceId,

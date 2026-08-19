@@ -95,6 +95,23 @@ enum BlockerAssigneeKind {
   client
 }
 
+enum ReminderStatus {
+  scheduled
+  due
+  done
+  snoozed
+  cancelled
+}
+
+enum ReminderChannel {
+  internal
+}
+
+enum ReminderSubjectType {
+  project
+  client
+}
+
 model User {
   id             String   @id @default(cuid())
   email          String   @unique
@@ -130,6 +147,7 @@ model Workspace {
   validations       Validation[]
   approvals         Approval[]
   blockers          Blocker[]
+  reminders         Reminder[]
 }
 
 model Client {
@@ -144,11 +162,13 @@ model Client {
   status         ClientStatus @default(lead)
   lastContactAt  DateTime?
   nextFollowUpAt DateTime?
+  lastInteractionAt DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   workspace      Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   owner          User         @relation("ClientOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
   projects       Project[]
+  reminders      Reminder[]
 
   @@index([workspaceId])
   @@index([workspaceId, ownerUserId])
@@ -170,6 +190,7 @@ model Project {
   notes              String?
   workflowTemplateId String?
   currentStageId     String?          @unique
+  lastInteractionAt  DateTime?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   workspace          Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -182,6 +203,7 @@ model Project {
   validations        Validation[]
   approvals          Approval[]
   blockers           Blocker[]
+  reminders          Reminder[]
 
   @@index([workspaceId])
   @@index([workspaceId, clientId])
@@ -408,6 +430,34 @@ model Blocker {
   @@index([projectId])
   @@index([workspaceId, status])
   @@index([assigneeUserId])
+}
+
+model Reminder {
+  id            String              @id @default(cuid())
+  workspaceId   String
+  subjectType   ReminderSubjectType
+  subjectId     String
+  clientId      String
+  projectId     String?
+  channel       ReminderChannel     @default(internal)
+  policyKey     String?
+  status        ReminderStatus      @default(scheduled)
+  dueAt         DateTime
+  snoozedUntil  DateTime?
+  doneAt        DateTime?
+  cancelledAt   DateTime?
+  draftMessage  String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  workspace     Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client        Client              @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  project       Project?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([projectId])
+  @@index([clientId])
+  @@index([policyKey])
 }
 
 model Member {

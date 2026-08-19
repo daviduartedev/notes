@@ -21,6 +21,8 @@ const actionLabel: Record<ActivityDto["action"], string> = {
   "approval.revoked": "Aprovação revogada",
   "blocker.opened": "Pendência aberta",
   "blocker.resolved": "Pendência resolvida",
+  "reminder.created": "Lembrete criado",
+  "reminder.completed": "Lembrete enviado",
 };
 
 export function ActivityList({ events }: { events: ActivityDto[] }) {

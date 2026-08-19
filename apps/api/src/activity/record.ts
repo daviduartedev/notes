@@ -2,6 +2,18 @@ import { sanitizeActivityPayload } from "../domain/activity.js";
 import type { ActivityAction, EntityType } from "../domain/types.js";
 import type { AppDeps } from "../deps.js";
 
+const INTERACTION_ACTIONS = new Set<ActivityAction>([
+  "client.created",
+  "client.updated",
+  "project.created",
+  "project.updated",
+  "project.status_changed",
+  "stage.started",
+  "stage.transitioned",
+  "stage.completed",
+  "reminder.completed",
+]);
+
 export async function recordActivity(
   deps: AppDeps,
   input: {
@@ -13,7 +25,7 @@ export async function recordActivity(
     payload: Record<string, unknown>;
   },
 ) {
-  return deps.store.appendActivity({
+  const event = await deps.store.appendActivity({
     workspaceId: input.workspaceId,
     actorId: input.actorId,
     entityType: input.entityType,
@@ -21,6 +33,14 @@ export async function recordActivity(
     action: input.action,
     payload: sanitizeActivityPayload(input.payload),
   });
+  if (INTERACTION_ACTIONS.has(input.action)) {
+    await deps.store.touchLastInteraction({
+      entityType: input.entityType,
+      entityId: input.entityId,
+      now: deps.now(),
+    });
+  }
+  return event;
 }
 
 export function serializeActivity(row: {

@@ -20,6 +20,11 @@ import {
   type BlockerStatus,
 } from "../domain/blocker-status.js";
 import type {
+  ReminderChannel,
+  ReminderStatus,
+  ReminderSubjectType,
+} from "../domain/reminder-status.js";
+import type {
   ValidationStatus,
   ValidationType,
 } from "../domain/validation-status.js";
@@ -40,6 +45,7 @@ import type {
   ClientFilters,
   ClientRecord,
   ClientUpdateInput,
+  FollowUpCandidate,
   MemberRecord,
   NotesStore,
   PipelineFilters,
@@ -48,6 +54,9 @@ import type {
   ProjectFilters,
   ProjectRecord,
   ProjectUpdateInput,
+  ReminderCreateInput,
+  ReminderFilters,
+  ReminderRecord,
   StagePersistPatch,
   StageRecord,
   ValidationCreateInput,
@@ -145,6 +154,25 @@ type BlockerRow = {
   updatedAt: Date;
 };
 
+type ReminderRow = {
+  id: string;
+  workspaceId: string;
+  subjectType: ReminderSubjectType;
+  subjectId: string;
+  clientId: string;
+  projectId: string | null;
+  channel: ReminderChannel;
+  policyKey: string | null;
+  status: ReminderStatus;
+  dueAt: Date;
+  snoozedUntil: Date | null;
+  doneAt: Date | null;
+  cancelledAt: Date | null;
+  draftMessage: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 type TemplateRow = {
   id: string;
   workspaceId: string;
@@ -167,6 +195,7 @@ function cloneClient(row: ClientRecord): ClientRecord {
     ...row,
     lastContactAt: row.lastContactAt ? new Date(row.lastContactAt) : null,
     nextFollowUpAt: row.nextFollowUpAt ? new Date(row.nextFollowUpAt) : null,
+    lastInteractionAt: row.lastInteractionAt ? new Date(row.lastInteractionAt) : null,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   };
@@ -177,6 +206,7 @@ function cloneProject(row: ProjectRecord): ProjectRecord {
     ...row,
     startDate: row.startDate ? new Date(row.startDate) : null,
     dueDate: row.dueDate ? new Date(row.dueDate) : null,
+    lastInteractionAt: row.lastInteractionAt ? new Date(row.lastInteractionAt) : null,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   };
@@ -276,6 +306,13 @@ function matchesBlockerFilters(
   return true;
 }
 
+function matchesReminderFilters(row: ReminderRow, filters: ReminderFilters): boolean {
+  if (filters.status && row.status !== filters.status) return false;
+  if (filters.projectId && row.projectId !== filters.projectId) return false;
+  if (filters.clientId && row.clientId !== filters.clientId) return false;
+  return true;
+}
+
 export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore {
   const members = [...seedMembers];
   const clients = new Map<string, ClientRecord>();
@@ -288,6 +325,7 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
   const validations = new Map<string, ValidationRow>();
   const approvals = new Map<string, ApprovalRow>();
   const blockers = new Map<string, BlockerRow>();
+  const reminders = new Map<string, ReminderRow>();
   const activities: ActivityRecord[] = [];
 
   function ensureTemplate(workspaceId: string): TemplateRow {
@@ -453,6 +491,32 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
     };
   }
 
+  function toReminderRecord(row: ReminderRow): ReminderRecord | null {
+    const client = clients.get(row.clientId);
+    const project = row.projectId ? projects.get(row.projectId) : null;
+    if (!client) return null;
+    return {
+      id: row.id,
+      workspaceId: row.workspaceId,
+      subjectType: row.subjectType,
+      subjectId: row.subjectId,
+      clientId: row.clientId,
+      clientName: client.name,
+      projectId: row.projectId,
+      projectName: project?.name ?? null,
+      channel: row.channel,
+      policyKey: row.policyKey,
+      status: row.status,
+      dueAt: new Date(row.dueAt),
+      snoozedUntil: row.snoozedUntil ? new Date(row.snoozedUntil) : null,
+      doneAt: row.doneAt ? new Date(row.doneAt) : null,
+      cancelledAt: row.cancelledAt ? new Date(row.cancelledAt) : null,
+      draftMessage: row.draftMessage,
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+    };
+  }
+
   function ensureChecklistTemplate(workspaceId: string): ChecklistTemplateRow {
     const existing = [...checklistTemplates.values()].find(
       (row) => row.workspaceId === workspaceId && row.key === DEPLOY_STAGING_TEMPLATE_KEY,
@@ -541,6 +605,7 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       const now = new Date();
       const row: ClientRecord = {
         ...data,
+        lastInteractionAt: data.lastInteractionAt ?? null,
         id: crypto.randomUUID(),
         createdAt: now,
         updatedAt: now,
@@ -625,6 +690,7 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       const now = new Date();
       const row: ProjectRecord = {
         ...data,
+        lastInteractionAt: data.lastInteractionAt ?? null,
         id: crypto.randomUUID(),
         workflowTemplateId: null,
         currentStageId: null,
@@ -678,6 +744,11 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
         for (const [blockerId, blocker] of blockers) {
           if (blocker.projectId === id) {
             blockers.delete(blockerId);
+          }
+        }
+        for (const [reminderId, reminder] of reminders) {
+          if (reminder.projectId === id) {
+            reminders.delete(reminderId);
           }
         }
         for (const [validationId, validation] of validations) {
@@ -1160,6 +1231,119 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       current.notes = input.notes;
       current.updatedAt = new Date();
       return toBlockerRecord(current);
+    },
+    async touchLastInteraction(input) {
+      if (input.entityType === "client") {
+        const client = clients.get(input.entityId);
+        if (!client) return;
+        client.lastInteractionAt = input.now;
+        client.updatedAt = input.now;
+        return;
+      }
+      const project = projects.get(input.entityId);
+      if (!project) return;
+      project.lastInteractionAt = input.now;
+      project.updatedAt = input.now;
+      const client = clients.get(project.clientId);
+      if (client) {
+        client.lastInteractionAt = input.now;
+        client.updatedAt = input.now;
+      }
+    },
+    async listFollowUpCandidates(workspaceId) {
+      const rows: FollowUpCandidate[] = [];
+      for (const project of projects.values()) {
+        if (project.workspaceId !== workspaceId) continue;
+        const client = clients.get(project.clientId);
+        const stage = project.currentStageId ? stages.get(project.currentStageId) : null;
+        rows.push({
+          id: project.id,
+          workspaceId: project.workspaceId,
+          clientId: project.clientId,
+          name: project.name,
+          clientName: client?.name ?? "",
+          currentStageKey: stage?.key ?? null,
+          lastInteractionAt: project.lastInteractionAt,
+          createdAt: project.createdAt,
+        });
+      }
+      return rows;
+    },
+    async listReminders(workspaceId, filters: ReminderFilters) {
+      return [...reminders.values()]
+        .filter((row) => row.workspaceId === workspaceId)
+        .filter((row) => matchesReminderFilters(row, filters))
+        .sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime())
+        .map(toReminderRecord)
+        .filter((row): row is ReminderRecord => row !== null);
+    },
+    async listProjectReminders(projectId) {
+      return [...reminders.values()]
+        .filter((row) => row.projectId === projectId)
+        .sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime())
+        .map(toReminderRecord)
+        .filter((row): row is ReminderRecord => row !== null);
+    },
+    async getReminder(id) {
+      const row = reminders.get(id);
+      return row ? toReminderRecord(row) : null;
+    },
+    async createReminder(data: ReminderCreateInput) {
+      const client = clients.get(data.clientId);
+      if (!client || client.workspaceId !== data.workspaceId) {
+        return null;
+      }
+      if (data.projectId) {
+        const project = projects.get(data.projectId);
+        if (!project || project.workspaceId !== data.workspaceId) {
+          return null;
+        }
+      }
+      const id = crypto.randomUUID();
+      const row: ReminderRow = {
+        id,
+        workspaceId: data.workspaceId,
+        subjectType: data.subjectType,
+        subjectId: data.subjectId,
+        clientId: data.clientId,
+        projectId: data.projectId,
+        channel: data.channel,
+        policyKey: data.policyKey,
+        status: data.status,
+        dueAt: data.dueAt,
+        snoozedUntil: null,
+        doneAt: null,
+        cancelledAt: null,
+        draftMessage: data.draftMessage,
+        createdAt: data.now,
+        updatedAt: data.now,
+      };
+      reminders.set(id, row);
+      return toReminderRecord(row);
+    },
+    async persistReminderDecision(input) {
+      const current = reminders.get(input.id);
+      if (!current) {
+        return null;
+      }
+      current.status = input.status;
+      current.dueAt = input.dueAt;
+      current.doneAt = input.doneAt;
+      current.cancelledAt = input.cancelledAt;
+      current.snoozedUntil = input.snoozedUntil;
+      current.updatedAt = new Date();
+      return toReminderRecord(current);
+    },
+    async promoteDueReminders(workspaceId, now) {
+      let count = 0;
+      for (const row of reminders.values()) {
+        if (row.workspaceId !== workspaceId || row.status !== "scheduled") continue;
+        if (row.dueAt.getTime() > now.getTime()) continue;
+        row.status = "due";
+        row.updatedAt = now;
+        count += 1;
+      }
+      return count;
     },
   };
 }

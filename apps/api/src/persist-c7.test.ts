@@ -26,6 +26,7 @@ function cookieFrom(response: Response): string {
 
 async function cleanup(prisma: PrismaClient, emails: string[], workspaceIds: string[]) {
   await prisma.activityEvent.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
+  await prisma.reminder.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
   await prisma.blocker.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
   await prisma.approval.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);
   await prisma.validation.deleteMany({ where: { workspaceId: { in: workspaceIds } } }).catch(() => undefined);

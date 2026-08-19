@@ -1,4 +1,4 @@
-const SENSITIVE = /password|secret|authorization|cookie|database_url|token/i;
+const SENSITIVE = /password|secret|authorization|cookie|database_url|token|draftmessage|draft/i;
 
 export function redact(value: unknown): unknown {
   if (Array.isArray(value)) {

@@ -1,0 +1,182 @@
+import { Hono } from "hono";
+import { recordActivity } from "../activity/record.js";
+import type { AppDeps } from "../deps.js";
+import { evaluateFollowUpPolicies } from "../domain/follow-up-policy.js";
+import {
+  applyReminderDecision,
+  type ReminderAction,
+} from "../domain/reminder-status.js";
+import { emptyNotFound, requireMember } from "../http/session-guard.js";
+import { lookupForSession } from "../workspace/lookup.js";
+import { workspaceIdFromSession } from "../workspace/scope.js";
+import { serializeReminder } from "./dto.js";
+import { decideReminderSchema, reminderStatusSchema } from "./schema.js";
+
+async function evaluateWorkspaceReminders(
+  deps: AppDeps,
+  workspaceId: string,
+  actorId: string,
+) {
+  const now = deps.now();
+  await deps.store.promoteDueReminders(workspaceId, now);
+  const existing = await deps.store.listReminders(workspaceId, {});
+  const projects = await deps.store.listFollowUpCandidates(workspaceId);
+  const plan = evaluateFollowUpPolicies({ now, projects, existing });
+  for (const id of plan.promoteIds) {
+    const current = existing.find((row) => row.id === id);
+    if (!current) continue;
+    await deps.store.persistReminderDecision({
+      id,
+      status: "due",
+      dueAt: current.dueAt,
+      doneAt: current.doneAt,
+      cancelledAt: current.cancelledAt,
+      snoozedUntil: current.snoozedUntil,
+    });
+  }
+  for (const item of plan.create) {
+    const created = await deps.store.createReminder({
+      workspaceId: item.workspaceId,
+      subjectType: item.subjectType,
+      subjectId: item.subjectId,
+      clientId: item.clientId,
+      projectId: item.projectId,
+      channel: item.channel,
+      policyKey: item.policyKey,
+      status: item.status,
+      dueAt: item.dueAt,
+      draftMessage: item.draftMessage,
+      now,
+    });
+    if (!created?.projectId) continue;
+    await recordActivity(deps, {
+      workspaceId,
+      actorId,
+      entityType: "project",
+      entityId: created.projectId,
+      action: "reminder.created",
+      payload: {
+        reminderId: created.id,
+        policyKey: created.policyKey,
+        channel: created.channel,
+      },
+    });
+  }
+}
+
+export function reminderRoutes(deps: AppDeps) {
+  const routes = new Hono();
+
+  routes.get("/reminders", async (c) => {
+    const gate = await requireMember(c, deps);
+    if (!gate.ok) return gate.response;
+    const workspaceId = workspaceIdFromSession(gate.session, { query: c.req.query() });
+    if (!workspaceId) {
+      return c.json({ error: "Sem permissão" }, 403);
+    }
+    const statusQuery = c.req.query("status");
+    const statusParsed = statusQuery ? reminderStatusSchema.safeParse(statusQuery) : null;
+    if (statusParsed && !statusParsed.success) {
+      return c.json({ error: "Dados inválidos" }, 400);
+    }
+    await evaluateWorkspaceReminders(deps, workspaceId, gate.session.sub);
+    const rows = await deps.store.listReminders(workspaceId, {
+      status: statusParsed?.success ? statusParsed.data : undefined,
+      projectId: c.req.query("projectId") || undefined,
+      clientId: c.req.query("clientId") || undefined,
+    });
+    return c.json(rows.map((row) => serializeReminder(row, deps.now())));
+  });
+
+  routes.get("/projects/:id/reminders", async (c) => {
+    const gate = await requireMember(c, deps);
+    if (!gate.ok) return gate.response;
+    const project = await lookupForSession(
+      gate.session,
+      c.req.param("id"),
+      (id) => deps.store.getProject(id),
+      (row) => row.workspaceId,
+    );
+    if (!project) {
+      return emptyNotFound(c);
+    }
+    await evaluateWorkspaceReminders(deps, project.workspaceId, gate.session.sub);
+    const rows = await deps.store.listProjectReminders(project.id);
+    return c.json(rows.map((row) => serializeReminder(row, deps.now())));
+  });
+
+  routes.get("/reminders/:id", async (c) => {
+    const gate = await requireMember(c, deps);
+    if (!gate.ok) return gate.response;
+    const row = await lookupForSession(
+      gate.session,
+      c.req.param("id"),
+      (id) => deps.store.getReminder(id),
+      (item) => item.workspaceId,
+    );
+    if (!row) {
+      return emptyNotFound(c);
+    }
+    return c.json(serializeReminder(row, deps.now()));
+  });
+
+  routes.post("/reminders/:id/decide", async (c) => {
+    const gate = await requireMember(c, deps);
+    if (!gate.ok) return gate.response;
+    const body: unknown = await c.req.json().catch(() => null);
+    void workspaceIdFromSession(gate.session, { body });
+    const current = await lookupForSession(
+      gate.session,
+      c.req.param("id"),
+      (id) => deps.store.getReminder(id),
+      (item) => item.workspaceId,
+    );
+    if (!current) {
+      return emptyNotFound(c);
+    }
+    const parsed = decideReminderSchema.safeParse(body);
+    if (!parsed.success) {
+      return c.json({ error: "Dados inválidos" }, 400);
+    }
+    const applied = applyReminderDecision({
+      from: current.status,
+      action: parsed.data.action as ReminderAction,
+      now: deps.now(),
+      dueAt: current.dueAt,
+      doneAt: current.doneAt,
+      cancelledAt: current.cancelledAt,
+      snoozeUntil: parsed.data.snoozeUntil ?? null,
+    });
+    if (!applied.ok) {
+      return c.json({ error: "Transição inválida", reason: applied.reason }, 409);
+    }
+    const persisted = await deps.store.persistReminderDecision({
+      id: current.id,
+      status: applied.status,
+      dueAt: applied.dueAt,
+      doneAt: applied.doneAt,
+      cancelledAt: applied.cancelledAt,
+      snoozedUntil: applied.snoozedUntil,
+    });
+    if (!persisted) {
+      return emptyNotFound(c);
+    }
+    if (applied.event && persisted.projectId) {
+      await recordActivity(deps, {
+        workspaceId: current.workspaceId,
+        actorId: gate.session.sub,
+        entityType: "project",
+        entityId: persisted.projectId,
+        action: applied.event,
+        payload: {
+          reminderId: current.id,
+          from: current.status,
+          to: applied.status,
+        },
+      });
+    }
+    return c.json(serializeReminder(persisted, deps.now()));
+  });
+
+  return routes;
+}

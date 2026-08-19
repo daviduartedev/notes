@@ -16,6 +16,11 @@ import {
   type BlockerAssigneeKind,
   type BlockerStatus,
 } from "../domain/blocker-status.js";
+import type {
+  ReminderChannel,
+  ReminderStatus,
+  ReminderSubjectType,
+} from "../domain/reminder-status.js";
 import type { ValidationStatus, ValidationType } from "../domain/validation-status.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
 import { ensureDeployStagingForWorkspace } from "../checklists/seed.js";
@@ -40,6 +45,9 @@ import type {
   ProjectCreateInput,
   ProjectFilters,
   ProjectRecord,
+  ReminderCreateInput,
+  ReminderFilters,
+  ReminderRecord,
   StagePersistPatch,
   StageRecord,
   ValidationCreateInput,
@@ -62,6 +70,7 @@ function mapClient(row: {
   status: ClientStatus;
   lastContactAt: Date | null;
   nextFollowUpAt: Date | null;
+  lastInteractionAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }): ClientRecord {
@@ -83,6 +92,7 @@ function mapProject(row: {
   notes: string | null;
   workflowTemplateId: string | null;
   currentStageId: string | null;
+  lastInteractionAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }): ProjectRecord {
@@ -322,6 +332,7 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
     async deleteProject(id) {
       try {
         await prisma.$transaction(async (tx) => {
+          await tx.reminder.deleteMany({ where: { projectId: id } });
           await tx.blocker.deleteMany({ where: { projectId: id } });
           await tx.approval.deleteMany({ where: { projectId: id } });
           await tx.validation.deleteMany({ where: { projectId: id } });
@@ -889,6 +900,139 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
         return null;
       }
     },
+    async touchLastInteraction(input) {
+      if (input.entityType === "client") {
+        await prisma.client
+          .update({
+            where: { id: input.entityId },
+            data: { lastInteractionAt: input.now },
+          })
+          .catch(() => undefined);
+        return;
+      }
+      const project = await prisma.project.findUnique({
+        where: { id: input.entityId },
+        select: { id: true, clientId: true },
+      });
+      if (!project) return;
+      await prisma.project
+        .update({
+          where: { id: project.id },
+          data: { lastInteractionAt: input.now },
+        })
+        .catch(() => undefined);
+      await prisma.client
+        .update({
+          where: { id: project.clientId },
+          data: { lastInteractionAt: input.now },
+        })
+        .catch(() => undefined);
+    },
+    async listFollowUpCandidates(workspaceId) {
+      const rows = await prisma.project.findMany({
+        where: { workspaceId },
+        include: {
+          client: { select: { name: true } },
+          currentStage: { select: { key: true } },
+        },
+      });
+      return rows.map((row) => ({
+        id: row.id,
+        workspaceId: row.workspaceId,
+        clientId: row.clientId,
+        name: row.name,
+        clientName: row.client.name,
+        currentStageKey: row.currentStage?.key ?? null,
+        lastInteractionAt: row.lastInteractionAt,
+        createdAt: row.createdAt,
+      }));
+    },
+    async listReminders(workspaceId, filters: ReminderFilters) {
+      const rows = await prisma.reminder.findMany({
+        where: reminderWhere(workspaceId, filters),
+        include: reminderInclude,
+        orderBy: { dueAt: "asc" },
+      });
+      return rows.map(mapReminder);
+    },
+    async listProjectReminders(projectId) {
+      const rows = await prisma.reminder.findMany({
+        where: { projectId },
+        include: reminderInclude,
+        orderBy: { dueAt: "asc" },
+      });
+      return rows.map(mapReminder);
+    },
+    async getReminder(id) {
+      const row = await prisma.reminder.findUnique({
+        where: { id },
+        include: reminderInclude,
+      });
+      return row ? mapReminder(row) : null;
+    },
+    async createReminder(data: ReminderCreateInput) {
+      const client = await prisma.client.findUnique({ where: { id: data.clientId } });
+      if (!client || client.workspaceId !== data.workspaceId) {
+        return null;
+      }
+      if (data.projectId) {
+        const project = await prisma.project.findUnique({ where: { id: data.projectId } });
+        if (!project || project.workspaceId !== data.workspaceId) {
+          return null;
+        }
+      }
+      try {
+        const row = await prisma.reminder.create({
+          data: {
+            workspaceId: data.workspaceId,
+            subjectType: data.subjectType,
+            subjectId: data.subjectId,
+            clientId: data.clientId,
+            projectId: data.projectId,
+            channel: data.channel,
+            policyKey: data.policyKey,
+            status: data.status,
+            dueAt: data.dueAt,
+            draftMessage: data.draftMessage,
+            createdAt: data.now,
+            updatedAt: data.now,
+          },
+          include: reminderInclude,
+        });
+        return mapReminder(row);
+      } catch {
+        return null;
+      }
+    },
+    async persistReminderDecision(input) {
+      try {
+        const row = await prisma.reminder.update({
+          where: { id: input.id },
+          data: {
+            status: input.status,
+            dueAt: input.dueAt,
+            doneAt: input.doneAt,
+            cancelledAt: input.cancelledAt,
+            snoozedUntil: input.snoozedUntil,
+          },
+          include: reminderInclude,
+        });
+        return mapReminder(row);
+      } catch {
+        return null;
+      }
+    },
+    async promoteDueReminders(workspaceId, now) {
+      const result = await prisma.reminder.updateMany({
+        where: {
+          workspaceId,
+          status: "scheduled",
+          dueAt: { lte: now },
+        },
+        data: { status: "due" },
+      });
+      return result.count;
+    },
   };
 }
 
@@ -1237,6 +1381,62 @@ function mapBlocker(row: {
     cancelledAt: row.cancelledAt,
     sourceMeetingId: row.sourceMeetingId,
     notes: row.notes,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+const reminderInclude = {
+  client: { select: { id: true, name: true } },
+  project: { select: { id: true, name: true } },
+} as const;
+
+function reminderWhere(workspaceId: string, filters: ReminderFilters): Prisma.ReminderWhereInput {
+  return {
+    workspaceId,
+    ...(filters.status ? { status: filters.status } : {}),
+    ...(filters.projectId ? { projectId: filters.projectId } : {}),
+    ...(filters.clientId ? { clientId: filters.clientId } : {}),
+  };
+}
+
+function mapReminder(row: {
+  id: string;
+  workspaceId: string;
+  subjectType: ReminderSubjectType;
+  subjectId: string;
+  clientId: string;
+  projectId: string | null;
+  channel: ReminderChannel;
+  policyKey: string | null;
+  status: ReminderStatus;
+  dueAt: Date;
+  snoozedUntil: Date | null;
+  doneAt: Date | null;
+  cancelledAt: Date | null;
+  draftMessage: string;
+  createdAt: Date;
+  updatedAt: Date;
+  client: { id: string; name: string };
+  project: { id: string; name: string } | null;
+}): ReminderRecord {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    subjectType: row.subjectType,
+    subjectId: row.subjectId,
+    clientId: row.client.id,
+    clientName: row.client.name,
+    projectId: row.projectId,
+    projectName: row.project?.name ?? null,
+    channel: row.channel,
+    policyKey: row.policyKey,
+    status: row.status,
+    dueAt: row.dueAt,
+    snoozedUntil: row.snoozedUntil,
+    doneAt: row.doneAt,
+    cancelledAt: row.cancelledAt,
+    draftMessage: row.draftMessage,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

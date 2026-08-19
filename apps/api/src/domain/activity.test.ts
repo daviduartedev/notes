@@ -21,4 +21,14 @@ describe("payload de activity", () => {
       }),
     ).toEqual({ fields: ["name"], nested: { ok: 1 } });
   });
+
+  it("remove texto de draft de lembrete", () => {
+    expect(
+      sanitizeActivityPayload({
+        reminderId: "r1",
+        draftMessage: "Olá, cliente. Texto completo.",
+        draft: "não logar",
+      }),
+    ).toEqual({ reminderId: "r1" });
+  });
 });

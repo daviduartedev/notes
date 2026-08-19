@@ -12,7 +12,7 @@ Create sempre inicia em `lead`.
 
 ## Campos
 
-nome, empresa, WhatsApp (string), e-mail, responsável interno (`ownerUserId` membro do workspace), observações, status, último contato, próximo follow-up, createdAt.
+nome, empresa, WhatsApp (string), e-mail, responsável interno (`ownerUserId` membro do workspace), observações, status, último contato, próximo follow-up, `lastInteractionAt`, createdAt.
 
 `workspaceId` e `createdAt` não vêm do body.
 
