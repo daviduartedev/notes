@@ -67,6 +67,23 @@ enum ValidationType {
   delivery
 }
 
+enum ApprovalStatus {
+  pending
+  granted
+  rejected
+  cancelled
+  revoked
+}
+
+enum ApprovalKind {
+  proposal
+  scope
+  prototype
+  staging
+  production
+  final_acceptance
+}
+
 model User {
   id             String   @id @default(cuid())
   email          String   @unique
@@ -82,6 +99,7 @@ model User {
   completedChecklistItems ChecklistItem[]
   requestedValidations Validation[] @relation("ValidationRequester")
   reviewedValidations  Validation[] @relation("ValidationReviewer")
+  approvals            Approval[] @relation("ApprovalApprover")
 }
 
 model Workspace {
@@ -98,6 +116,7 @@ model Workspace {
   checklistTemplates ChecklistTemplate[]
   projectChecklists ProjectChecklist[]
   validations       Validation[]
+  approvals         Approval[]
 }
 
 model Client {
@@ -148,6 +167,7 @@ model Project {
   stages             Stage[]          @relation("ProjectStages")
   checklists         ProjectChecklist[]
   validations        Validation[]
+  approvals          Approval[]
 
   @@index([workspaceId])
   @@index([workspaceId, clientId])
@@ -311,11 +331,39 @@ model Validation {
   stage           Stage?           @relation(fields: [stageId], references: [id], onDelete: SetNull)
   reviewer        User?            @relation("ValidationReviewer", fields: [reviewerUserId], references: [id], onDelete: SetNull)
   requester       User             @relation("ValidationRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)
+  approvals       Approval[]
 
   @@index([workspaceId])
   @@index([projectId])
   @@index([workspaceId, status])
   @@index([reviewerUserId])
+}
+
+model Approval {
+  id              String         @id @default(cuid())
+  workspaceId     String
+  projectId       String
+  subjectType     String         @default("project")
+  subjectId       String
+  kind            ApprovalKind
+  status          ApprovalStatus @default(pending)
+  validationId    String?
+  approverId      String?
+  decidedAt       DateTime?
+  revokedAt       DateTime?
+  comment         String?
+  projectSnapshot Json
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  workspace       Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project         Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  validation      Validation?    @relation(fields: [validationId], references: [id], onDelete: SetNull)
+  approver        User?          @relation("ApprovalApprover", fields: [approverId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([workspaceId, status])
+  @@index([approverId])
 }
 
 model Member {

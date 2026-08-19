@@ -23,8 +23,8 @@ Prompts genéricos (com placeholder): [`prompts/`](prompts/).
 | C2 | [0818-c2-etapas-e-transicoes](Q32026/0818-c2-etapas-e-transicoes/) | Large | **fechado** | — |
 | C3 | [0818-c3-pipeline](Q32026/0818-c3-pipeline/) | Medium | **fechado** | — |
 | C4 | [0818-c4-checklists](Q32026/0818-c4-checklists/) | Medium | **fechado** | — |
-| C5 | [0818-c5-validacoes](Q32026/0818-c5-validacoes/) | Medium | request pronto | Refine depois de C2 |
-| C6 | [0818-c6-aprovacoes](Q32026/0818-c6-aprovacoes/) | Medium | request pronto | Refine depois de C5 (recomendado) |
+| C5 | [0818-c5-validacoes](Q32026/0818-c5-validacoes/) | Medium | **fechado** | — |
+| C6 | [0818-c6-aprovacoes](Q32026/0818-c6-aprovacoes/) | Medium | **fechado** | — |
 | C7 | [0818-c7-pendencias](Q32026/0818-c7-pendencias/) | Medium | request pronto | Refine depois de C2 |
 | C8 | [0818-c8-lembretes](Q32026/0818-c8-lembretes/) | Medium | request pronto | Refine depois de C1+C2 |
 | C9 | [0818-c9-reunioes](Q32026/0818-c9-reunioes/) | Medium | request pronto | Refine depois de C1+C2 |

@@ -395,6 +395,49 @@ C6 cria Approval do zero. Playwright continua fora.
 
 ---
 
+## ADR-0021 — Máquina de Approval.status (C6-D1–D10/D14)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c6-aprovacoes/
+- **Status:** Accepted
+
+### Contexto
+Aprovação formal precisa de estados, snapshot auditável e revoke sem apagar o granted.
+
+### Decisão
+Máquina `pending→granted|rejected|cancelled`; `granted→revoked`. Só `POST /api/approvals/:id/decide`. Events `approval.granted|rejected|revoked`. Snapshot server-side no create. Grant não chama transition C2. Kinds `proposal|scope|prototype|staging|production|final_acceptance`.
+
+### Alternativas consideradas
+- PATCH de status — rejeitado.
+- Avançar etapa no grant — rejeitado neste cycle.
+- Apagar granted no revoke — rejeitado (append-only).
+
+### Consequências
+C7+ assume Approval existente e etapa ainda só via C2.
+
+---
+
+## ADR-0022 — approverId da sessão; D8 (C6-D5/D11–D22)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c6-aprovacoes/
+- **Status:** Accepted
+
+### Contexto
+Mass assignment de approver e confusão com Validation.approved.
+
+### Decisão
+`approverId` só da sessão no decide; body ignorado. Isolamento: GET por id → 404; collection → `[]`. `Validation.approved` não cria Approval. Qualquer member/owner decide. `validationId` opcional do mesmo projeto.
+
+### Alternativas consideradas
+- approverId no create — rejeitado (null até decide).
+- Playwright E2E — ORCH-008.
+
+### Consequências
+Playwright continua fora. Assinatura digital e portal do cliente fora.
+
+---
+
 ## ADR-0018 — Completar item não muda Stage.status (C4-D7–D16)
 
 - **Data:** 2026-08-19

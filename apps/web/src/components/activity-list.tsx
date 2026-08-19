@@ -16,6 +16,9 @@ const actionLabel: Record<ActivityDto["action"], string> = {
   "validation.changes_requested": "Ajustes de validação solicitados",
   "validation.approved": "Validação aprovada",
   "validation.rejected": "Validação recusada",
+  "approval.granted": "Aprovação concedida",
+  "approval.rejected": "Aprovação recusada",
+  "approval.revoked": "Aprovação revogada",
 };
 
 export function ActivityList({ events }: { events: ActivityDto[] }) {

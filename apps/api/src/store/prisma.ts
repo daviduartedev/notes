@@ -10,12 +10,16 @@ import type {
   StagePhase,
   StageStatus,
 } from "../domain/types.js";
+import type { ApprovalKind, ApprovalSnapshot, ApprovalStatus } from "../domain/approval-status.js";
 import type { ValidationStatus, ValidationType } from "../domain/validation-status.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
 import { ensureDeployStagingForWorkspace } from "../checklists/seed.js";
 import { ensureSaasDeliveryForWorkspace, type SaasTemplateRow } from "../projects/saas-seed.js";
 import type {
   ActivityRecord,
+  ApprovalCreateInput,
+  ApprovalFilters,
+  ApprovalRecord,
   ChecklistItemLookup,
   ChecklistItemRecord,
   ChecklistTemplateRecord,
@@ -306,6 +310,7 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
     async deleteProject(id) {
       try {
         await prisma.$transaction(async (tx) => {
+          await tx.approval.deleteMany({ where: { projectId: id } });
           await tx.validation.deleteMany({ where: { projectId: id } });
           await tx.projectChecklist.deleteMany({ where: { projectId: id } });
           await tx.project.update({
@@ -723,6 +728,79 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
         return null;
       }
     },
+    async listApprovals(workspaceId, filters: ApprovalFilters) {
+      const rows = await prisma.approval.findMany({
+        where: approvalWhere(workspaceId, filters),
+        include: approvalInclude,
+        orderBy: { createdAt: "desc" },
+      });
+      return rows.map(mapApproval);
+    },
+    async listProjectApprovals(projectId) {
+      const rows = await prisma.approval.findMany({
+        where: { projectId },
+        include: approvalInclude,
+        orderBy: { createdAt: "desc" },
+      });
+      return rows.map(mapApproval);
+    },
+    async getApproval(id) {
+      const row = await prisma.approval.findUnique({
+        where: { id },
+        include: approvalInclude,
+      });
+      return row ? mapApproval(row) : null;
+    },
+    async createApproval(data: ApprovalCreateInput) {
+      const project = await prisma.project.findUnique({ where: { id: data.projectId } });
+      if (!project || project.workspaceId !== data.workspaceId) {
+        return null;
+      }
+      if (data.validationId) {
+        const validation = await prisma.validation.findUnique({ where: { id: data.validationId } });
+        if (!validation || validation.projectId !== project.id) {
+          return null;
+        }
+      }
+      try {
+        const row = await prisma.approval.create({
+          data: {
+            workspaceId: data.workspaceId,
+            projectId: data.projectId,
+            subjectType: "project",
+            subjectId: data.projectId,
+            kind: data.kind,
+            validationId: data.validationId,
+            comment: data.comment,
+            projectSnapshot: data.projectSnapshot,
+            createdAt: data.now,
+            updatedAt: data.now,
+          },
+          include: approvalInclude,
+        });
+        return mapApproval(row);
+      } catch {
+        return null;
+      }
+    },
+    async persistApprovalDecision(input) {
+      try {
+        const row = await prisma.approval.update({
+          where: { id: input.id },
+          data: {
+            status: input.status,
+            approverId: input.approverId,
+            decidedAt: input.decidedAt,
+            revokedAt: input.revokedAt,
+            comment: input.comment,
+          },
+          include: approvalInclude,
+        });
+        return mapApproval(row);
+      } catch {
+        return null;
+      }
+    },
   };
 }
 
@@ -935,6 +1013,75 @@ function mapValidation(row: {
     items: asStringArray(row.items),
     resultNotes: row.resultNotes,
     checklistId: row.checklistId,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+const approvalInclude = {
+  project: { include: { client: { select: { id: true, name: true } } } },
+  approver: { select: { name: true, email: true } },
+} as const;
+
+function approvalWhere(workspaceId: string, filters: ApprovalFilters): Prisma.ApprovalWhereInput {
+  return {
+    workspaceId,
+    ...(filters.status ? { status: filters.status } : {}),
+    ...(filters.kind ? { kind: filters.kind } : {}),
+    ...(filters.projectId ? { projectId: filters.projectId } : {}),
+    ...(filters.approverId ? { approverId: filters.approverId } : {}),
+    ...(filters.clientId ? { project: { clientId: filters.clientId } } : {}),
+  };
+}
+
+function mapApprovalSnapshot(value: Prisma.JsonValue): ApprovalSnapshot {
+  const obj = jsonObject(value);
+  return {
+    currentStageKey: typeof obj.currentStageKey === "string" ? obj.currentStageKey : null,
+    projectStatus: (typeof obj.projectStatus === "string" ? obj.projectStatus : "draft") as ProjectStatus,
+    validationId: typeof obj.validationId === "string" ? obj.validationId : null,
+    projectId: typeof obj.projectId === "string" ? obj.projectId : "",
+    clientId: typeof obj.clientId === "string" ? obj.clientId : "",
+  };
+}
+
+function mapApproval(row: {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  subjectType: string;
+  subjectId: string;
+  kind: ApprovalKind;
+  status: ApprovalStatus;
+  validationId: string | null;
+  approverId: string | null;
+  decidedAt: Date | null;
+  revokedAt: Date | null;
+  comment: string | null;
+  projectSnapshot: Prisma.JsonValue;
+  createdAt: Date;
+  updatedAt: Date;
+  project: { name: string; clientId: string; client: { id: string; name: string } };
+  approver: { name: string | null; email: string } | null;
+}): ApprovalRecord {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    projectId: row.projectId,
+    projectName: row.project.name,
+    clientId: row.project.client.id,
+    clientName: row.project.client.name,
+    subjectType: "project",
+    subjectId: row.subjectId,
+    kind: row.kind,
+    status: row.status,
+    validationId: row.validationId,
+    approverId: row.approverId,
+    approverName: displayName(row.approver),
+    decidedAt: row.decidedAt,
+    revokedAt: row.revokedAt,
+    comment: row.comment,
+    projectSnapshot: mapApprovalSnapshot(row.projectSnapshot),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

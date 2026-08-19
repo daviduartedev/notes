@@ -19,6 +19,15 @@ export type ValidationStatus =
   | "rejected"
   | "cancelled";
 export type ValidationType = "prototype" | "staging" | "production" | "feature" | "delivery";
+export type ApprovalStatus = "pending" | "granted" | "rejected" | "cancelled" | "revoked";
+export type ApprovalKind =
+  | "proposal"
+  | "scope"
+  | "prototype"
+  | "staging"
+  | "production"
+  | "final_acceptance";
+export type ApprovalAction = "grant" | "reject" | "cancel" | "revoke";
 
 export type MemberDto = {
   id: string;
@@ -136,7 +145,10 @@ export type ActivityDto = {
     | "validation.in_review"
     | "validation.changes_requested"
     | "validation.approved"
-    | "validation.rejected";
+    | "validation.rejected"
+    | "approval.granted"
+    | "approval.rejected"
+    | "approval.revoked";
   payload: Record<string, unknown>;
   createdAt: string;
 };
@@ -204,6 +216,37 @@ export type ValidationDto = {
   checklistId: string | null;
   visualState: "overdue" | null;
   allowedTransitions: ValidationStatus[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ApprovalSnapshotDto = {
+  currentStageKey: string | null;
+  projectStatus: ProjectStatus;
+  validationId: string | null;
+  projectId: string;
+  clientId: string;
+};
+
+export type ApprovalDto = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  projectName: string;
+  clientId: string;
+  clientName: string;
+  subjectType: "project";
+  subjectId: string;
+  kind: ApprovalKind;
+  status: ApprovalStatus;
+  validationId: string | null;
+  approverId: string | null;
+  approverName: string | null;
+  decidedAt: string | null;
+  revokedAt: string | null;
+  comment: string | null;
+  projectSnapshot: ApprovalSnapshotDto;
+  allowedActions: ApprovalAction[];
   createdAt: string;
   updatedAt: string;
 };

@@ -53,4 +53,15 @@ Testes de domínio não exigem Postgres. Teste de persistência usa `DATABASE_UR
 - IDOR GET/transition outro workspace → 404 vazio
 - collection `GET /api/validations` do workspace B vazia
 
+## C6 obrigatório
+
+- grant `kind=staging` grava `approverId` da sessão, `decidedAt` e snapshot server-side
+- `approverId` no body é ignorado
+- revoke não apaga o registro (`id` igual, status `revoked`, `decidedAt` intacto)
+- decisão ilegal → 409 sem event
+- grant **não** muda `Stage.status`
+- `Validation.approved` **não** cria Approval nem emite `approval.*`
+- IDOR GET/decide outro workspace → 404 vazio
+- collection `GET /api/approvals` do workspace B vazia
+
 

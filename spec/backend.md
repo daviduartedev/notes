@@ -64,7 +64,17 @@ Completar item de checklist **não** muda `Stage.status`.
 
 CORS: GET, POST, PATCH, PUT, DELETE, OPTIONS. `workspaceId` no body é ignorado. PATCH `currentStageId` é ignorado. Query `workspaceId` em `/api/pipeline` também é ignorada.
 
-GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR. Completar item de checklist **não** muda `Stage.status`. `changes_requested` na validação **não** muda `Stage.status`.
+GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR. Completar item de checklist **não** muda `Stage.status`. `changes_requested` na validação **não** muda `Stage.status`. Grant de Approval **não** muda `Stage.status`.
+
+## Contratos C6
+
+| Método | Path | Auth | Notas |
+|--------|------|------|-------|
+| POST | `/api/approvals` | sessão | create `pending`; snapshot server-side; `approverId` do body ignorado |
+| GET | `/api/approvals` | sessão | filtros status/kind/projeto/cliente/aprovador; tenant B → `[]` |
+| GET | `/api/projects/:id/approvals` | sessão | 404 IDOR |
+| GET | `/api/approvals/:id` | sessão | 404 IDOR |
+| POST | `/api/approvals/:id/decide` | sessão | body `{ action, comment? }`; 409 ilegal sem event |
 
 ## Erros
 

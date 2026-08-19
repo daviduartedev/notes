@@ -45,6 +45,9 @@ export const ACTIVITY_ACTIONS = [
   "validation.changes_requested",
   "validation.approved",
   "validation.rejected",
+  "approval.granted",
+  "approval.rejected",
+  "approval.revoked",
 ] as const;
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
 

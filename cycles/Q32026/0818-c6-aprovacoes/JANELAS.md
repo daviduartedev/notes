@@ -3,7 +3,9 @@
 **Pasta:** `cycles/Q32026/0818-c6-aprovacoes/`  
 **Tipo:** Medium  
 **Depende de:** C2; recomendado C5 fechado  
-**Status:** `request.md` pronto → **Refine depois de C5**
+**Status:** `fechado` (2026-08-19)
+
+Abra um **chat novo** para cada janela. Cole o bloco. Padrão Elli: uma missão por contexto.
 
 Abra um **chat novo** para cada janela. Cole o bloco. Padrão Elli: uma missão por contexto.
 

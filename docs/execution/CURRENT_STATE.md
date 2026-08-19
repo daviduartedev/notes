@@ -1,15 +1,15 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-19 (C5 `db3e9728996f91215b54fb457c50a14125df03dd`).
+Atualizado: 2026-08-19 (C6 pending SHA).
 
 ## Produto
 
 - Nome interno de UI: **Notes**
 - Tipo: Software House Operating System / Delivery CRM
-- Entidade operacional: **Project** (C1 envelope + C2 etapas + C3 board + C4 checklists + C5 validações)
+- Entidade operacional: **Project** (C1 envelope + C2 etapas + C3 board + C4 checklists + C5 validações + C6 aprovações)
 - Tenant: `workspaceId` sempre da sessão, nunca do body
 
-## Stack (C0 + C1 + C2 + C3 + C4 + C5)
+## Stack (C0 + C1 + C2 + C3 + C4 + C5 + C6)
 
 - Monorepo **pnpm** (Node 22)
 - `apps/web` — Next.js App Router + Tailwind — porta **3015**
@@ -23,17 +23,18 @@ Atualizado: 2026-08-19 (C5 `db3e9728996f91215b54fb457c50a14125df03dd`).
 - Harness em `spec/` + `.cursor/commands/`
 - Auth credentials, seed 1 workspace + 1 owner + template SaaS delivery + checklist Deploy Staging SaaS
 - `/login`, `/hoje` empty state, `/design-system` (dev)
-- `/clientes`, `/clientes/:id`, `/projetos`, `/projetos/:id` (Etapas + Checklists + Validações)
+- `/clientes`, `/clientes/:id`, `/projetos`, `/projetos/:id` (Etapas + Checklists + Validações + Aprovações)
 - `/pipeline` board por etapa atual (click-only)
 - `/checklists` lista de instâncias
 - `/validacoes`, `/validacoes/:id`
+- `/aprovacoes`, `/aprovacoes/:id`
 - CI GitHub Actions (lint, typecheck, test, build + migrate)
 
 ## Auth / banco / módulos
 
 - Auth: credentials na API, cookie `authjs.session-token`
-- Banco: User, Workspace, Member, Client, Project, ActivityEvent, WorkflowTemplate, StageTemplate, Stage, ChecklistTemplate, ChecklistTemplateItem, ProjectChecklist, ChecklistItem, Validation
-- Módulos: clientes, projetos, activity, etapas, pipeline board, checklists, validações
+- Banco: User, Workspace, Member, Client, Project, ActivityEvent, WorkflowTemplate, StageTemplate, Stage, ChecklistTemplate, ChecklistTemplateItem, ProjectChecklist, ChecklistItem, Validation, Approval
+- Módulos: clientes, projetos, activity, etapas, pipeline board, checklists, validações, aprovações
 
 ## Contratos
 
@@ -43,13 +44,15 @@ Atualizado: 2026-08-19 (C5 `db3e9728996f91215b54fb457c50a14125df03dd`).
 - C3: `GET /api/pipeline` → `{ columns }`
 - C4: apply/list/patch checklists; `PATCH /api/checklist-items/:id`; templates owner-only
 - C5: create/list/get/patch validations; `POST /api/validations/:id/transition`
-- Cross-tenant → 404 vazio em recurso por id; collection pipeline/checklists/validations → vazio
+- C6: `POST /api/approvals`; `POST /api/approvals/:id/decide`; GET lista/ficha/projeto
+- Cross-tenant → 404 vazio em recurso por id; collection pipeline/checklists/validations/approvals → vazio
 - Sem membership → 403
 - CORS inclui PATCH/PUT/DELETE
 - `visualState: overdue` para projeto `active` com prazo passado e para validação não terminal com prazo passado
-- PATCH `currentStageId` ignorado; PATCH validation `status` ignorado
+- PATCH `currentStageId` ignorado; PATCH validation `status` ignorado; `approverId` no body de Approval ignorado
 - Completar checklist **não** muda `Stage.status`
 - `changes_requested` **não** muda `Stage.status` nem cria Approval
+- Grant de Approval **não** avança etapa; `Validation.approved` **não** cria Approval
 
 ## Como rodar
 

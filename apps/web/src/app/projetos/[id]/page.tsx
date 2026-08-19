@@ -1,5 +1,6 @@
 import { ActivityList } from "@/components/activity-list";
 import { AppShell } from "@/components/app-shell";
+import { ProjectApprovals } from "@/components/project-approvals";
 import { ProjectChecklists } from "@/components/project-checklists";
 import { ProjectEditForm } from "@/components/project-edit-form";
 import { ProjectValidations } from "@/components/project-validations";
@@ -8,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import type {
   ActivityDto,
+  ApprovalDto,
   ChecklistTemplateDto,
   ClientDto,
   MemberDto,
@@ -25,7 +27,7 @@ export default async function ProjetoFichaPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [detail, membersRes, clientsRes, activityRes, templatesRes, checklistsRes, validationsRes] =
+  const [detail, membersRes, clientsRes, activityRes, templatesRes, checklistsRes, validationsRes, approvalsRes] =
     await Promise.all([
     serverApi<ProjectDto>(`/api/projects/${id}`),
     serverApi<MemberDto[]>("/api/workspace/members"),
@@ -34,6 +36,7 @@ export default async function ProjetoFichaPage({
     serverApi<ChecklistTemplateDto[]>("/api/checklist-templates"),
     serverApi<ProjectChecklistDto[]>(`/api/projects/${id}/checklists`),
     serverApi<ValidationDto[]>(`/api/projects/${id}/validations`),
+    serverApi<ApprovalDto[]>(`/api/projects/${id}/approvals`),
   ]);
   const project = detail.status === 200 ? detail.data : null;
   const members = membersRes.status === 200 && membersRes.data ? membersRes.data : [];
@@ -42,6 +45,7 @@ export default async function ProjetoFichaPage({
   const templates = templatesRes.status === 200 && templatesRes.data ? templatesRes.data : [];
   const checklists = checklistsRes.status === 200 && checklistsRes.data ? checklistsRes.data : [];
   const validations = validationsRes.status === 200 && validationsRes.data ? validationsRes.data : [];
+  const approvals = approvalsRes.status === 200 && approvalsRes.data ? approvalsRes.data : [];
 
   return (
     <AppShell title={project?.name ?? "Projeto"} pathname="/projetos">
@@ -78,6 +82,10 @@ export default async function ProjetoFichaPage({
             checklists={checklists}
             validations={validations}
           />
+        </Card>
+        <Card>
+          <h3 className="mb-4 font-display text-xl">Aprovações</h3>
+          <ProjectApprovals project={project} approvals={approvals} />
         </Card>
         <Card>
           <h3 className="mb-4 font-display text-xl">Histórico</h3>

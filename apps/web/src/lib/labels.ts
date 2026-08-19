@@ -7,6 +7,9 @@ import type {
   StageStatus,
   ValidationStatus,
   ValidationType,
+  ApprovalStatus,
+  ApprovalKind,
+  ApprovalAction,
 } from "./domain-types";
 
 export const clientStatusLabel: Record<ClientStatus, string> = {
@@ -69,6 +72,30 @@ export const validationTypeLabel: Record<ValidationType, string> = {
   production: "Produção",
   feature: "Funcionalidade",
   delivery: "Entrega",
+};
+
+export const approvalStatusLabel: Record<ApprovalStatus, string> = {
+  pending: "Pendente",
+  granted: "Concedida",
+  rejected: "Recusada",
+  cancelled: "Cancelada",
+  revoked: "Revogada",
+};
+
+export const approvalKindLabel: Record<ApprovalKind, string> = {
+  proposal: "Proposta",
+  scope: "Escopo",
+  prototype: "Protótipo",
+  staging: "Staging",
+  production: "Produção",
+  final_acceptance: "Aceite final",
+};
+
+export const approvalActionLabel: Record<ApprovalAction, string> = {
+  grant: "Conceder",
+  reject: "Recusar",
+  cancel: "Cancelar",
+  revoke: "Revogar",
 };
 
 export const stageKeyLabel: Record<string, string> = {

@@ -10,12 +10,20 @@ import { SAAS_DELIVERY_STAGES } from "../domain/saas-delivery-template.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
 import type { StagePhase } from "../domain/types.js";
 import type {
+  ApprovalKind,
+  ApprovalSnapshot,
+  ApprovalStatus,
+} from "../domain/approval-status.js";
+import type {
   ValidationStatus,
   ValidationType,
 } from "../domain/validation-status.js";
 import type {
   ActivityCreateInput,
   ActivityRecord,
+  ApprovalCreateInput,
+  ApprovalFilters,
+  ApprovalRecord,
   ChecklistItemLookup,
   ChecklistItemRecord,
   ChecklistTemplateRecord,
@@ -87,6 +95,24 @@ type ValidationRow = {
   items: string[];
   resultNotes: string | null;
   checklistId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type ApprovalRow = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  subjectType: "project";
+  subjectId: string;
+  kind: ApprovalKind;
+  status: ApprovalStatus;
+  validationId: string | null;
+  approverId: string | null;
+  decidedAt: Date | null;
+  revokedAt: Date | null;
+  comment: string | null;
+  projectSnapshot: ApprovalSnapshot;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -189,6 +215,19 @@ function matchesValidationFilters(
   return true;
 }
 
+function matchesApprovalFilters(
+  row: ApprovalRow,
+  project: ProjectRecord | undefined,
+  filters: ApprovalFilters,
+): boolean {
+  if (filters.status && row.status !== filters.status) return false;
+  if (filters.kind && row.kind !== filters.kind) return false;
+  if (filters.projectId && row.projectId !== filters.projectId) return false;
+  if (filters.approverId && row.approverId !== filters.approverId) return false;
+  if (filters.clientId && project?.clientId !== filters.clientId) return false;
+  return true;
+}
+
 export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore {
   const members = [...seedMembers];
   const clients = new Map<string, ClientRecord>();
@@ -199,6 +238,7 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
   const checklists = new Map<string, ChecklistRow>();
   const checklistItems = new Map<string, ChecklistItemRow>();
   const validations = new Map<string, ValidationRow>();
+  const approvals = new Map<string, ApprovalRow>();
   const activities: ActivityRecord[] = [];
 
   function ensureTemplate(workspaceId: string): TemplateRow {
@@ -303,6 +343,33 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       items: [...row.items],
       resultNotes: row.resultNotes,
       checklistId: row.checklistId,
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+    };
+  }
+
+  function toApprovalRecord(row: ApprovalRow): ApprovalRecord | null {
+    const project = projects.get(row.projectId);
+    if (!project) return null;
+    const client = clients.get(project.clientId);
+    return {
+      id: row.id,
+      workspaceId: row.workspaceId,
+      projectId: row.projectId,
+      projectName: project.name,
+      clientId: project.clientId,
+      clientName: client?.name ?? "",
+      subjectType: row.subjectType,
+      subjectId: row.subjectId,
+      kind: row.kind,
+      status: row.status,
+      validationId: row.validationId,
+      approverId: row.approverId,
+      approverName: actorName(row.approverId),
+      decidedAt: row.decidedAt ? new Date(row.decidedAt) : null,
+      revokedAt: row.revokedAt ? new Date(row.revokedAt) : null,
+      comment: row.comment,
+      projectSnapshot: { ...row.projectSnapshot },
       createdAt: new Date(row.createdAt),
       updatedAt: new Date(row.updatedAt),
     };
@@ -517,6 +584,11 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
               }
             }
             checklists.delete(checklistId);
+          }
+        }
+        for (const [approvalId, approval] of approvals) {
+          if (approval.projectId === id) {
+            approvals.delete(approvalId);
           }
         }
         for (const [validationId, validation] of validations) {
@@ -870,6 +942,70 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       }
       current.updatedAt = new Date();
       return toValidationRecord(current);
+    },
+    async listApprovals(workspaceId, filters: ApprovalFilters) {
+      return [...approvals.values()]
+        .filter((row) => row.workspaceId === workspaceId)
+        .filter((row) => matchesApprovalFilters(row, projects.get(row.projectId), filters))
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .map(toApprovalRecord)
+        .filter((row): row is ApprovalRecord => row !== null);
+    },
+    async listProjectApprovals(projectId) {
+      return [...approvals.values()]
+        .filter((row) => row.projectId === projectId)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .map(toApprovalRecord)
+        .filter((row): row is ApprovalRecord => row !== null);
+    },
+    async getApproval(id) {
+      const row = approvals.get(id);
+      return row ? toApprovalRecord(row) : null;
+    },
+    async createApproval(data: ApprovalCreateInput) {
+      const project = projects.get(data.projectId);
+      if (!project || project.workspaceId !== data.workspaceId) {
+        return null;
+      }
+      if (data.validationId) {
+        const validation = validations.get(data.validationId);
+        if (!validation || validation.projectId !== project.id) {
+          return null;
+        }
+      }
+      const id = crypto.randomUUID();
+      const row: ApprovalRow = {
+        id,
+        workspaceId: data.workspaceId,
+        projectId: data.projectId,
+        subjectType: "project",
+        subjectId: data.projectId,
+        kind: data.kind,
+        status: "pending",
+        validationId: data.validationId,
+        approverId: null,
+        decidedAt: null,
+        revokedAt: null,
+        comment: data.comment,
+        projectSnapshot: { ...data.projectSnapshot },
+        createdAt: data.now,
+        updatedAt: data.now,
+      };
+      approvals.set(id, row);
+      return toApprovalRecord(row);
+    },
+    async persistApprovalDecision(input) {
+      const current = approvals.get(input.id);
+      if (!current) {
+        return null;
+      }
+      current.status = input.status;
+      current.approverId = input.approverId;
+      current.decidedAt = input.decidedAt;
+      current.revokedAt = input.revokedAt;
+      current.comment = input.comment;
+      current.updatedAt = new Date();
+      return toApprovalRecord(current);
     },
   };
 }

@@ -43,4 +43,9 @@ Seed C4: template **Deploy Staging SaaS** (8 itens) no workspace.
 - `Validation` — status `draft|requested|in_review|changes_requested|approved|rejected|cancelled`; tipo `prototype|staging|production|feature|delivery`; `requesterUserId`; `reviewerUserId?`; `stageId?`; `checklistId?`; `dueDate?`; `notes`; `items` JSON; `resultNotes?`
 - `ProjectChecklist.validationId` pode ser preenchido quando a validação liga um checklist
 
-Sem modelo Approval neste cycle.
+Sem modelo Approval neste cycle C5; C6 adiciona Approval.
+
+## Modelos C6
+
+- `Approval` — status `pending|granted|rejected|cancelled|revoked`; kind `proposal|scope|prototype|staging|production|final_acceptance`; `approverId` nullable até o decide; `decidedAt`; `revokedAt`; `comment`; `projectSnapshot` JSON; `validationId` opcional; `subjectType`/`subjectId` (`project` + projectId)
+

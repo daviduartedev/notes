@@ -4,12 +4,13 @@
 
 - Todo dado operacional usa `workspaceId` da **sessão**, nunca do body ou query.
 - Recurso de outro workspace (ou inexistente): **404** sem payload. Não usar 403 que confirme existência.
-- Lookup de recurso por id é sempre scoped à sessão (`lookupForSession`). `GET /api/workspace/:id` do workspace da sessão → 200; id de outro tenant → 404 vazio. O mesmo vale para cliente, projeto, activity, transição de etapa, item de checklist e validação.
+- Lookup de recurso por id é sempre scoped à sessão (`lookupForSession`). `GET /api/workspace/:id` do workspace da sessão → 200; id de outro tenant → 404 vazio. O mesmo vale para cliente, projeto, activity, transição de etapa, item de checklist, validação e aprovação.
 - `GET /api/pipeline` (collection): outro tenant recebe **colunas vazias**, nunca cards alheios. Não usar 404 em listagem.
 - `GET /api/checklists` (collection): outro tenant recebe **lista vazia**.
 - `GET /api/validations` (collection): outro tenant recebe **lista vazia**.
+- `GET /api/approvals` (collection): outro tenant recebe **lista vazia**.
 - Autenticado sem membership válida: **403**. Member tentando editar template de checklist do próprio workspace: **403**.
-- Body não grava `workspaceId` nem `createdAt`. Status de validação só via `POST .../transition`. `currentStageId` no PATCH de projeto é ignorado. `status` no PATCH de validação é ignorado.
+- Body não grava `workspaceId` nem `createdAt`. Status de validação só via `POST .../transition`. Status de Approval só via `POST .../decide`. `currentStageId` no PATCH de projeto é ignorado. `status` no PATCH de validação é ignorado. `approverId` no body de Approval é ignorado.
 
 ## Auth (C0)
 

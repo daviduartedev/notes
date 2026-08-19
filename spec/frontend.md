@@ -24,7 +24,7 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 | `/clientes` | autenticado | lista + criação; filtros nome/responsável/status |
 | `/clientes/:id` | autenticado | ficha, projetos do cliente, histórico |
 | `/projetos` | autenticado | lista + criação; filtros responsável/status/cliente/prazo/prioridade |
-| `/projetos/:id` | autenticado | cabeçalho operacional + overdue + **seção Etapas** + **seção Checklists** + **seção Validações** + histórico |
+| `/projetos/:id` | autenticado | cabeçalho operacional + overdue + **seção Etapas** + **seção Checklists** + **seção Validações** + **seção Aprovações** + histórico |
 
 ## Rotas C3
 
@@ -45,7 +45,14 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 | `/validacoes` | autenticado | lista + filtros status/projeto/cliente/responsável/prazo; visitante → `/login` |
 | `/validacoes/:id` | autenticado | ficha + transições; StatusPill roxo; overdue vermelho |
 
-Nav: Hoje / Pipeline / Clientes / Projetos / Checklists / Validações. `/hoje` continua empty state.
+## Rotas C6
+
+| Path | Quem | Comportamento |
+|------|------|----------------|
+| `/aprovacoes` | autenticado | lista + filtros status/kind/projeto/cliente; visitante → `/login` |
+| `/aprovacoes/:id` | autenticado | ficha + decidir; snapshot; StatusPill por status |
+
+Nav: Hoje / Pipeline / Clientes / Projetos / Checklists / Validações / Aprovações. `/hoje` continua empty state.
 
 Primitivos: Button, Input, Card, StatusPill, Select, Textarea.
 

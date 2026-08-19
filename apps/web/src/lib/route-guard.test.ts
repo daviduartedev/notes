@@ -12,6 +12,8 @@ describe("proteção de rotas", () => {
     expect(isProtectedPath("/checklists")).toBe(true);
     expect(isProtectedPath("/validacoes")).toBe(true);
     expect(isProtectedPath("/validacoes/abc")).toBe(true);
+    expect(isProtectedPath("/aprovacoes")).toBe(true);
+    expect(isProtectedPath("/aprovacoes/abc")).toBe(true);
     expect(isProtectedPath("/login")).toBe(false);
   });
 
@@ -33,6 +35,10 @@ describe("proteção de rotas", () => {
 
   it("redireciona visitante de /validacoes para /login", () => {
     expect(loginRedirect("/validacoes", false)).toBe("/login");
+  });
+
+  it("redireciona visitante de /aprovacoes para /login", () => {
+    expect(loginRedirect("/aprovacoes", false)).toBe("/login");
   });
 
   it("não redireciona visitante em /login", () => {

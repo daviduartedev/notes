@@ -105,8 +105,9 @@ describe("validations", () => {
     const after = (await ficha.json()) as ProjectDetail;
     expect(after.stages.find((stage) => stage.key === "briefing")?.status).toBe("in_progress");
 
-    const missingApproval = await app.request("/api/approvals", { headers: { cookie } });
-    expect(missingApproval.status).toBe(404);
+    const approvals = await app.request("/api/approvals", { headers: { cookie } });
+    expect(approvals.status).toBe(200);
+    await expect(approvals.json()).resolves.toEqual([]);
   });
 
   it("rejeita transição ilegal com 409 e sem event", async () => {

@@ -19,6 +19,9 @@
 - `validation.changes_requested`
 - `validation.approved`
 - `validation.rejected`
+- `approval.granted`
+- `approval.rejected`
+- `approval.revoked`
 
 Payload consultável **sem** telefone/e-mail. Sanitizer remove essas chaves.
 

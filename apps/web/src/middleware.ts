@@ -29,5 +29,7 @@ export const config = {
     "/checklists",
     "/validacoes/:path*",
     "/validacoes",
+    "/aprovacoes/:path*",
+    "/aprovacoes",
   ],
 };

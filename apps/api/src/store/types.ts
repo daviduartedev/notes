@@ -1,5 +1,10 @@
 import type { PipelineCardRow } from "../domain/pipeline-board.js";
 import type {
+  ApprovalKind,
+  ApprovalSnapshot,
+  ApprovalStatus,
+} from "../domain/approval-status.js";
+import type {
   ValidationStatus,
   ValidationType,
 } from "../domain/validation-status.js";
@@ -224,6 +229,46 @@ export type ValidationCreateInput = {
   now: Date;
 };
 
+export type ApprovalRecord = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  projectName: string;
+  clientId: string;
+  clientName: string;
+  subjectType: "project";
+  subjectId: string;
+  kind: ApprovalKind;
+  status: ApprovalStatus;
+  validationId: string | null;
+  approverId: string | null;
+  approverName: string | null;
+  decidedAt: Date | null;
+  revokedAt: Date | null;
+  comment: string | null;
+  projectSnapshot: ApprovalSnapshot;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type ApprovalFilters = {
+  status?: ApprovalStatus;
+  kind?: ApprovalKind;
+  projectId?: string;
+  clientId?: string;
+  approverId?: string;
+};
+
+export type ApprovalCreateInput = {
+  workspaceId: string;
+  projectId: string;
+  kind: ApprovalKind;
+  validationId: string | null;
+  comment: string | null;
+  projectSnapshot: ApprovalSnapshot;
+  now: Date;
+};
+
 export type ValidationUpdateInput = {
   type?: ValidationType;
   reviewerUserId?: string | null;
@@ -312,4 +357,16 @@ export type NotesStore = {
     requestedAt: Date | null;
     resultNotes?: string | null;
   }): Promise<ValidationRecord | null>;
+  listApprovals(workspaceId: string, filters: ApprovalFilters): Promise<ApprovalRecord[]>;
+  listProjectApprovals(projectId: string): Promise<ApprovalRecord[]>;
+  getApproval(id: string): Promise<ApprovalRecord | null>;
+  createApproval(data: ApprovalCreateInput): Promise<ApprovalRecord | null>;
+  persistApprovalDecision(input: {
+    id: string;
+    status: ApprovalStatus;
+    approverId: string | null;
+    decidedAt: Date | null;
+    revokedAt: Date | null;
+    comment: string | null;
+  }): Promise<ApprovalRecord | null>;
 };

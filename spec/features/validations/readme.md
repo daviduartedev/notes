@@ -1,6 +1,6 @@
 # Validações
 
-Validação **verifica** algo antes de avançar. Não é Approval (C6). `Validation.status === approved` não cria entidade de aprovação.
+Validação **verifica** algo antes de avançar. Não é Approval. `Validation.status === approved` não cria entidade de aprovação (D8; C6).
 
 ## Status
 
