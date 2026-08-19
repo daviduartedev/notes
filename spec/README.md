@@ -24,3 +24,4 @@ Verdade canônica do que foi **implementado e validado**. Propostas de cycle fic
 | [features/checklists/](features/checklists/readme.md) | Templates, instâncias, apply |
 | [features/validations/](features/validations/readme.md) | Máquina de validação, overdue, ≠ Approval |
 | [features/approvals/](features/approvals/readme.md) | Aprovações formais, snapshot, ≠ Validation |
+| [features/blockers/](features/blockers/readme.md) | Pendências circunstanciais, ≠ Checklist |

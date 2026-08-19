@@ -48,6 +48,8 @@ export const ACTIVITY_ACTIONS = [
   "approval.granted",
   "approval.rejected",
   "approval.revoked",
+  "blocker.opened",
+  "blocker.resolved",
 ] as const;
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
 

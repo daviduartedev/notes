@@ -21,6 +21,8 @@ export type PipelineCardRow = {
   currentStageKey: string;
   currentStageLabel: string;
   stageStatus: StageStatus;
+  openBlockerCount: number;
+  waitingOnClient: boolean;
 };
 
 export type PipelineCardDto = {
@@ -37,6 +39,8 @@ export type PipelineCardDto = {
   currentStageLabel: string;
   stageStatus: StageStatus;
   visualState: "overdue" | null;
+  openBlockerCount: number;
+  waitingOnClient: boolean;
 };
 
 export type PipelineColumnDto = {
@@ -79,6 +83,8 @@ export function serializePipelineCard(row: PipelineCardRow, now: Date): Pipeline
     currentStageLabel: row.currentStageLabel,
     stageStatus: row.stageStatus,
     visualState: projectVisualState(row.status, row.dueDate, now),
+    openBlockerCount: row.openBlockerCount,
+    waitingOnClient: row.waitingOnClient,
   };
 }
 

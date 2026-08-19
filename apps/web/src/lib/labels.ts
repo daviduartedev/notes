@@ -10,6 +10,9 @@ import type {
   ApprovalStatus,
   ApprovalKind,
   ApprovalAction,
+  BlockerStatus,
+  BlockerAssigneeKind,
+  BlockerAction,
 } from "./domain-types";
 
 export const clientStatusLabel: Record<ClientStatus, string> = {
@@ -97,6 +100,24 @@ export const approvalActionLabel: Record<ApprovalAction, string> = {
   cancel: "Cancelar",
   revoke: "Revogar",
 };
+
+export const blockerStatusLabel: Record<BlockerStatus, string> = {
+  open: "Aberta",
+  resolved: "Resolvida",
+  cancelled: "Cancelada",
+};
+
+export const blockerAssigneeKindLabel: Record<BlockerAssigneeKind, string> = {
+  internal: "Interno",
+  client: "Cliente",
+};
+
+export const blockerActionLabel: Record<BlockerAction, string> = {
+  resolve: "Resolver",
+  cancel: "Cancelar",
+};
+
+export const WAITING_ON_CLIENT_COPY = "Aguardando cliente";
 
 export const stageKeyLabel: Record<string, string> = {
   briefing: "Briefing",

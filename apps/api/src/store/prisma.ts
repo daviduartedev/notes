@@ -11,6 +11,11 @@ import type {
   StageStatus,
 } from "../domain/types.js";
 import type { ApprovalKind, ApprovalSnapshot, ApprovalStatus } from "../domain/approval-status.js";
+import {
+  summarizeOpenBlockers,
+  type BlockerAssigneeKind,
+  type BlockerStatus,
+} from "../domain/blocker-status.js";
 import type { ValidationStatus, ValidationType } from "../domain/validation-status.js";
 import { instantiateProjectStages } from "../domain/stage-instance.js";
 import { ensureDeployStagingForWorkspace } from "../checklists/seed.js";
@@ -20,6 +25,9 @@ import type {
   ApprovalCreateInput,
   ApprovalFilters,
   ApprovalRecord,
+  BlockerCreateInput,
+  BlockerFilters,
+  BlockerRecord,
   ChecklistItemLookup,
   ChecklistItemRecord,
   ChecklistTemplateRecord,
@@ -260,11 +268,13 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
           client: { select: { name: true } },
           currentStage: { select: { key: true, label: true, status: true } },
           owner: { select: { name: true, email: true } },
+          blockers: { where: { status: "open" }, select: { assigneeKind: true } },
         },
       });
       const cards: PipelineCardRow[] = [];
       for (const row of rows) {
         if (!row.currentStage) continue;
+        const summary = summarizeOpenBlockers(row.blockers);
         cards.push({
           id: row.id,
           name: row.name,
@@ -278,6 +288,8 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
           currentStageKey: row.currentStage.key,
           currentStageLabel: row.currentStage.label,
           stageStatus: row.currentStage.status,
+          openBlockerCount: summary.openBlockerCount,
+          waitingOnClient: summary.waitingOnClient,
         });
       }
       return cards;
@@ -310,6 +322,7 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
     async deleteProject(id) {
       try {
         await prisma.$transaction(async (tx) => {
+          await tx.blocker.deleteMany({ where: { projectId: id } });
           await tx.approval.deleteMany({ where: { projectId: id } });
           await tx.validation.deleteMany({ where: { projectId: id } });
           await tx.projectChecklist.deleteMany({ where: { projectId: id } });
@@ -801,6 +814,81 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
         return null;
       }
     },
+    async listBlockers(workspaceId, filters: BlockerFilters) {
+      const rows = await prisma.blocker.findMany({
+        where: blockerWhere(workspaceId, filters),
+        include: blockerInclude,
+        orderBy: { openedAt: "desc" },
+      });
+      return rows.map(mapBlocker);
+    },
+    async listProjectBlockers(projectId) {
+      const rows = await prisma.blocker.findMany({
+        where: { projectId },
+        include: blockerInclude,
+        orderBy: { openedAt: "desc" },
+      });
+      return rows.map(mapBlocker);
+    },
+    async getBlocker(id) {
+      const row = await prisma.blocker.findUnique({
+        where: { id },
+        include: blockerInclude,
+      });
+      return row ? mapBlocker(row) : null;
+    },
+    async createBlocker(data: BlockerCreateInput) {
+      const project = await prisma.project.findUnique({ where: { id: data.projectId } });
+      if (!project || project.workspaceId !== data.workspaceId) {
+        return null;
+      }
+      if (data.blocksStageId) {
+        const stage = await prisma.stage.findUnique({ where: { id: data.blocksStageId } });
+        if (!stage || stage.projectId !== project.id) {
+          return null;
+        }
+      }
+      try {
+        const row = await prisma.blocker.create({
+          data: {
+            workspaceId: data.workspaceId,
+            projectId: data.projectId,
+            title: data.title,
+            assigneeKind: data.assigneeKind,
+            assigneeUserId: data.assigneeUserId,
+            blocksStageId: data.blocksStageId,
+            blocksProject: data.blocksProject,
+            dueDate: data.dueDate,
+            notes: data.notes,
+            sourceMeetingId: data.sourceMeetingId,
+            openedAt: data.now,
+            createdAt: data.now,
+            updatedAt: data.now,
+          },
+          include: blockerInclude,
+        });
+        return mapBlocker(row);
+      } catch {
+        return null;
+      }
+    },
+    async persistBlockerDecision(input) {
+      try {
+        const row = await prisma.blocker.update({
+          where: { id: input.id },
+          data: {
+            status: input.status,
+            resolvedAt: input.resolvedAt,
+            cancelledAt: input.cancelledAt,
+            notes: input.notes,
+          },
+          include: blockerInclude,
+        });
+        return mapBlocker(row);
+      } catch {
+        return null;
+      }
+    },
   };
 }
 
@@ -1086,3 +1174,71 @@ function mapApproval(row: {
     updatedAt: row.updatedAt,
   };
 }
+
+const blockerInclude = {
+  project: { include: { client: { select: { id: true, name: true } } } },
+  assignee: { select: { name: true, email: true } },
+} as const;
+
+function blockerWhere(workspaceId: string, filters: BlockerFilters): Prisma.BlockerWhereInput {
+  const now = filters.now ?? new Date();
+  return {
+    workspaceId,
+    ...(filters.status ? { status: filters.status } : {}),
+    ...(filters.assigneeKind ? { assigneeKind: filters.assigneeKind } : {}),
+    ...(filters.assigneeUserId ? { assigneeUserId: filters.assigneeUserId } : {}),
+    ...(filters.projectId ? { projectId: filters.projectId } : {}),
+    ...(filters.clientId ? { project: { clientId: filters.clientId } } : {}),
+    ...(filters.blocking
+      ? { OR: [{ blocksProject: true }, { blocksStageId: { not: null } }] }
+      : {}),
+    ...(filters.overdue ? { status: "open", dueDate: { not: null, lt: now } } : {}),
+  };
+}
+
+function mapBlocker(row: {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  title: string;
+  assigneeKind: BlockerAssigneeKind;
+  assigneeUserId: string | null;
+  blocksStageId: string | null;
+  blocksProject: boolean;
+  status: BlockerStatus;
+  dueDate: Date | null;
+  openedAt: Date;
+  resolvedAt: Date | null;
+  cancelledAt: Date | null;
+  sourceMeetingId: string | null;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  project: { name: string; clientId: string; client: { id: string; name: string } };
+  assignee: { name: string | null; email: string } | null;
+}): BlockerRecord {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    projectId: row.projectId,
+    projectName: row.project.name,
+    clientId: row.project.client.id,
+    clientName: row.project.client.name,
+    title: row.title,
+    assigneeKind: row.assigneeKind,
+    assigneeUserId: row.assigneeUserId,
+    assigneeName: displayName(row.assignee),
+    blocksStageId: row.blocksStageId,
+    blocksProject: row.blocksProject,
+    status: row.status,
+    dueDate: row.dueDate,
+    openedAt: row.openedAt,
+    resolvedAt: row.resolvedAt,
+    cancelledAt: row.cancelledAt,
+    sourceMeetingId: row.sourceMeetingId,
+    notes: row.notes,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+

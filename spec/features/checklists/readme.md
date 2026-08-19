@@ -2,7 +2,7 @@
 
 Trabalho **previsto**. Template ≠ instância: aplicar o molde copia `name` e itens (`title`, `order`) para `ProjectChecklist` + `ChecklistItem`. Mutar o template **não** reescreve instâncias já aplicadas.
 
-Checklist **não** é pendência e **não** altera `Stage.status`.
+Checklist **não** é pendência e **não** altera `Stage.status`. Blocker (C7) é tabela distinta; completar item **não** cria Blocker.
 
 ## Seed
 

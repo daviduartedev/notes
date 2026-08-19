@@ -1,3 +1,8 @@
+import {
+  OPEN_BLOCKER_COMPLETE_REASON,
+  openBlockerBlocksStage,
+  type OpenBlockerHint,
+} from "./blocker-status.js";
 import type { StageSnapshot } from "./stage-instance.js";
 import type { ActivityAction, StageAction } from "./types.js";
 
@@ -61,6 +66,7 @@ export function evaluateStageAction(input: {
   stageId: string;
   action: StageAction;
   toKey?: string | null;
+  openBlockers?: readonly OpenBlockerHint[];
 }): { ok: true; toKey: string | null } | { ok: false; reason: string } {
   const origin = input.stages.find((stage) => stage.id === input.stageId);
   if (!origin) {
@@ -71,6 +77,9 @@ export function evaluateStageAction(input: {
   }
 
   if (input.action === "complete") {
+    if (openBlockerBlocksStage(input.openBlockers ?? [], origin.id)) {
+      return { ok: false, reason: OPEN_BLOCKER_COMPLETE_REASON };
+    }
     const statusReason = completeReason(origin.status);
     if (statusReason) {
       return { ok: false, reason: statusReason };
@@ -143,6 +152,7 @@ export function canTransition(input: {
   stageId: string;
   action: StageAction;
   toKey?: string | null;
+  openBlockers?: readonly OpenBlockerHint[];
 }): boolean {
   return evaluateStageAction(input).ok;
 }
@@ -153,6 +163,7 @@ export function applyStageAction(input: {
   stageId: string;
   action: StageAction;
   toKey?: string | null;
+  openBlockers?: readonly OpenBlockerHint[];
 }): StageActionResult {
   const decision = evaluateStageAction(input);
   if (!decision.ok) {
@@ -204,6 +215,7 @@ export function listStageActions(input: {
   stage: StageSnapshot;
   stages: readonly StageSnapshot[];
   currentStageId: string | null;
+  openBlockers?: readonly OpenBlockerHint[];
 }): StageActionItem[] {
   const completeTargets =
     input.stage.allowedNextKeys.length > 0 ? [...input.stage.allowedNextKeys] : [null];
@@ -220,6 +232,7 @@ export function listStageActions(input: {
       stageId: input.stage.id,
       action: item.action,
       toKey: item.toKey,
+      openBlockers: input.openBlockers,
     });
     return {
       action: item.action,

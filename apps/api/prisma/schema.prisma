@@ -84,6 +84,17 @@ enum ApprovalKind {
   final_acceptance
 }
 
+enum BlockerStatus {
+  open
+  resolved
+  cancelled
+}
+
+enum BlockerAssigneeKind {
+  internal
+  client
+}
+
 model User {
   id             String   @id @default(cuid())
   email          String   @unique
@@ -100,6 +111,7 @@ model User {
   requestedValidations Validation[] @relation("ValidationRequester")
   reviewedValidations  Validation[] @relation("ValidationReviewer")
   approvals            Approval[] @relation("ApprovalApprover")
+  assignedBlockers     Blocker[] @relation("BlockerAssignee")
 }
 
 model Workspace {
@@ -117,6 +129,7 @@ model Workspace {
   projectChecklists ProjectChecklist[]
   validations       Validation[]
   approvals         Approval[]
+  blockers          Blocker[]
 }
 
 model Client {
@@ -168,6 +181,7 @@ model Project {
   checklists         ProjectChecklist[]
   validations        Validation[]
   approvals          Approval[]
+  blockers           Blocker[]
 
   @@index([workspaceId])
   @@index([workspaceId, clientId])
@@ -227,6 +241,7 @@ model Stage {
   currentFor      Project[]   @relation("ProjectCurrentStage")
   checklists      ProjectChecklist[]
   validations     Validation[]
+  blockers        Blocker[]
 
   @@unique([projectId, key])
   @@index([workspaceId, projectId])
@@ -364,6 +379,35 @@ model Approval {
   @@index([projectId])
   @@index([workspaceId, status])
   @@index([approverId])
+}
+
+model Blocker {
+  id              String              @id @default(cuid())
+  workspaceId     String
+  projectId       String
+  title           String
+  assigneeKind    BlockerAssigneeKind
+  assigneeUserId  String?
+  blocksStageId   String?
+  blocksProject   Boolean             @default(false)
+  status          BlockerStatus       @default(open)
+  dueDate         DateTime?
+  openedAt        DateTime
+  resolvedAt      DateTime?
+  cancelledAt     DateTime?
+  sourceMeetingId String?
+  notes           String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  workspace       Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project         Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee        User?               @relation("BlockerAssignee", fields: [assigneeUserId], references: [id], onDelete: SetNull)
+  blocksStage     Stage?              @relation(fields: [blocksStageId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([workspaceId, status])
+  @@index([assigneeUserId])
 }
 
 model Member {

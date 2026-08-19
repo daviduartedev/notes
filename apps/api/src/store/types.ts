@@ -5,6 +5,10 @@ import type {
   ApprovalStatus,
 } from "../domain/approval-status.js";
 import type {
+  BlockerAssigneeKind,
+  BlockerStatus,
+} from "../domain/blocker-status.js";
+import type {
   ValidationStatus,
   ValidationType,
 } from "../domain/validation-status.js";
@@ -269,6 +273,55 @@ export type ApprovalCreateInput = {
   now: Date;
 };
 
+export type BlockerRecord = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  projectName: string;
+  clientId: string;
+  clientName: string;
+  title: string;
+  assigneeKind: BlockerAssigneeKind;
+  assigneeUserId: string | null;
+  assigneeName: string | null;
+  blocksStageId: string | null;
+  blocksProject: boolean;
+  status: BlockerStatus;
+  dueDate: Date | null;
+  openedAt: Date;
+  resolvedAt: Date | null;
+  cancelledAt: Date | null;
+  sourceMeetingId: string | null;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type BlockerFilters = {
+  status?: BlockerStatus;
+  assigneeKind?: BlockerAssigneeKind;
+  assigneeUserId?: string;
+  projectId?: string;
+  clientId?: string;
+  blocking?: boolean;
+  overdue?: boolean;
+  now?: Date;
+};
+
+export type BlockerCreateInput = {
+  workspaceId: string;
+  projectId: string;
+  title: string;
+  assigneeKind: BlockerAssigneeKind;
+  assigneeUserId: string | null;
+  blocksStageId: string | null;
+  blocksProject: boolean;
+  dueDate: Date | null;
+  notes: string | null;
+  sourceMeetingId: string | null;
+  now: Date;
+};
+
 export type ValidationUpdateInput = {
   type?: ValidationType;
   reviewerUserId?: string | null;
@@ -369,4 +422,15 @@ export type NotesStore = {
     revokedAt: Date | null;
     comment: string | null;
   }): Promise<ApprovalRecord | null>;
+  listBlockers(workspaceId: string, filters: BlockerFilters): Promise<BlockerRecord[]>;
+  listProjectBlockers(projectId: string): Promise<BlockerRecord[]>;
+  getBlocker(id: string): Promise<BlockerRecord | null>;
+  createBlocker(data: BlockerCreateInput): Promise<BlockerRecord | null>;
+  persistBlockerDecision(input: {
+    id: string;
+    status: BlockerStatus;
+    resolvedAt: Date | null;
+    cancelledAt: Date | null;
+    notes: string | null;
+  }): Promise<BlockerRecord | null>;
 };

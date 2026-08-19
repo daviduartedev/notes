@@ -12,9 +12,9 @@ Só `draft | active | on_hold`. `completed` e `cancelled` não aparecem.
 
 ## Card
 
-id, name, clientId, clientName, ownerUserId, ownerName, dueDate, priority, status do projeto, currentStageKey, currentStageLabel, stageStatus da etapa atual, visualState (overdue do C1).
+id, name, clientId, clientName, ownerUserId, ownerName, dueDate, priority, status do projeto, currentStageKey, currentStageLabel, stageStatus da etapa atual, visualState (overdue do C1), openBlockerCount, waitingOnClient.
 
-Pills na UI: Atrasado / Bloqueada / Aguardando.
+Pills na UI: Atrasado / Bloqueada / Aguardando / Pendência / Aguardando cliente.
 
 ## API
 

@@ -8,6 +8,7 @@ import { projectRoutes } from "./projects/routes.js";
 import type { AppDeps } from "./deps.js";
 import { clientErrorBody } from "./http/errors.js";
 import { approvalRoutes } from "./approvals/routes.js";
+import { blockerRoutes } from "./blockers/routes.js";
 import { validationRoutes } from "./validations/routes.js";
 import { workspaceRoutes } from "./workspace/routes.js";
 
@@ -37,6 +38,7 @@ export function createApp(deps: AppDeps) {
   app.route("/api", checklistRoutes(deps));
   app.route("/api", validationRoutes(deps));
   app.route("/api", approvalRoutes(deps));
+  app.route("/api", blockerRoutes(deps));
   app.route("/api/projects", projectRoutes(deps));
 
   return app;

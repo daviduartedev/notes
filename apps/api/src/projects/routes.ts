@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import type { AppDeps } from "../deps.js";
 import { canTransitionProjectStatus } from "../domain/project-status.js";
 import { applyStageAction } from "../domain/stage-transition.js";
+import type { OpenBlockerHint } from "../domain/blocker-status.js";
 import type { ProjectPriority, ProjectStatus, StageAction } from "../domain/types.js";
 import { emptyNotFound, requireMember } from "../http/session-guard.js";
 import type { ProjectRecord, ProjectUpdateInput, StageRecord } from "../store/types.js";
@@ -26,6 +27,21 @@ async function clientNameOf(
   return client?.name ?? "";
 }
 
+async function openHintsFor(deps: AppDeps, projectId: string): Promise<{
+  hints: OpenBlockerHint[];
+  waitingOnClient: boolean;
+}> {
+  const rows = await deps.store.listProjectBlockers(projectId);
+  const open = rows.filter((row) => row.status === "open");
+  return {
+    hints: open.map((row) => ({
+      blocksStageId: row.blocksStageId,
+      blocksProject: row.blocksProject,
+    })),
+    waitingOnClient: open.some((row) => row.assigneeKind === "client"),
+  };
+}
+
 async function toDto(
   deps: AppDeps,
   row: ProjectRecord,
@@ -35,7 +51,17 @@ async function toDto(
     ? await deps.store.hydrateProjectStages(row.id, deps.now())
     : undefined;
   const fresh = includeStages ? ((await deps.store.getProject(row.id)) ?? row) : row;
-  return serializeProject(fresh, await clientNameOf(deps, fresh.clientId), deps.now(), stages);
+  const blockers = includeStages
+    ? await openHintsFor(deps, fresh.id)
+    : { hints: [], waitingOnClient: false };
+  return serializeProject(
+    fresh,
+    await clientNameOf(deps, fresh.clientId),
+    deps.now(),
+    stages,
+    blockers.hints,
+    blockers.waitingOnClient,
+  );
 }
 
 function patchesFromAction(
@@ -203,12 +229,14 @@ export function projectRoutes(deps: AppDeps) {
       return emptyNotFound(c);
     }
     const action = (parsed.data.action ?? "complete") as StageAction;
+    const open = await openHintsFor(deps, project.id);
     const applied = applyStageAction({
       stages: stages.map(toStageSnapshot),
       currentStageId: project.currentStageId,
       stageId,
       action,
       toKey: parsed.data.to,
+      openBlockers: open.hints,
     });
     if (!applied.ok) {
       return c.json({ error: "Transição inválida", reason: applied.reason }, 409);

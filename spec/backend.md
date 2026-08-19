@@ -64,7 +64,7 @@ Completar item de checklist **não** muda `Stage.status`.
 
 CORS: GET, POST, PATCH, PUT, DELETE, OPTIONS. `workspaceId` no body é ignorado. PATCH `currentStageId` é ignorado. Query `workspaceId` em `/api/pipeline` também é ignorada.
 
-GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR. Completar item de checklist **não** muda `Stage.status`. `changes_requested` na validação **não** muda `Stage.status`. Grant de Approval **não** muda `Stage.status`.
+GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com motivo pt-BR. Completar item de checklist **não** muda `Stage.status`. `changes_requested` na validação **não** muda `Stage.status`. Grant de Approval **não** muda `Stage.status`. Blocker open a bloquear a etapa/projeto **rejeita** complete.
 
 ## Contratos C6
 
@@ -75,6 +75,16 @@ GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com m
 | GET | `/api/projects/:id/approvals` | sessão | 404 IDOR |
 | GET | `/api/approvals/:id` | sessão | 404 IDOR |
 | POST | `/api/approvals/:id/decide` | sessão | body `{ action, comment? }`; 409 ilegal sem event |
+
+## Contratos C7
+
+| Método | Path | Auth | Notas |
+|--------|------|------|-------|
+| POST | `/api/blockers` | sessão | create `open`; auto-block da etapa atual; `workspaceId`/`status` ignorados |
+| GET | `/api/blockers` | sessão | filtros status/assigneeKind/projeto/cliente/blocking/overdue; tenant B → `[]` |
+| GET | `/api/projects/:id/blockers` | sessão | 404 IDOR |
+| GET | `/api/blockers/:id` | sessão | 404 IDOR |
+| POST | `/api/blockers/:id/decide` | sessão | body `{ action, notes? }`; 409 ilegal; resolve não avança etapa |
 
 ## Erros
 

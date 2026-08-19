@@ -188,4 +188,41 @@ describe("matriz de transições de etapa", () => {
     if (!unblocked.ok) return;
     expect(unblocked.stages.find((stage) => stage.id === origin.id)?.status).toBe("in_progress");
   });
+
+  it("rejeita complete com Blocker open mesmo se a etapa estiver in_progress", () => {
+    const state = projectAt("briefing");
+    const origin = state.stages.find((stage) => stage.key === "briefing");
+    expect(origin).toBeDefined();
+    if (!origin) return;
+    const blocked = evaluateStageAction({
+      stages: state.stages,
+      currentStageId: state.currentStageId,
+      stageId: origin.id,
+      action: "complete",
+      toKey: "proposal",
+      openBlockers: [{ blocksStageId: origin.id, blocksProject: false }],
+    });
+    expect(blocked).toEqual({
+      ok: false,
+      reason: "Há pendência em aberto bloqueando esta etapa",
+    });
+    const projectBlock = evaluateStageAction({
+      stages: state.stages,
+      currentStageId: state.currentStageId,
+      stageId: origin.id,
+      action: "complete",
+      toKey: "proposal",
+      openBlockers: [{ blocksStageId: null, blocksProject: true }],
+    });
+    expect(projectBlock.ok).toBe(false);
+    const cleared = evaluateStageAction({
+      stages: state.stages,
+      currentStageId: state.currentStageId,
+      stageId: origin.id,
+      action: "complete",
+      toKey: "proposal",
+      openBlockers: [],
+    });
+    expect(cleared.ok).toBe(true);
+  });
 });

@@ -1,6 +1,7 @@
 import { ActivityList } from "@/components/activity-list";
 import { AppShell } from "@/components/app-shell";
 import { ProjectApprovals } from "@/components/project-approvals";
+import { ProjectBlockers } from "@/components/project-blockers";
 import { ProjectChecklists } from "@/components/project-checklists";
 import { ProjectEditForm } from "@/components/project-edit-form";
 import { ProjectValidations } from "@/components/project-validations";
@@ -10,6 +11,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import type {
   ActivityDto,
   ApprovalDto,
+  BlockerDto,
   ChecklistTemplateDto,
   ClientDto,
   MemberDto,
@@ -27,7 +29,7 @@ export default async function ProjetoFichaPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [detail, membersRes, clientsRes, activityRes, templatesRes, checklistsRes, validationsRes, approvalsRes] =
+  const [detail, membersRes, clientsRes, activityRes, templatesRes, checklistsRes, validationsRes, approvalsRes, blockersRes] =
     await Promise.all([
     serverApi<ProjectDto>(`/api/projects/${id}`),
     serverApi<MemberDto[]>("/api/workspace/members"),
@@ -37,6 +39,7 @@ export default async function ProjetoFichaPage({
     serverApi<ProjectChecklistDto[]>(`/api/projects/${id}/checklists`),
     serverApi<ValidationDto[]>(`/api/projects/${id}/validations`),
     serverApi<ApprovalDto[]>(`/api/projects/${id}/approvals`),
+    serverApi<BlockerDto[]>(`/api/projects/${id}/blockers`),
   ]);
   const project = detail.status === 200 ? detail.data : null;
   const members = membersRes.status === 200 && membersRes.data ? membersRes.data : [];
@@ -46,6 +49,7 @@ export default async function ProjetoFichaPage({
   const checklists = checklistsRes.status === 200 && checklistsRes.data ? checklistsRes.data : [];
   const validations = validationsRes.status === 200 && validationsRes.data ? validationsRes.data : [];
   const approvals = approvalsRes.status === 200 && approvalsRes.data ? approvalsRes.data : [];
+  const blockers = blockersRes.status === 200 && blockersRes.data ? blockersRes.data : [];
 
   return (
     <AppShell title={project?.name ?? "Projeto"} pathname="/projetos">
@@ -57,6 +61,12 @@ export default async function ProjetoFichaPage({
           <div className="mb-4 flex flex-wrap items-center gap-2">
             {project.visualState === "overdue" ? (
               <StatusPill tone="red">Atrasado</StatusPill>
+            ) : null}
+            {(project.openBlockerCount ?? 0) > 0 ? (
+              <StatusPill tone="red">Pendência</StatusPill>
+            ) : null}
+            {project.waitingOnClient ? (
+              <StatusPill tone="yellow">Aguardando cliente</StatusPill>
             ) : null}
             <StatusPill tone={projectStatusTone[project.status]}>
               {projectStatusLabel[project.status]}
@@ -86,6 +96,10 @@ export default async function ProjetoFichaPage({
         <Card>
           <h3 className="mb-4 font-display text-xl">Aprovações</h3>
           <ProjectApprovals project={project} approvals={approvals} />
+        </Card>
+        <Card>
+          <h3 className="mb-4 font-display text-xl">Pendências</h3>
+          <ProjectBlockers project={project} members={members} blockers={blockers} />
         </Card>
         <Card>
           <h3 className="mb-4 font-display text-xl">Histórico</h3>

@@ -14,6 +14,8 @@ function card(overrides: Partial<PipelineCardRow> & Pick<PipelineCardRow, "id" |
     status: "draft",
     currentStageLabel: overrides.currentStageKey,
     stageStatus: "in_progress",
+    openBlockerCount: 0,
+    waitingOnClient: false,
     ...overrides,
   };
 }

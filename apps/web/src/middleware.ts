@@ -31,5 +31,7 @@ export const config = {
     "/validacoes",
     "/aprovacoes/:path*",
     "/aprovacoes",
+    "/pendencias/:path*",
+    "/pendencias",
   ],
 };

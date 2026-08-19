@@ -14,6 +14,11 @@ import type {
   ApprovalSnapshot,
   ApprovalStatus,
 } from "../domain/approval-status.js";
+import {
+  summarizeOpenBlockers,
+  type BlockerAssigneeKind,
+  type BlockerStatus,
+} from "../domain/blocker-status.js";
 import type {
   ValidationStatus,
   ValidationType,
@@ -24,6 +29,9 @@ import type {
   ApprovalCreateInput,
   ApprovalFilters,
   ApprovalRecord,
+  BlockerCreateInput,
+  BlockerFilters,
+  BlockerRecord,
   ChecklistItemLookup,
   ChecklistItemRecord,
   ChecklistTemplateRecord,
@@ -113,6 +121,26 @@ type ApprovalRow = {
   revokedAt: Date | null;
   comment: string | null;
   projectSnapshot: ApprovalSnapshot;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type BlockerRow = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  title: string;
+  assigneeKind: BlockerAssigneeKind;
+  assigneeUserId: string | null;
+  blocksStageId: string | null;
+  blocksProject: boolean;
+  status: BlockerStatus;
+  dueDate: Date | null;
+  openedAt: Date;
+  resolvedAt: Date | null;
+  cancelledAt: Date | null;
+  sourceMeetingId: string | null;
+  notes: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -228,6 +256,26 @@ function matchesApprovalFilters(
   return true;
 }
 
+function matchesBlockerFilters(
+  row: BlockerRow,
+  project: ProjectRecord | undefined,
+  filters: BlockerFilters,
+): boolean {
+  if (filters.status && row.status !== filters.status) return false;
+  if (filters.assigneeKind && row.assigneeKind !== filters.assigneeKind) return false;
+  if (filters.assigneeUserId && row.assigneeUserId !== filters.assigneeUserId) return false;
+  if (filters.projectId && row.projectId !== filters.projectId) return false;
+  if (filters.clientId && project?.clientId !== filters.clientId) return false;
+  if (filters.blocking && !row.blocksProject && !row.blocksStageId) return false;
+  if (filters.overdue) {
+    const now = filters.now ?? new Date();
+    if (row.status !== "open" || !row.dueDate || row.dueDate.getTime() >= now.getTime()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore {
   const members = [...seedMembers];
   const clients = new Map<string, ClientRecord>();
@@ -239,6 +287,7 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
   const checklistItems = new Map<string, ChecklistItemRow>();
   const validations = new Map<string, ValidationRow>();
   const approvals = new Map<string, ApprovalRow>();
+  const blockers = new Map<string, BlockerRow>();
   const activities: ActivityRecord[] = [];
 
   function ensureTemplate(workspaceId: string): TemplateRow {
@@ -370,6 +419,35 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       revokedAt: row.revokedAt ? new Date(row.revokedAt) : null,
       comment: row.comment,
       projectSnapshot: { ...row.projectSnapshot },
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+    };
+  }
+
+  function toBlockerRecord(row: BlockerRow): BlockerRecord | null {
+    const project = projects.get(row.projectId);
+    if (!project) return null;
+    const client = clients.get(project.clientId);
+    return {
+      id: row.id,
+      workspaceId: row.workspaceId,
+      projectId: row.projectId,
+      projectName: project.name,
+      clientId: project.clientId,
+      clientName: client?.name ?? "",
+      title: row.title,
+      assigneeKind: row.assigneeKind,
+      assigneeUserId: row.assigneeUserId,
+      assigneeName: actorName(row.assigneeUserId),
+      blocksStageId: row.blocksStageId,
+      blocksProject: row.blocksProject,
+      status: row.status,
+      dueDate: row.dueDate ? new Date(row.dueDate) : null,
+      openedAt: new Date(row.openedAt),
+      resolvedAt: row.resolvedAt ? new Date(row.resolvedAt) : null,
+      cancelledAt: row.cancelledAt ? new Date(row.cancelledAt) : null,
+      sourceMeetingId: row.sourceMeetingId,
+      notes: row.notes,
       createdAt: new Date(row.createdAt),
       updatedAt: new Date(row.updatedAt),
     };
@@ -516,6 +594,10 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
         if (!stage) continue;
         const client = clients.get(project.clientId);
         const owner = memberByUser.get(project.ownerUserId);
+        const open = [...blockers.values()].filter(
+          (row) => row.projectId === project.id && row.status === "open",
+        );
+        const summary = summarizeOpenBlockers(open);
         cards.push({
           id: project.id,
           name: project.name,
@@ -529,6 +611,8 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
           currentStageKey: stage.key,
           currentStageLabel: stage.label,
           stageStatus: stage.status,
+          openBlockerCount: summary.openBlockerCount,
+          waitingOnClient: summary.waitingOnClient,
         });
       }
       return cards;
@@ -589,6 +673,11 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
         for (const [approvalId, approval] of approvals) {
           if (approval.projectId === id) {
             approvals.delete(approvalId);
+          }
+        }
+        for (const [blockerId, blocker] of blockers) {
+          if (blocker.projectId === id) {
+            blockers.delete(blockerId);
           }
         }
         for (const [validationId, validation] of validations) {
@@ -1006,6 +1095,71 @@ export function createMemoryStore(seedMembers: MemberRecord[] = []): NotesStore 
       current.comment = input.comment;
       current.updatedAt = new Date();
       return toApprovalRecord(current);
+    },
+    async listBlockers(workspaceId, filters: BlockerFilters) {
+      return [...blockers.values()]
+        .filter((row) => row.workspaceId === workspaceId)
+        .filter((row) => matchesBlockerFilters(row, projects.get(row.projectId), filters))
+        .sort((a, b) => b.openedAt.getTime() - a.openedAt.getTime())
+        .map(toBlockerRecord)
+        .filter((row): row is BlockerRecord => row !== null);
+    },
+    async listProjectBlockers(projectId) {
+      return [...blockers.values()]
+        .filter((row) => row.projectId === projectId)
+        .sort((a, b) => b.openedAt.getTime() - a.openedAt.getTime())
+        .map(toBlockerRecord)
+        .filter((row): row is BlockerRecord => row !== null);
+    },
+    async getBlocker(id) {
+      const row = blockers.get(id);
+      return row ? toBlockerRecord(row) : null;
+    },
+    async createBlocker(data: BlockerCreateInput) {
+      const project = projects.get(data.projectId);
+      if (!project || project.workspaceId !== data.workspaceId) {
+        return null;
+      }
+      if (data.blocksStageId) {
+        const stage = stages.get(data.blocksStageId);
+        if (!stage || stage.projectId !== project.id) {
+          return null;
+        }
+      }
+      const id = crypto.randomUUID();
+      const row: BlockerRow = {
+        id,
+        workspaceId: data.workspaceId,
+        projectId: data.projectId,
+        title: data.title,
+        assigneeKind: data.assigneeKind,
+        assigneeUserId: data.assigneeUserId,
+        blocksStageId: data.blocksStageId,
+        blocksProject: data.blocksProject,
+        status: "open",
+        dueDate: data.dueDate,
+        openedAt: data.now,
+        resolvedAt: null,
+        cancelledAt: null,
+        sourceMeetingId: data.sourceMeetingId,
+        notes: data.notes,
+        createdAt: data.now,
+        updatedAt: data.now,
+      };
+      blockers.set(id, row);
+      return toBlockerRecord(row);
+    },
+    async persistBlockerDecision(input) {
+      const current = blockers.get(input.id);
+      if (!current) {
+        return null;
+      }
+      current.status = input.status;
+      current.resolvedAt = input.resolvedAt;
+      current.cancelledAt = input.cancelledAt;
+      current.notes = input.notes;
+      current.updatedAt = new Date();
+      return toBlockerRecord(current);
     },
   };
 }

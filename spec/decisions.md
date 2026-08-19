@@ -438,6 +438,48 @@ Playwright continua fora. Assinatura digital e portal do cliente fora.
 
 ---
 
+## ADR-0023 — Blocker ≠ Checklist; máquina open/resolved/cancelled (C7-D1–D11)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c7-pendencias/
+- **Status:** Accepted
+
+### Contexto
+Pendência circunstancial não pode colapsar com checklist previsto. Complete de etapa precisa respeitar Blocker open.
+
+### Decisão
+Tabela `Blocker` distinta. Status `open|resolved|cancelled`. `assigneeKind` `internal` (userId member) ou `client` (userId null). `blocksStageId` opcional; `blocksProject` boolean. Create na etapa atual auto `Stage.status=blocked`. Resolve não avança etapa. `sourceMeetingId` nullable sem FK.
+
+### Alternativas consideradas
+- Reusar ChecklistItem como pendência — rejeitado.
+- Só rejeitar complete sem auto-block — rejeitado (brief pede os dois).
+
+### Consequências
+C8+ assume Blocker e invariante em `stage-transition.ts`. C9 pode ligar `sourceMeetingId`.
+
+---
+
+## ADR-0024 — Isolamento e decide de Blocker (C7-D12–D22)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c7-pendencias/
+- **Status:** Accepted
+
+### Contexto
+Mesmo padrão de tenant e mass assignment dos cycles anteriores.
+
+### Decisão
+GET/decide outro tenant → 404 vazio; collection → `[]`. Status só via `POST /api/blockers/:id/decide`. `workspaceId` da sessão. Copy UI "Aguardando cliente". Indicadores na ficha e no pipeline.
+
+### Alternativas consideradas
+- PATCH de status — rejeitado.
+- Playwright E2E — ORCH-008.
+
+### Consequências
+Playwright continua fora. Checklist não vira Blocker automático.
+
+---
+
 ## ADR-0018 — Completar item não muda Stage.status (C4-D7–D16)
 
 - **Data:** 2026-08-19

@@ -22,6 +22,8 @@
 - `approval.granted`
 - `approval.rejected`
 - `approval.revoked`
+- `blocker.opened`
+- `blocker.resolved`
 
 Payload consultável **sem** telefone/e-mail. Sanitizer remove essas chaves.
 

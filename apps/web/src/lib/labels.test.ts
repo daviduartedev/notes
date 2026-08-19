@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { stageKeyLabel, stageStatusLabel, validationStatusLabel, approvalStatusLabel } from "./labels";
+import { stageKeyLabel, stageStatusLabel, validationStatusLabel, approvalStatusLabel, WAITING_ON_CLIENT_COPY } from "./labels";
 
 describe("labels de etapas", () => {
   it("usa a linguagem manuscrita do seed SaaS", () => {
@@ -9,5 +9,6 @@ describe("labels de etapas", () => {
     expect(stageStatusLabel.waiting).toBe("Aguardando");
     expect(validationStatusLabel.changes_requested).toBe("Ajustes solicitados");
     expect(approvalStatusLabel.granted).toBe("Concedida");
+    expect(WAITING_ON_CLIENT_COPY).toBe("Aguardando cliente");
   });
 });

@@ -9,6 +9,7 @@ const links = [
   { href: "/checklists", label: "Checklists" },
   { href: "/validacoes", label: "Validações" },
   { href: "/aprovacoes", label: "Aprovações" },
+  { href: "/pendencias", label: "Pendências" },
 ];
 
 export function AppShell({

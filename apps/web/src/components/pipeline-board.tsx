@@ -14,6 +14,12 @@ function cardPills(card: PipelineCardDto) {
   if (card.stageStatus === "waiting") {
     pills.push({ tone: "yellow", label: "Aguardando" });
   }
+  if (card.openBlockerCount > 0) {
+    pills.push({ tone: "red", label: "Pendência" });
+  }
+  if (card.waitingOnClient) {
+    pills.push({ tone: "yellow", label: "Aguardando cliente" });
+  }
   return pills;
 }
 

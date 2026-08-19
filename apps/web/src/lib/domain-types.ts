@@ -28,6 +28,9 @@ export type ApprovalKind =
   | "production"
   | "final_acceptance";
 export type ApprovalAction = "grant" | "reject" | "cancel" | "revoke";
+export type BlockerStatus = "open" | "resolved" | "cancelled";
+export type BlockerAssigneeKind = "internal" | "client";
+export type BlockerAction = "resolve" | "cancel";
 
 export type MemberDto = {
   id: string;
@@ -93,6 +96,8 @@ export type ProjectDto = {
   currentStageId?: string | null;
   currentStageKey?: string | null;
   stages?: StageDto[];
+  openBlockerCount?: number;
+  waitingOnClient?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -111,6 +116,8 @@ export type PipelineCardDto = {
   currentStageLabel: string;
   stageStatus: StageStatus;
   visualState: "overdue" | null;
+  openBlockerCount: number;
+  waitingOnClient: boolean;
 };
 
 export type PipelineColumnDto = {
@@ -148,7 +155,9 @@ export type ActivityDto = {
     | "validation.rejected"
     | "approval.granted"
     | "approval.rejected"
-    | "approval.revoked";
+    | "approval.revoked"
+    | "blocker.opened"
+    | "blocker.resolved";
   payload: Record<string, unknown>;
   createdAt: string;
 };
@@ -247,6 +256,34 @@ export type ApprovalDto = {
   comment: string | null;
   projectSnapshot: ApprovalSnapshotDto;
   allowedActions: ApprovalAction[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BlockerDto = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  projectName: string;
+  clientId: string;
+  clientName: string;
+  title: string;
+  assigneeKind: BlockerAssigneeKind;
+  assigneeUserId: string | null;
+  assigneeName: string | null;
+  waitingOnClient: boolean;
+  waitingOnClientCopy: string | null;
+  blocksStageId: string | null;
+  blocksProject: boolean;
+  status: BlockerStatus;
+  dueDate: string | null;
+  openedAt: string;
+  resolvedAt: string | null;
+  cancelledAt: string | null;
+  sourceMeetingId: string | null;
+  notes: string | null;
+  visualState: "overdue" | null;
+  allowedActions: BlockerAction[];
   createdAt: string;
   updatedAt: string;
 };

@@ -1,4 +1,5 @@
 import { projectVisualState } from "../domain/overdue.js";
+import type { OpenBlockerHint } from "../domain/blocker-status.js";
 import { listStageActions } from "../domain/stage-transition.js";
 import type { StageSnapshot } from "../domain/stage-instance.js";
 import type { ProjectRecord, StageRecord } from "../store/types.js";
@@ -17,7 +18,12 @@ export function toStageSnapshot(row: StageRecord): StageSnapshot {
   };
 }
 
-export function serializeStage(row: StageRecord, stages: StageRecord[], currentStageId: string | null) {
+export function serializeStage(
+  row: StageRecord,
+  stages: StageRecord[],
+  currentStageId: string | null,
+  openBlockers: readonly OpenBlockerHint[] = [],
+) {
   const snapshots = stages.map(toStageSnapshot);
   return {
     id: row.id,
@@ -36,6 +42,7 @@ export function serializeStage(row: StageRecord, stages: StageRecord[], currentS
       stage: toStageSnapshot(row),
       stages: snapshots,
       currentStageId,
+      openBlockers,
     }),
   };
 }
@@ -45,6 +52,8 @@ export function serializeProject(
   clientName: string,
   now: Date,
   stages?: StageRecord[],
+  openBlockers: readonly OpenBlockerHint[] = [],
+  waitingOnClient = false,
 ) {
   const current = stages?.find((stage) => stage.id === row.currentStageId);
   return {
@@ -65,10 +74,12 @@ export function serializeProject(
     workflowTemplateId: row.workflowTemplateId,
     currentStageId: row.currentStageId,
     currentStageKey: current?.key ?? null,
+    openBlockerCount: openBlockers.length,
+    waitingOnClient,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     ...(stages
-      ? { stages: stages.map((stage) => serializeStage(stage, stages, row.currentStageId)) }
+      ? { stages: stages.map((stage) => serializeStage(stage, stages, row.currentStageId, openBlockers)) }
       : {}),
   };
 }

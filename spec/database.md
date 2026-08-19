@@ -49,3 +49,7 @@ Sem modelo Approval neste cycle C5; C6 adiciona Approval.
 
 - `Approval` — status `pending|granted|rejected|cancelled|revoked`; kind `proposal|scope|prototype|staging|production|final_acceptance`; `approverId` nullable até o decide; `decidedAt`; `revokedAt`; `comment`; `projectSnapshot` JSON; `validationId` opcional; `subjectType`/`subjectId` (`project` + projectId)
 
+## Modelos C7
+
+- `Blocker` — status `open|resolved|cancelled`; `assigneeKind` `internal|client`; `assigneeUserId` nullable (null se cliente); `blocksStageId` nullable; `blocksProject`; `dueDate`; `openedAt`; `resolvedAt`; `cancelledAt`; `sourceMeetingId` nullable sem FK; `notes`
+

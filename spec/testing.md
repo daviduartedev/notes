@@ -64,4 +64,14 @@ Testes de domínio não exigem Postgres. Teste de persistência usa `DATABASE_UR
 - IDOR GET/decide outro workspace → 404 vazio
 - collection `GET /api/approvals` do workspace B vazia
 
+## C7 obrigatório
+
+- Blocker open na etapa atual impede `complete` (409, motivo de pendência)
+- resolve desbloqueia sem avançar `currentStageKey`
+- `assigneeKind=client` grava `assigneeUserId` null
+- Blocker **não** é ChecklistItem
+- decisão ilegal → 409 sem event extra
+- IDOR GET/decide outro workspace → 404 vazio
+- collection `GET /api/blockers` do workspace B vazia
+
 
