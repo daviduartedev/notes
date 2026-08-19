@@ -352,3 +352,23 @@ export type MeetingDto = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type HojeCardKind = "project" | "validation" | "blocker" | "approval" | "reminder" | "meeting";
+
+export type HojeCardDto = {
+  id: string;
+  kind: HojeCardKind;
+  clientName: string;
+  projectName: string;
+  reason: string;
+  since: string;
+  nextAction: string;
+  href: string;
+};
+
+export type HojeDashboardDto = {
+  needs_attention: HojeCardDto[];
+  today: HojeCardDto[];
+  waiting_client: HojeCardDto[];
+  in_progress: HojeCardDto[];
+};

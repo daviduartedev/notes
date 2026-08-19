@@ -106,6 +106,12 @@ GET `/api/projects/:id` inclui `stages` (cópia da instância) e `actions` com m
 | GET | `/api/projects/:id/meetings` | sessão | 404 IDOR |
 | GET | `/api/clients/:id/meetings` | sessão | 404 IDOR |
 
+## Contratos C10
+
+| Método | Path | Auth | Notas |
+|--------|------|------|-------|
+| GET | `/api/hoje` | sessão | `{ needs_attention, today, waiting_client, in_progress }`; evaluate on-read; máx. 20/seção; tenant B → seções vazias; `workspaceId` ignorado |
+
 ## Erros
 
 JSON `{ "error": "<mensagem segura>" }` sem stack. 404 cross-tenant vazio.

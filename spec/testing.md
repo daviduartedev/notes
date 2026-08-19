@@ -92,4 +92,11 @@ Testes de domínio não exigem Postgres. Teste de persistência usa `DATABASE_UR
 - IDOR GET/PATCH outro workspace → 404 vazio
 - collection `GET /api/meetings` do workspace B vazia
 
+## C10 obrigatório
+
+- fixture: projeto atrasado → `needs_attention`; validação `requested` → `waiting_client`; blocker do cliente → `waiting_client`; follow-up `due` → `today`
+- card com `clientName`, `projectName`, `reason`, `since`, `nextAction`, `href`
+- collection `GET /api/hoje` do workspace B com as quatro seções vazias
+- empty por seção (arrays vazios + copy na UI)
+
 

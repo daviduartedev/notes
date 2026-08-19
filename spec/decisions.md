@@ -583,3 +583,45 @@ Checklist não é etapa nem pendência.
 ### Consequências
 Transição de etapa continua só no contrato C2. Playwright continua fora.
 
+---
+
+## ADR-0029 — Quadro /hoje em quatro seções (C10-D1–D9)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c10-hoje-dashboard-operacional/
+- **Status:** Accepted
+
+### Contexto
+O empty state C0 não fecha o MVP. O operador precisa de ações, não de BI.
+
+### Decisão
+`GET /api/hoje` devolve `needs_attention`, `today`, `waiting_client` e `in_progress`. Read model sem tabela nova. Evaluate on-read de lembretes. Limite 20 por seção. Approval stale = 3 dias. Reuniões do dia entram em `today`.
+
+### Alternativas consideradas
+- Tabela materializada de dashboard — rejeitada (brief).
+- Playwright E2E — ORCH-008.
+
+### Consequências
+O mesmo fato pode aparecer em mais de uma seção. C11 não é necessário para o MVP.
+
+---
+
+## ADR-0030 — Isolamento e empty de /hoje (C10-D10–D18)
+
+- **Data:** 2026-08-19
+- **Cycle:** cycles/Q32026/0818-c10-hoje-dashboard-operacional/
+- **Status:** Accepted
+
+### Contexto
+Agregação aumenta o risco de vazamento entre tenants.
+
+### Decisão
+Workspace B recebe as quatro seções vazias. `workspaceId` query/body ignorado. Empty copy por coluna, sem mock de métricas. Deep-links para fichas C1–C9. Dia civil em UTC via `deps.now()`.
+
+### Alternativas consideradas
+- 404 na collection — rejeitado (padrão pipeline).
+- Relógio local do browser — rejeitado; API usa `now()`.
+
+### Consequências
+`/hoje` passa a ser SSR (`ƒ`). Playwright continua fora.
+

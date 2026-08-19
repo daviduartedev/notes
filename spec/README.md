@@ -15,7 +15,7 @@ Verdade canônica do que foi **implementado e validado**. Propostas de cycle fic
 | [decisions.md](decisions.md) | ADRs |
 | [features/auth/](features/auth/readme.md) | Login/sessão |
 | [features/workspace/](features/workspace/readme.md) | Tenant e membership |
-| [features/hoje/](features/hoje/readme.md) | Empty state C0 |
+| [features/hoje/](features/hoje/readme.md) | Quadro operacional (fecha MVP) |
 | [features/clients/](features/clients/readme.md) | CRUD cliente |
 | [features/projects/](features/projects/readme.md) | CRUD projeto, overdue |
 | [features/activity/](features/activity/readme.md) | Histórico de mutações |

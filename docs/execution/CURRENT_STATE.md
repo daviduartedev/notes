@@ -1,15 +1,16 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-19 (C9 `fa9b7a9666e1cbe1188f3d26103662dc8c094416`).
+Atualizado: 2026-08-19 (C10 — SHA após commit).
 
 ## Produto
 
 - Nome interno de UI: **Notes**
 - Tipo: Software House Operating System / Delivery CRM
-- Entidade operacional: **Project** (C1 envelope + C2 etapas + C3 board + C4 checklists + C5 validações + C6 aprovações + C7 pendências + C8 lembretes + C9 reuniões)
+- Entidade operacional: **Project** (C1 envelope + C2 etapas + C3 board + C4 checklists + C5 validações + C6 aprovações + C7 pendências + C8 lembretes + C9 reuniões + C10 hoje operacional)
 - Tenant: `workspaceId` sempre da sessão, nunca do body
+- **MVP fechado** no C10
 
-## Stack (C0 + C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8 + C9)
+## Stack (C0 + C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8 + C9 + C10)
 
 - Monorepo **pnpm** (Node 22)
 - `apps/web` — Next.js App Router + Tailwind — porta **3015**
@@ -22,7 +23,7 @@ Atualizado: 2026-08-19 (C9 `fa9b7a9666e1cbe1188f3d26103662dc8c094416`).
 
 - Harness em `spec/` + `.cursor/commands/`
 - Auth credentials, seed 1 workspace + 1 owner + template SaaS delivery + checklist Deploy Staging SaaS
-- `/login`, `/hoje` empty state, `/design-system` (dev)
+- `/login`, `/hoje` quadro operacional (4 seções), `/design-system` (dev)
 - `/clientes`, `/clientes/:id`, `/projetos`, `/projetos/:id` (Etapas + Checklists + Validações + Aprovações + Pendências + Lembretes + Reuniões)
 - `/pipeline` board por etapa atual (click-only)
 - `/checklists` lista de instâncias
@@ -37,7 +38,7 @@ Atualizado: 2026-08-19 (C9 `fa9b7a9666e1cbe1188f3d26103662dc8c094416`).
 
 - Auth: credentials na API, cookie `authjs.session-token`
 - Banco: User, Workspace, Member, Client, Project, ActivityEvent, WorkflowTemplate, StageTemplate, Stage, ChecklistTemplate, ChecklistTemplateItem, ProjectChecklist, ChecklistItem, Validation, Approval, Blocker, Reminder, Meeting
-- Módulos: clientes, projetos, activity, etapas, pipeline board, checklists, validações, aprovações, pendências, lembretes, reuniões
+- Módulos: clientes, projetos, activity, etapas, pipeline board, checklists, validações, aprovações, pendências, lembretes, reuniões, hoje
 
 ## Contratos
 
@@ -51,7 +52,8 @@ Atualizado: 2026-08-19 (C9 `fa9b7a9666e1cbe1188f3d26103662dc8c094416`).
 - C7: `POST /api/blockers`; `POST /api/blockers/:id/decide`; GET lista/ficha/projeto
 - C8: `GET /api/reminders` (evaluate on-read); `POST /api/reminders/:id/decide`; GET lista/ficha/projeto
 - C9: `POST/GET/PATCH /api/meetings`; nested projeto/cliente; GET lista/ficha
-- Cross-tenant → 404 vazio em recurso por id; collection pipeline/checklists/validations/approvals/blockers/reminders/meetings → vazio
+- C10: `GET /api/hoje` → `{ needs_attention, today, waiting_client, in_progress }`; máx. 20/seção; evaluate on-read
+- Cross-tenant → 404 vazio em recurso por id; collection pipeline/checklists/validations/approvals/blockers/reminders/meetings/hoje → vazio
 - Sem membership → 403
 - CORS inclui PATCH/PUT/DELETE
 - `visualState: overdue` para projeto `active` com prazo passado e para validação não terminal com prazo passado

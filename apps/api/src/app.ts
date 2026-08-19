@@ -10,6 +10,7 @@ import { clientErrorBody } from "./http/errors.js";
 import { approvalRoutes } from "./approvals/routes.js";
 import { blockerRoutes } from "./blockers/routes.js";
 import { reminderRoutes } from "./reminders/routes.js";
+import { hojeRoutes } from "./hoje/routes.js";
 import { meetingRoutes } from "./meetings/routes.js";
 import { validationRoutes } from "./validations/routes.js";
 import { workspaceRoutes } from "./workspace/routes.js";
@@ -37,6 +38,7 @@ export function createApp(deps: AppDeps) {
   app.route("/api", workspaceRoutes(deps));
   app.route("/api/clients", clientRoutes(deps));
   app.route("/api/pipeline", pipelineRoutes(deps));
+  app.route("/api/hoje", hojeRoutes(deps));
   app.route("/api", checklistRoutes(deps));
   app.route("/api", validationRoutes(deps));
   app.route("/api", approvalRoutes(deps));

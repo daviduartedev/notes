@@ -14,7 +14,7 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 | Path | Quem | Comportamento |
 |------|------|----------------|
 | `/login` | visitante | layout de login |
-| `/hoje` | autenticado | empty state “quadro ainda sem operação”; visitante ou JWT inválido → `/login` |
+| `/hoje` | autenticado | quadro operacional de 4 seções; empty copy por coluna; visitante ou JWT inválido → `/login` |
 | `/design-system` | development | 404 em production |
 
 ## Rotas C1
@@ -73,7 +73,13 @@ Web em `apps/web` (Next.js App Router + Tailwind), porta **3015**.
 | `/reunioes` | autenticado | lista + filtros tipo/projeto/cliente; visitante → `/login` |
 | `/reunioes/:id` | autenticado | ficha com notas, decisões e próximos passos |
 
-Nav: Hoje / Pipeline / Clientes / Projetos / Checklists / Validações / Aprovações / Pendências / Lembretes / Reuniões. `/hoje` continua empty state. Pipeline cards com pills Pendência / Aguardando cliente.
+## Rotas C10
+
+| Path | Quem | Comportamento |
+|------|------|----------------|
+| `/hoje` | autenticado | quatro colunas (Precisa de atenção / Hoje / Aguardando cliente / Projetos em andamento); post-its e setas leves; empty por seção |
+
+Nav: Hoje / Pipeline / Clientes / Projetos / Checklists / Validações / Aprovações / Pendências / Lembretes / Reuniões. Pipeline cards com pills Pendência / Aguardando cliente.
 
 Primitivos: Button, Input, Card, StatusPill, Select, Textarea.
 

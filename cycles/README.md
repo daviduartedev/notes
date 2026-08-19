@@ -28,7 +28,7 @@ Prompts genéricos (com placeholder): [`prompts/`](prompts/).
 | C7 | [0818-c7-pendencias](Q32026/0818-c7-pendencias/) | Medium | **fechado** | — |
 | C8 | [0818-c8-lembretes](Q32026/0818-c8-lembretes/) | Medium | **fechado** | — |
 | C9 | [0818-c9-reunioes](Q32026/0818-c9-reunioes/) | Medium | **fechado** | — |
-| C10 | [0818-c10-hoje-dashboard-operacional](Q32026/0818-c10-hoje-dashboard-operacional/) | Medium | request pronto | Refine depois de C3–C9 — **fecha o MVP** |
+| C10 | [0818-c10-hoje-dashboard-operacional](Q32026/0818-c10-hoje-dashboard-operacional/) | Medium | **fechado** (fecha MVP) | — |
 | C11 | [0818-c11-templates-de-workflow](Q32026/0818-c11-templates-de-workflow/) | Medium | request pronto | Pós-MVP; depende só de C2 |
 
 Ordem recomendada de execução: **C0 → C1 → C2 → C3 → C4 → C5 → C6 → C7 → C8 → C9 → C10 → C11**.

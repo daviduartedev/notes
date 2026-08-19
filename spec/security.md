@@ -12,6 +12,7 @@
 - `GET /api/blockers` (collection): outro tenant recebe **lista vazia**.
 - `GET /api/reminders` (collection): outro tenant recebe **lista vazia**.
 - `GET /api/meetings` (collection): outro tenant recebe **lista vazia**.
+- `GET /api/hoje` (collection): outro tenant recebe as **quatro seções vazias**, nunca cards alheios.
 - Autenticado sem membership válida: **403**. Member tentando editar template de checklist do próprio workspace: **403**.
 - Body não grava `workspaceId` nem `createdAt`. Status de validação só via `POST .../transition`. Status de Approval só via `POST .../decide`. Status de Blocker só via `POST .../decide`. Status de Reminder só via `POST .../decide`. `currentStageId` no PATCH de projeto é ignorado. `status` no PATCH de validação é ignorado. `approverId` no body de Approval é ignorado. `assigneeUserId` no body de Blocker com `assigneeKind=client` é ignorado. Participante de Meeting fora do workspace → 400.
 
