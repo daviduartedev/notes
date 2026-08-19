@@ -21,8 +21,8 @@ Flat Medium: domínio deep copy, Prisma, apply/list/patch, persistência, UI fic
 ## Commit / push
 
 - Mensagem: `cycle(04): checklists`
-- SHA: _(preencher após commit)_
-- Push `origin main`: _(preencher após push)_
+- SHA: `3b30055fb7ed617ad757d783a5241d532f332189`
+- Push `origin main`: ok (`fa06c97..3b30055`)
 
 ## Decisões
 

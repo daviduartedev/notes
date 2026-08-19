@@ -1,6 +1,6 @@
 # CURRENT_STATE
 
-Atualizado: 2026-08-19 (C4 — SHA no relatório).
+Atualizado: 2026-08-19 (C4 `3b30055fb7ed617ad757d783a5241d532f332189`).
 
 ## Produto
 
