@@ -21,8 +21,8 @@ Flat Medium: domínio de tipos + participantes, Prisma Meeting, HTTP CRUD, persi
 ## Commit / push
 
 - Mensagem: `cycle(09): meetings`
-- SHA: (preenchido após commit)
-- Push `origin main`: (preenchido após push)
+- SHA: `fa9b7a9666e1cbe1188f3d26103662dc8c094416`
+- Push `origin main`: pending
 
 ## Decisões
 
