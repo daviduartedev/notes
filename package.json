@@ -6,13 +6,15 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm run --parallel --filter @notes/web --filter @notes/api dev",
+    "dev": "node scripts/sync-web-env.mjs && pnpm run --parallel --filter @notes/web --filter @notes/api dev",
     "dev:web": "pnpm --filter @notes/web dev",
     "dev:api": "pnpm --filter @notes/api dev",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
-    "build": "pnpm -r --if-present build",
+    "build": "pnpm --filter @notes/api db:generate && pnpm -r --if-present build",
+    "build:api": "pnpm --filter @notes/api build",
+    "start:api": "pnpm --filter @notes/api start",
     "db:migrate": "pnpm --filter @notes/api db:migrate",
     "db:seed": "pnpm --filter @notes/api db:seed"
   },
