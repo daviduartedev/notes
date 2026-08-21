@@ -4,7 +4,6 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { API_ORIGIN } from "@/lib/api";
 
 export function LoginForm() {
   const router = useRouter();
@@ -20,7 +19,7 @@ export function LoginForm() {
     const password = String(form.get("password") ?? "");
 
     try {
-      const response = await fetch(`${API_ORIGIN}/api/auth/login`, {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
