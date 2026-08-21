@@ -1,5 +1,10 @@
+/** No browser, use same-origin `/api` (rewrite → backend). No servidor, chama a API direto. */
 export const API_ORIGIN =
-  process.env.NEXT_PUBLIC_API_ORIGIN ?? "http://localhost:3014";
+  typeof window === "undefined"
+    ? (process.env.API_ORIGIN ??
+      process.env.NEXT_PUBLIC_API_ORIGIN ??
+      "http://localhost:3014")
+    : "";
 
 export async function apiRequest<T>(
   path: string,
