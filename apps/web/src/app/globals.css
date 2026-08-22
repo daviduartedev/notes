@@ -10,11 +10,26 @@
   --notes-border: rgba(255, 255, 255, 0.08);
   --notes-text: #f4f4f5;
   --notes-muted: #a1a1aa;
+  --notes-ink: #5b8cff;
   --notes-green: #22c55e;
   --notes-yellow: #eab308;
   --notes-red: #ef4444;
   --notes-blue: #3b82f6;
   --notes-purple: #a855f7;
+  --page-gutter: 2rem;
+  --page-max: 72rem;
+}
+
+@layer components {
+  .page-shell {
+    @apply mx-auto flex w-full flex-col gap-6 py-6;
+    padding-inline: var(--page-gutter);
+    max-width: var(--page-max);
+  }
+
+  .page-shell--wide {
+    max-width: none;
+  }
 }
 
 html,
@@ -24,8 +39,61 @@ body {
   color: var(--notes-text);
 }
 
-h1,
-h2,
-label {
-  font-family: var(--font-caveat), cursive;
+body {
+  font-family: var(--font-ibm), system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.board-bg {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.nav-item {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--notes-muted);
+  padding: 5px 10px;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s;
+}
+
+.nav-item:hover {
+  color: var(--notes-text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-item-active {
+  color: var(--notes-text);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.skeleton {
+  background: rgba(255, 255, 255, 0.06);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
 }

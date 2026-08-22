@@ -8,6 +8,7 @@ import {
   createPrismaAuthenticate,
   createPrismaSessionVersion,
   createPrismaWorkspaceLookup,
+  createPrismaWorkspaceUpdate,
 } from "./prisma-auth";
 import { createPrismaStore } from "./store/prisma";
 
@@ -52,6 +53,7 @@ describe.skipIf(!databaseUrl)("persistência postgres", () => {
         webOrigin: "http://localhost:3015",
         authenticate: createPrismaAuthenticate(prisma),
         getWorkspace: createPrismaWorkspaceLookup(prisma),
+        updateWorkspace: createPrismaWorkspaceUpdate(prisma),
         getSessionVersion: sessionVersion.getSessionVersion,
         bumpSessionVersion: sessionVersion.bumpSessionVersion,
         store: createPrismaStore(prisma),
@@ -107,6 +109,7 @@ describe.skipIf(!databaseUrl)("persistência postgres", () => {
         webOrigin: "http://localhost:3015",
         authenticate: createPrismaAuthenticate(prisma),
         getWorkspace: createPrismaWorkspaceLookup(prisma),
+        updateWorkspace: createPrismaWorkspaceUpdate(prisma),
         getSessionVersion: sessionVersion.getSessionVersion,
         bumpSessionVersion: sessionVersion.bumpSessionVersion,
         store: createPrismaStore(prisma),
@@ -185,6 +188,7 @@ describe.skipIf(!databaseUrl)("persistência postgres", () => {
         webOrigin: "http://localhost:3015",
         authenticate: createPrismaAuthenticate(prisma),
         getWorkspace: createPrismaWorkspaceLookup(prisma),
+        updateWorkspace: createPrismaWorkspaceUpdate(prisma),
         getSessionVersion: sessionVersion.getSessionVersion,
         bumpSessionVersion: sessionVersion.bumpSessionVersion,
         store: createPrismaStore(prisma),

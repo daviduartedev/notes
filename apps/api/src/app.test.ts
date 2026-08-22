@@ -127,7 +127,11 @@ describe("membership e workspace", () => {
       headers: { cookie },
     });
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ id: "ws-1", name: "Notes" });
+    await expect(response.json()).resolves.toEqual({
+      id: "ws-1",
+      name: "Notes",
+      attentionLeadDays: 3,
+    });
   });
 
   it("GET /api/workspace/:id do tenant da sessão é 200 e o de outro tenant é 404 vazio", async () => {
@@ -136,10 +140,32 @@ describe("membership e workspace", () => {
 
     const own = await app.request("/api/workspace/ws-1", { headers: { cookie } });
     expect(own.status).toBe(200);
-    await expect(own.json()).resolves.toEqual({ id: "ws-1", name: "Notes" });
+    await expect(own.json()).resolves.toEqual({
+      id: "ws-1",
+      name: "Notes",
+      attentionLeadDays: 3,
+    });
 
     const other = await app.request("/api/workspace/ws-2", { headers: { cookie } });
     expect(other.status).toBe(404);
     expect(await other.text()).toBe("");
+  });
+
+  it("PATCH /api/workspace persiste antecedência e ignora workspaceId do body", async () => {
+    const { cookie } = await login("owner@example.com", "changeme");
+    const app = createApp(createTestDeps());
+    const patched = await app.request("/api/workspace", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", cookie },
+      body: JSON.stringify({ attentionLeadDays: 5, workspaceId: "ws-evil" }),
+    });
+    expect(patched.status).toBe(200);
+    await expect(patched.json()).resolves.toEqual({
+      id: "ws-1",
+      name: "Notes",
+      attentionLeadDays: 5,
+    });
+    const again = await app.request("/api/workspace", { headers: { cookie } });
+    await expect(again.json()).resolves.toMatchObject({ attentionLeadDays: 5 });
   });
 });

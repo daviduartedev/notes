@@ -135,7 +135,7 @@ export function ClientMeetings({
         ))}
       </div>
       {error ? <p className="text-sm text-semantic-red">{error}</p> : null}
-      <Button type="button" disabled={pending || !title.trim()} onClick={() => void createMeeting()}>
+      <Button type="button" disabled={!title.trim()} pending={pending} onClick={() => void createMeeting()}>
         {MEETING_CREATE_LABEL}
       </Button>
       {meetings.length === 0 ? (

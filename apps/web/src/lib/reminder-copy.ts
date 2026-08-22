@@ -4,6 +4,8 @@ export const REMINDERS_LOADING = "Carregando lembretes…";
 export const REMINDER_NOT_FOUND = "Lembrete não encontrado";
 export const REMINDER_COPY_LABEL = "Copiar mensagem";
 export const REMINDER_COPIED = "Mensagem copiada";
+export const REMINDER_CREATE_LABEL = "Cadastrar lembrete";
+export const REMINDER_CREATE_ERROR = "Não foi possível cadastrar o lembrete.";
 
 export function reminderHref(id: string): string {
   return `/lembretes/${id}`;

@@ -95,7 +95,7 @@ export function ProjectValidations({
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
         />
-        <Button disabled={pending} onClick={() => void createDraft()}>
+        <Button pending={pending} onClick={() => void createDraft()}>
           {VALIDATION_CREATE_LABEL}
         </Button>
       </div>

@@ -22,7 +22,7 @@ export default async function ChecklistsPage() {
             return (
               <Card key={checklist.id}>
                 <a href={checklistProjectHref(checklist.projectId)} className="flex flex-col gap-1">
-                  <h3 className="font-display text-xl">{checklist.name}</h3>
+                  <h3 className="text-xl font-semibold">{checklist.name}</h3>
                   <p className="text-sm text-notes-muted">
                     {checklist.projectName} · {done}/{checklist.items.length} itens
                   </p>

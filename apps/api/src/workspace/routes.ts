@@ -3,6 +3,7 @@ import type { AppDeps } from "../deps.js";
 import { readLiveSession } from "../auth/read-session.js";
 import { lookupForSession } from "./lookup.js";
 import { hasMembership, workspaceIdFromSession } from "./scope.js";
+import { patchWorkspaceSchema } from "./schema.js";
 
 export function workspaceRoutes(deps: AppDeps) {
   const routes = new Hono();
@@ -87,6 +88,32 @@ export function workspaceRoutes(deps: AppDeps) {
       deps.getWorkspace,
       (record) => record.id,
     );
+    if (!workspace) {
+      return c.body(null, 404);
+    }
+    return c.json(workspace);
+  });
+
+  routes.patch("/workspace", async (c) => {
+    const session = await readLiveSession(c, deps);
+    if (!session) {
+      return c.json({ error: "Não autenticado" }, 401);
+    }
+    if (!hasMembership(session)) {
+      return c.json({ error: "Sem permissão" }, 403);
+    }
+    const body: unknown = await c.req.json().catch(() => null);
+    const workspaceId = workspaceIdFromSession(session, { body });
+    if (!workspaceId) {
+      return c.json({ error: "Sem permissão" }, 403);
+    }
+    const parsed = patchWorkspaceSchema.safeParse(body);
+    if (!parsed.success) {
+      return c.json({ error: "Dados inválidos" }, 400);
+    }
+    const workspace = await deps.updateWorkspace(workspaceId, {
+      attentionLeadDays: parsed.data.attentionLeadDays,
+    });
     if (!workspace) {
       return c.body(null, 404);
     }

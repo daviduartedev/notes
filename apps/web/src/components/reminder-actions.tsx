@@ -43,20 +43,21 @@ export function ReminderActions({ reminder }: { reminder: ReminderDto }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <pre className="whitespace-pre-wrap rounded-md border border-notes-border bg-notes-raised p-3 text-sm">
+      <pre className="whitespace-pre-wrap border border-notes-border bg-notes-raised p-3 text-sm">
         {reminder.draftMessage}
       </pre>
       <div className="flex flex-wrap gap-2">
-        <Button disabled={pendingAction !== null} onClick={() => void copyDraft()}>
-          {pendingAction === "copy" ? "…" : copied ? REMINDER_COPIED : REMINDER_COPY_LABEL}
+        <Button disabled={pendingAction !== null} pending={pendingAction === "copy"} onClick={() => void copyDraft()}>
+          {copied ? REMINDER_COPIED : REMINDER_COPY_LABEL}
         </Button>
         {reminder.allowedActions.map((action) => (
           <Button
             key={action}
             disabled={pendingAction !== null}
+            pending={pendingAction === action}
             onClick={() => void run(action)}
           >
-            {pendingAction === action ? "…" : reminderActionLabel[action]}
+            {reminderActionLabel[action]}
           </Button>
         ))}
       </div>

@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { PipelineBoard } from "@/components/pipeline-board";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { Select } from "@/components/ui/select";
 import type {
   ClientDto,
@@ -46,8 +46,8 @@ export default async function PipelinePage({
 
   return (
     <AppShell title="Pipeline" pathname="/pipeline">
-      <Card>
-        <form className="grid gap-3 md:grid-cols-4" method="get">
+      <div className="border-b border-notes-border px-8 py-3">
+        <FilterBar method="get">
           <Select name="ownerUserId" defaultValue={filters.ownerUserId ?? ""}>
             <option value="">Todos os responsáveis</option>
             {members.map((member) => (
@@ -73,10 +73,14 @@ export default async function PipelinePage({
             ))}
           </Select>
           <Button type="submit">Filtrar</Button>
-        </form>
-      </Card>
+        </FilterBar>
+      </div>
 
-      {loadError ? <p className="text-sm text-semantic-red">{PIPELINE_LOAD_ERROR}</p> : <PipelineBoard board={board} />}
+      {loadError ? (
+        <p className="px-8 text-sm text-semantic-red">{PIPELINE_LOAD_ERROR}</p>
+      ) : (
+        <PipelineBoard board={board} />
+      )}
     </AppShell>
   );
 }

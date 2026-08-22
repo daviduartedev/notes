@@ -364,6 +364,13 @@ export type HojeCardDto = {
   since: string;
   nextAction: string;
   href: string;
+  alert?: boolean;
+};
+
+export type WorkspaceDto = {
+  id: string;
+  name: string;
+  attentionLeadDays: number;
 };
 
 export type HojeDashboardDto = {

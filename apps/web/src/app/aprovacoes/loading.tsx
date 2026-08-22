@@ -1,10 +1,5 @@
-import { AppShell } from "@/components/app-shell";
-import { APPROVALS_LOADING } from "@/lib/approval-copy";
+import { PageSkeleton } from "@/components/page-skeleton";
 
-export default function AprovacoesLoading() {
-  return (
-    <AppShell title="Aprovações" pathname="/aprovacoes">
-      <p className="text-sm text-notes-muted">{APPROVALS_LOADING}</p>
-    </AppShell>
-  );
+export default function Loading() {
+  return <PageSkeleton title="Aprovações" pathname="/aprovacoes" />;
 }

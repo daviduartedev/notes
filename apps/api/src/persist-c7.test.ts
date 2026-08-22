@@ -8,6 +8,7 @@ import {
   createPrismaAuthenticate,
   createPrismaSessionVersion,
   createPrismaWorkspaceLookup,
+  createPrismaWorkspaceUpdate,
 } from "./prisma-auth";
 import { createPrismaStore } from "./store/prisma";
 import { workflowTemplateIdOf } from "./test/templates";
@@ -93,6 +94,7 @@ describe.skipIf(!databaseUrl)("C7 persistência blockers", () => {
         webOrigin: "http://localhost:3015",
         authenticate: createPrismaAuthenticate(prisma),
         getWorkspace: createPrismaWorkspaceLookup(prisma),
+        updateWorkspace: createPrismaWorkspaceUpdate(prisma),
         getSessionVersion: sessionVersion.getSessionVersion,
         bumpSessionVersion: sessionVersion.bumpSessionVersion,
         store,

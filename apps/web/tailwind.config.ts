@@ -12,6 +12,7 @@ const config: Config = {
           border: "rgba(255, 255, 255, 0.08)",
           text: "#f4f4f5",
           muted: "#a1a1aa",
+          ink: "#5b8cff",
         },
         semantic: {
           green: "#22c55e",
@@ -23,7 +24,6 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-ibm)", "system-ui", "sans-serif"],
-        display: ["var(--font-caveat)", "cursive"],
       },
     },
   },

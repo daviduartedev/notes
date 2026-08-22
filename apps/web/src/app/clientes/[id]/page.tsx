@@ -50,15 +50,15 @@ export default async function ClienteFichaPage({
             <ClientEditForm client={client} members={members} />
           </Card>
           <Card>
-            <h3 className="font-display text-xl">Projetos</h3>
+            <h3 className="text-xl font-semibold">Projetos</h3>
             <div className="mt-4">
               <ProjectList projects={projects} />
             </div>
-            <h3 className="mt-6 font-display text-xl">Novo projeto neste cliente</h3>
+            <h3 className="mt-6 text-xl font-semibold">Novo projeto neste cliente</h3>
             <ProjectCreateForm members={members} clients={[client]} templates={templates} defaultClientId={client.id} />
           </Card>
           <Card>
-            <h3 className="mb-4 font-display text-xl">Reuniões</h3>
+            <h3 className="mb-4 text-xl font-semibold">Reuniões</h3>
             <ClientMeetings
               client={client}
               members={members}
@@ -67,7 +67,7 @@ export default async function ClienteFichaPage({
             />
           </Card>
           <Card>
-            <h3 className="mb-4 font-display text-xl">Histórico</h3>
+            <h3 className="mb-4 text-xl font-semibold">Histórico</h3>
             <ActivityList events={events} />
           </Card>
         </>

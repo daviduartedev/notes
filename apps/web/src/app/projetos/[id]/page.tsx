@@ -58,6 +58,7 @@ export default async function ProjetoFichaPage({
   const blockers = blockersRes.status === 200 && blockersRes.data ? blockersRes.data : [];
   const reminders = remindersRes.status === 200 && remindersRes.data ? remindersRes.data : [];
   const meetings = meetingsRes.status === 200 && meetingsRes.data ? meetingsRes.data : [];
+  const projectClient = project ? clients.find((item) => item.id === project.clientId) ?? null : null;
 
   return (
     <AppShell title={project?.name ?? "Projeto"} pathname="/projetos">
@@ -85,15 +86,15 @@ export default async function ProjetoFichaPage({
           <ProjectEditForm project={project} members={members} clients={clients} />
         </Card>
         <Card>
-          <h3 className="mb-4 font-display text-xl">Etapas</h3>
+          <h3 className="mb-4 text-xl font-semibold">Etapas</h3>
           <StageBoard project={project} />
         </Card>
         <Card>
-          <h3 className="mb-4 font-display text-xl">Checklists</h3>
+          <h3 className="mb-4 text-xl font-semibold">Checklists</h3>
           <ProjectChecklists project={project} templates={templates} checklists={checklists} />
         </Card>
         <Card>
-          <h3 className="mb-4 font-display text-xl">Validações</h3>
+          <h3 className="mb-4 text-xl font-semibold">Validações</h3>
           <ProjectValidations
             project={project}
             members={members}
@@ -102,19 +103,27 @@ export default async function ProjetoFichaPage({
           />
         </Card>
         <Card>
-          <h3 className="mb-4 font-display text-xl">Aprovações</h3>
+          <h3 className="mb-4 text-xl font-semibold">Aprovações</h3>
           <ProjectApprovals project={project} approvals={approvals} />
         </Card>
         <Card>
-          <h3 className="mb-4 font-display text-xl">Pendências</h3>
+          <h3 className="mb-4 text-xl font-semibold">Pendências</h3>
           <ProjectBlockers project={project} members={members} blockers={blockers} />
         </Card>
         <Card>
-          <h3 className="mb-4 font-display text-xl">Lembretes</h3>
-          <ProjectReminders reminders={reminders} />
+          <h3 className="mb-4 text-xl font-semibold">Lembretes</h3>
+          {projectClient ? (
+            <ProjectReminders
+              reminders={reminders}
+              client={projectClient}
+              project={project}
+            />
+          ) : (
+            <p className="text-sm text-notes-muted">Cliente do projeto não encontrado.</p>
+          )}
         </Card>
         <Card>
-          <h3 className="mb-4 font-display text-xl">Reuniões</h3>
+          <h3 className="mb-4 text-xl font-semibold">Reuniões</h3>
           <ProjectMeetings
             project={project}
             members={members}
@@ -123,7 +132,7 @@ export default async function ProjetoFichaPage({
           />
         </Card>
         <Card>
-          <h3 className="mb-4 font-display text-xl">Histórico</h3>
+          <h3 className="mb-4 text-xl font-semibold">Histórico</h3>
           <ActivityList events={events} />
         </Card>
         </>

@@ -69,7 +69,7 @@ export function ProjectApprovals({
           value={comment}
           onChange={(event) => setComment(event.target.value)}
         />
-        <Button disabled={pending} onClick={() => void createPending()}>
+        <Button pending={pending} onClick={() => void createPending()}>
           {APPROVAL_CREATE_LABEL}
         </Button>
       </div>

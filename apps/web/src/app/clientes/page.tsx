@@ -2,6 +2,7 @@ import { AppShell } from "@/components/app-shell";
 import { ClientCreateForm } from "@/components/client-create-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -34,7 +35,7 @@ export default async function ClientesPage({
   return (
     <AppShell title="Clientes" pathname="/clientes">
       <Card>
-        <form className="grid gap-3 md:grid-cols-4" method="get">
+        <FilterBar method="get">
           <Input name="name" placeholder="Filtrar por nome" defaultValue={filters.name ?? ""} />
           <Select name="ownerUserId" defaultValue={filters.ownerUserId ?? ""}>
             <option value="">Todos os responsáveis</option>
@@ -53,11 +54,11 @@ export default async function ClientesPage({
             ))}
           </Select>
           <Button type="submit">Filtrar</Button>
-        </form>
+        </FilterBar>
       </Card>
 
       <Card>
-        <h3 className="font-display text-xl">Novo cliente</h3>
+        <h3 className="text-xl font-semibold">Novo cliente</h3>
         <ClientCreateForm members={members} />
       </Card>
 

@@ -1,10 +1,5 @@
-import { AppShell } from "@/components/app-shell";
-import { MEETINGS_LOADING } from "@/lib/meeting-copy";
+import { PageSkeleton } from "@/components/page-skeleton";
 
-export default function ReunioesLoading() {
-  return (
-    <AppShell title="Reuniões" pathname="/reunioes">
-      <p className="text-sm text-notes-muted">{MEETINGS_LOADING}</p>
-    </AppShell>
-  );
+export default function Loading() {
+  return <PageSkeleton title="Reuniões" pathname="/reunioes" />;
 }

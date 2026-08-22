@@ -1,6 +1,18 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import type { Authenticate } from "./deps.js";
+import type { Authenticate, WorkspaceRecord } from "./deps.js";
+import { DEFAULT_ATTENTION_LEAD_DAYS } from "./domain/attention-lead.js";
+
+function mapWorkspace(row: { id: string; name: string; attentionLeadDays: number } | null): WorkspaceRecord | null {
+  if (!row) {
+    return null;
+  }
+  return {
+    id: row.id,
+    name: row.name,
+    attentionLeadDays: row.attentionLeadDays ?? DEFAULT_ATTENTION_LEAD_DAYS,
+  };
+}
 
 export function createPrismaAuthenticate(prisma: PrismaClient): Authenticate {
   return async (email, password) => {
@@ -29,9 +41,27 @@ export function createPrismaWorkspaceLookup(prisma: PrismaClient) {
   return async (workspaceId: string) => {
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, attentionLeadDays: true },
     });
-    return workspace;
+    return mapWorkspace(workspace);
+  };
+}
+
+export function createPrismaWorkspaceUpdate(prisma: PrismaClient) {
+  return async (
+    workspaceId: string,
+    patch: { attentionLeadDays: number },
+  ): Promise<WorkspaceRecord | null> => {
+    try {
+      const workspace = await prisma.workspace.update({
+        where: { id: workspaceId },
+        data: { attentionLeadDays: patch.attentionLeadDays },
+        select: { id: true, name: true, attentionLeadDays: true },
+      });
+      return mapWorkspace(workspace);
+    } catch {
+      return null;
+    }
   };
 }
 

@@ -137,8 +137,8 @@ export function ProjectCreateForm({
       </label>
       {error ? <p className="text-sm text-semantic-red md:col-span-2">{error}</p> : null}
       <div className="md:col-span-2">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Criando…" : "Criar projeto"}
+        <Button type="submit" pending={pending}>
+          Criar projeto
         </Button>
       </div>
     </form>

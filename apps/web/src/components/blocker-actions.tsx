@@ -48,9 +48,10 @@ export function BlockerActions({ blocker }: { blocker: BlockerDto }) {
           <Button
             key={action}
             disabled={pendingAction !== null}
+            pending={pendingAction === action}
             onClick={() => void run(action)}
           >
-            {pendingAction === action ? "…" : blockerActionLabel[action]}
+            {blockerActionLabel[action]}
           </Button>
         ))}
       </div>

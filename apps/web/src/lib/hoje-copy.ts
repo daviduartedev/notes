@@ -1,4 +1,7 @@
-export const HOJE_LOAD_ERROR = "Não foi possível carregar o quadro de hoje.";
+export const DASHBOARD_TITLE = "Dashboard";
+export const HOJE_LOAD_ERROR = "Não foi possível carregar o dashboard.";
+export const ATTENTION_LEAD_LABEL = "Antecedência (dias)";
+export const ATTENTION_LEAD_HINT = "Lembretes e reuniões entram em Precisa de atenção este número de dias antes.";
 
 export const HOJE_SECTION_LABELS = {
   needs_attention: "Precisa de atenção",

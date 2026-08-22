@@ -109,7 +109,7 @@ export function ProjectChecklists({
             </option>
           ))}
         </Select>
-        <Button type="submit" disabled={pending || !templateId}>
+        <Button type="submit" disabled={!templateId} pending={pending}>
           {CHECKLIST_APPLY_LABEL}
         </Button>
       </form>
@@ -119,14 +119,14 @@ export function ProjectChecklists({
       ) : (
         checklists.map((checklist) => (
           <section key={checklist.id} className="flex flex-col gap-3">
-            <h4 className="font-display text-lg">{checklist.name}</h4>
+            <h4 className="text-lg font-semibold">{checklist.name}</h4>
             <ol className="flex flex-col gap-3">
               {checklist.items.map((item) => {
                 const done = Boolean(item.completedAt);
                 return (
                   <li
                     key={item.id}
-                    className="flex flex-col gap-2 rounded-md border border-notes-border p-3 md:flex-row md:items-center"
+                    className="flex flex-col gap-2 border border-notes-border p-3 md:flex-row md:items-center"
                   >
                     <div className="flex-1">
                       <p className="text-sm">{item.title}</p>
@@ -151,7 +151,7 @@ export function ProjectChecklists({
                     ) : null}
                     <Button
                       variant="ghost"
-                      disabled={pendingItemId === item.id}
+                      pending={pendingItemId === item.id}
                       onClick={() => void toggleItem(item.id, !done)}
                     >
                       {done ? "Reabrir" : CHECKLIST_MARK_LABEL}

@@ -1,10 +1,5 @@
-import { AppShell } from "@/components/app-shell";
-import { BLOCKERS_LOADING } from "@/lib/blocker-copy";
+import { PageSkeleton } from "@/components/page-skeleton";
 
-export default function PendenciasLoading() {
-  return (
-    <AppShell title="Pendências" pathname="/pendencias">
-      <p className="text-sm text-notes-muted">{BLOCKERS_LOADING}</p>
-    </AppShell>
-  );
+export default function Loading() {
+  return <PageSkeleton title="Pendências" pathname="/pendencias" />;
 }

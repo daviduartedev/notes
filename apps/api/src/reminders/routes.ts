@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { recordActivity } from "../activity/record.js";
 import type { AppDeps } from "../deps.js";
+import { MANUAL_REMINDER_POLICY } from "../domain/attention-lead.js";
 import {
   applyReminderDecision,
   type ReminderAction,
@@ -10,7 +11,7 @@ import { lookupForSession } from "../workspace/lookup.js";
 import { workspaceIdFromSession } from "../workspace/scope.js";
 import { serializeReminder } from "./dto.js";
 import { evaluateWorkspaceReminders } from "./evaluate.js";
-import { decideReminderSchema, reminderStatusSchema } from "./schema.js";
+import { createReminderSchema, decideReminderSchema, reminderStatusSchema } from "./schema.js";
 
 export function reminderRoutes(deps: AppDeps) {
   const routes = new Hono();
@@ -34,6 +35,69 @@ export function reminderRoutes(deps: AppDeps) {
       clientId: c.req.query("clientId") || undefined,
     });
     return c.json(rows.map((row) => serializeReminder(row, deps.now())));
+  });
+
+  routes.post("/reminders", async (c) => {
+    const gate = await requireMember(c, deps);
+    if (!gate.ok) return gate.response;
+    const body: unknown = await c.req.json().catch(() => null);
+    const workspaceId = workspaceIdFromSession(gate.session, { body });
+    if (!workspaceId) {
+      return c.json({ error: "Sem permissão" }, 403);
+    }
+    const parsed = createReminderSchema.safeParse(body);
+    if (!parsed.success) {
+      return c.json({ error: "Dados inválidos" }, 400);
+    }
+    const client = await lookupForSession(
+      gate.session,
+      parsed.data.clientId,
+      (id) => deps.store.getClient(id),
+      (row) => row.workspaceId,
+    );
+    const project = await lookupForSession(
+      gate.session,
+      parsed.data.projectId,
+      (id) => deps.store.getProject(id),
+      (row) => row.workspaceId,
+    );
+    if (!client || !project) {
+      return c.json({ error: "Dados inválidos", reason: "Cliente ou projeto inválido" }, 400);
+    }
+    if (project.clientId !== client.id) {
+      return c.json({ error: "Dados inválidos", reason: "Projeto não pertence ao cliente" }, 400);
+    }
+    const now = deps.now();
+    const dueAt = parsed.data.dueAt;
+    const created = await deps.store.createReminder({
+      workspaceId,
+      subjectType: "project",
+      subjectId: project.id,
+      clientId: client.id,
+      projectId: project.id,
+      channel: "internal",
+      policyKey: MANUAL_REMINDER_POLICY,
+      status: dueAt.getTime() <= now.getTime() ? "due" : "scheduled",
+      dueAt,
+      draftMessage: parsed.data.draftMessage,
+      now,
+    });
+    if (!created) {
+      return c.json({ error: "Dados inválidos" }, 400);
+    }
+    await recordActivity(deps, {
+      workspaceId,
+      actorId: gate.session.sub,
+      entityType: "project",
+      entityId: project.id,
+      action: "reminder.created",
+      payload: {
+        reminderId: created.id,
+        policyKey: created.policyKey,
+        channel: created.channel,
+      },
+    });
+    return c.json(serializeReminder(created, now), 201);
   });
 
   routes.get("/projects/:id/reminders", async (c) => {

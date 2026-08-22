@@ -167,6 +167,7 @@ function idsOf(cards: HojeCard[]): string[] {
 function emptyInput() {
   return {
     now,
+    attentionLeadDays: 3,
     pipeline: [] as PipelineCardRow[],
     validations: [] as ValidationRecord[],
     approvals: [] as ApprovalRecord[],
@@ -315,5 +316,34 @@ describe("buildHojeDashboard", () => {
       waiting_client: [],
       in_progress: [],
     });
+  });
+
+  it("antecipa lembrete e reunião em Precisa de atenção conforme os dias", () => {
+    const upcoming = buildHojeDashboard({
+      ...emptyInput(),
+      reminders: [
+        reminder({
+          id: "r-soon",
+          status: "scheduled",
+          dueAt: new Date("2026-08-22T09:00:00.000Z"),
+        }),
+      ],
+      meetings: [meeting({ id: "m-soon", startsAt: new Date("2026-08-21T15:00:00.000Z") })],
+    });
+    expect(upcoming.needs_attention.map((card) => card.id)).toEqual(["meeting:m-soon", "reminder:r-soon"]);
+    expect(upcoming.needs_attention.every((card) => card.alert)).toBe(true);
+
+    const none = buildHojeDashboard({
+      ...emptyInput(),
+      attentionLeadDays: 0,
+      reminders: [
+        reminder({
+          id: "r-soon",
+          status: "scheduled",
+          dueAt: new Date("2026-08-22T09:00:00.000Z"),
+        }),
+      ],
+    });
+    expect(none.needs_attention.map((card) => card.id)).not.toContain("reminder:r-soon");
   });
 });

@@ -136,8 +136,8 @@ export function ProjectEditForm({
       </label>
       {error ? <p className="text-sm text-semantic-red md:col-span-2">{error}</p> : null}
       <div className="md:col-span-2">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Salvando…" : "Salvar"}
+        <Button type="submit" pending={pending}>
+          Salvar
         </Button>
       </div>
     </form>

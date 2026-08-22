@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { Select } from "@/components/ui/select";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { ClientDto, MeetingDto, MeetingType, ProjectDto } from "@/lib/domain-types";
@@ -47,7 +48,7 @@ export default async function ReunioesPage({
   return (
     <AppShell title="Reuniões" pathname="/reunioes">
       <Card>
-        <form className="grid gap-3 md:grid-cols-4" method="get">
+        <FilterBar method="get">
           <Select name="type" defaultValue={filters.type ?? ""}>
             <option value="">Todos os tipos</option>
             {types.map((value) => (
@@ -73,7 +74,7 @@ export default async function ReunioesPage({
             ))}
           </Select>
           <Button type="submit">Filtrar</Button>
-        </form>
+        </FilterBar>
       </Card>
 
       {loadError ? (
@@ -89,7 +90,7 @@ export default async function ReunioesPage({
                   <StatusPill tone={meetingTypeTone[meeting.type]}>
                     {meetingTypeLabel[meeting.type]}
                   </StatusPill>
-                  <h3 className="font-display text-xl">{meeting.title}</h3>
+                  <h3 className="text-xl font-semibold">{meeting.title}</h3>
                 </div>
                 <p className="text-sm text-notes-muted">
                   {meeting.projectName ?? "Sem projeto"} · {meeting.clientName ?? "Sem cliente"}

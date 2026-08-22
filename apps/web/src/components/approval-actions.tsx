@@ -48,9 +48,10 @@ export function ApprovalActions({ approval }: { approval: ApprovalDto }) {
           <Button
             key={action}
             disabled={pendingAction !== null}
+            pending={pendingAction === action}
             onClick={() => void run(action)}
           >
-            {pendingAction === action ? "…" : approvalActionLabel[action]}
+            {approvalActionLabel[action]}
           </Button>
         ))}
       </div>

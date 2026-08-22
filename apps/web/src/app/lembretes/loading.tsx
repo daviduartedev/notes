@@ -1,10 +1,5 @@
-import { AppShell } from "@/components/app-shell";
-import { REMINDERS_LOADING } from "@/lib/reminder-copy";
+import { PageSkeleton } from "@/components/page-skeleton";
 
-export default function LembretesLoading() {
-  return (
-    <AppShell title="Lembretes" pathname="/lembretes">
-      <p className="text-sm text-notes-muted">{REMINDERS_LOADING}</p>
-    </AppShell>
-  );
+export default function Loading() {
+  return <PageSkeleton title="Lembretes" pathname="/lembretes" />;
 }

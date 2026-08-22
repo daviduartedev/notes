@@ -30,7 +30,7 @@ export default async function ReuniaoFichaPage({
             <StatusPill tone={meetingTypeTone[meeting.type]}>
               {meetingTypeLabel[meeting.type]}
             </StatusPill>
-            <h3 className="font-display text-xl">{meeting.title}</h3>
+            <h3 className="text-xl font-semibold">{meeting.title}</h3>
           </div>
           <p className="mb-4 text-sm text-notes-muted">
             {meeting.projectId ? (
