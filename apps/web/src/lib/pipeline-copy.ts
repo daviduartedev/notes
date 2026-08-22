@@ -1,6 +1,6 @@
-export const PIPELINE_EMPTY = "Nenhum projeto no quadro.";
+export const PIPELINE_EMPTY = "Nenhum projeto nesta linha do tempo.";
 export const PIPELINE_LOAD_ERROR = "Não foi possível carregar o pipeline.";
-export const PIPELINE_LOADING = "Carregando quadro…";
+export const PIPELINE_LOADING = "Carregando linha do tempo…";
 
 export function pipelineCardHref(projectId: string): string {
   return `/projetos/${projectId}`;

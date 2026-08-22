@@ -33,9 +33,9 @@ export function AttentionLeadForm({ workspace }: { workspace: WorkspaceDto }) {
   }
 
   return (
-    <form className="flex flex-col gap-2" onSubmit={(event) => void onSave(event)}>
-      <label className="flex items-center gap-2 text-[12px] text-notes-muted">
-        {ATTENTION_LEAD_LABEL}
+    <form className="flex min-w-0 flex-col gap-2" onSubmit={(event) => void onSave(event)}>
+      <p className="text-[12px] text-notes-muted">{ATTENTION_LEAD_LABEL}</p>
+      <div className="flex min-w-0 items-center gap-2">
         <Input
           name="attentionLeadDays"
           type="number"
@@ -43,16 +43,16 @@ export function AttentionLeadForm({ workspace }: { workspace: WorkspaceDto }) {
           max={30}
           defaultValue={workspace.attentionLeadDays}
           required
-          className="min-w-0 w-14 flex-none px-2 py-1 text-center"
+          className="!w-16 !min-w-0 !max-w-16 flex-none px-2 py-1 text-center"
         />
-        <Button type="submit" pending={pending} className="px-3 py-1 text-[12px]">
+        <Button type="submit" pending={pending} className="shrink-0 px-3 py-1 text-[12px]">
           Salvar
         </Button>
-      </label>
+      </div>
       {error ? (
-        <p className="text-[12px] text-semantic-red">{error}</p>
+        <p className="text-[11px] leading-snug text-semantic-red">{error}</p>
       ) : (
-        <p className="text-[11px] text-notes-muted">{ATTENTION_LEAD_HINT}</p>
+        <p className="text-[11px] leading-snug text-notes-muted">{ATTENTION_LEAD_HINT}</p>
       )}
     </form>
   );

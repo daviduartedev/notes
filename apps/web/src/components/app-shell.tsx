@@ -25,7 +25,7 @@ export function AppShell({
   pathname: string;
   children: ReactNode;
 }) {
-  const wide = pathname === "/pipeline" || pathname.startsWith("/pipeline/") || pathname === "/hoje";
+  const wide = pathname === "/hoje";
   return (
     <div className="flex min-h-screen flex-col bg-notes-canvas">
       <header className="sticky top-0 z-20 flex h-12 items-center gap-5 border-b border-notes-border bg-notes-canvas px-6">

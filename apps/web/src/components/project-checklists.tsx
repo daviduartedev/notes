@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { StageTimeline, StageTimelineItem } from "@/components/stage-timeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -14,6 +15,7 @@ import {
   formatChecklistCompletedAt,
 } from "@/lib/checklist-copy";
 import type {
+  ChecklistItemDto,
   ChecklistTemplateDto,
   ProjectChecklistDto,
   ProjectDto,
@@ -120,49 +122,80 @@ export function ProjectChecklists({
         checklists.map((checklist) => (
           <section key={checklist.id} className="flex flex-col gap-3">
             <h4 className="text-lg font-semibold">{checklist.name}</h4>
-            <ol className="flex flex-col gap-3">
-              {checklist.items.map((item) => {
-                const done = Boolean(item.completedAt);
-                return (
-                  <li
-                    key={item.id}
-                    className="flex flex-col gap-2 border border-notes-border p-3 md:flex-row md:items-center"
-                  >
-                    <div className="flex-1">
-                      <p className="text-sm">{item.title}</p>
-                      <p className="text-xs text-notes-muted">
-                        {done
-                          ? `${item.completedByName ?? "Alguém"} · ${formatChecklistCompletedAt(item.completedAt)}`
-                          : "Aberto"}
-                        {item.note ? ` · ${item.note}` : ""}
-                      </p>
-                    </div>
-                    <StatusPill tone={done ? "green" : "yellow"}>
-                      {done ? "Concluído" : "Aberto"}
-                    </StatusPill>
-                    {!done ? (
-                      <Input
-                        placeholder="Observação (opcional)"
-                        value={notes[item.id] ?? ""}
-                        onChange={(event) =>
-                          setNotes((current) => ({ ...current, [item.id]: event.target.value }))
-                        }
-                      />
-                    ) : null}
-                    <Button
-                      variant="ghost"
-                      pending={pendingItemId === item.id}
-                      onClick={() => void toggleItem(item.id, !done)}
-                    >
-                      {done ? "Reabrir" : CHECKLIST_MARK_LABEL}
-                    </Button>
-                  </li>
-                );
-              })}
-            </ol>
+            <ChecklistItems
+              items={checklist.items}
+              notes={notes}
+              pendingItemId={pendingItemId}
+              onNoteChange={(itemId, value) =>
+                setNotes((current) => ({ ...current, [itemId]: value }))
+              }
+              onToggle={(itemId, completed) => void toggleItem(itemId, completed)}
+            />
           </section>
         ))
       )}
     </div>
+  );
+}
+
+function ChecklistItems({
+  items,
+  notes,
+  pendingItemId,
+  onNoteChange,
+  onToggle,
+}: {
+  items: ChecklistItemDto[];
+  notes: Record<string, string>;
+  pendingItemId: string | null;
+  onNoteChange: (itemId: string, value: string) => void;
+  onToggle: (itemId: string, completed: boolean) => void;
+}) {
+  const firstOpen = items.findIndex((row) => !row.completedAt);
+  return (
+    <StageTimeline>
+      {items.map((item, index) => {
+        const done = Boolean(item.completedAt);
+        const state = done ? "completed" : firstOpen === index ? "current" : "upcoming";
+        return (
+          <StageTimelineItem
+            key={item.id}
+            state={state}
+            last={index === items.length - 1}
+            compact
+            current={state === "current"}
+          >
+            <div className="flex flex-col gap-2 border border-notes-border p-3 md:flex-row md:items-center">
+              <div className="flex-1">
+                <p className="text-sm">{item.title}</p>
+                <p className="text-xs text-notes-muted">
+                  {done
+                    ? `${item.completedByName ?? "Alguém"} · ${formatChecklistCompletedAt(item.completedAt)}`
+                    : "Aberto"}
+                  {item.note ? ` · ${item.note}` : ""}
+                </p>
+              </div>
+              <StatusPill tone={done ? "green" : "yellow"}>
+                {done ? "Concluído" : "Aberto"}
+              </StatusPill>
+              {!done ? (
+                <Input
+                  placeholder="Observação (opcional)"
+                  value={notes[item.id] ?? ""}
+                  onChange={(event) => onNoteChange(item.id, event.target.value)}
+                />
+              ) : null}
+              <Button
+                variant="ghost"
+                pending={pendingItemId === item.id}
+                onClick={() => onToggle(item.id, !done)}
+              >
+                {done ? "Reabrir" : CHECKLIST_MARK_LABEL}
+              </Button>
+            </div>
+          </StageTimelineItem>
+        );
+      })}
+    </StageTimeline>
   );
 }

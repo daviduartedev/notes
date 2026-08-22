@@ -53,23 +53,23 @@ function SectionColumn({
   leadForm?: WorkspaceDto;
 }) {
   return (
-    <section className="flex w-[240px] shrink-0 flex-col">
-      <div className="mb-5 flex items-center gap-2.5">
-        <span className={`h-3 w-0.5 ${COLUMN_ACCENT[sectionKey]}`} />
-        <h3 className="text-[13px] font-medium">{HOJE_SECTION_LABELS[sectionKey]}</h3>
+    <section className="flex min-w-0 flex-col">
+      <div className="mb-4 flex h-6 items-center gap-2 overflow-hidden">
+        <span className={`h-3 w-0.5 shrink-0 ${COLUMN_ACCENT[sectionKey]}`} />
+        <h3 className="truncate text-[13px] font-medium">{HOJE_SECTION_LABELS[sectionKey]}</h3>
         {cards.length > 0 ? (
-          <span className="text-[11px] tabular-nums text-notes-muted">{cards.length}</span>
+          <span className="shrink-0 text-[11px] tabular-nums text-notes-muted">{cards.length}</span>
         ) : null}
       </div>
       {sectionKey === "needs_attention" && leadForm ? (
-        <div className="mb-4">
+        <div className="mb-4 min-w-0">
           <AttentionLeadForm workspace={leadForm} />
         </div>
       ) : null}
       {cards.length === 0 ? (
         <p className="text-[12px] text-notes-muted">{HOJE_SECTION_EMPTY[sectionKey]}</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex min-w-0 flex-col gap-3">
           {cards.map((card) => (
             <HojeCard key={card.id} card={card} />
           ))}
@@ -88,7 +88,7 @@ export function HojeBoard({
 }) {
   return (
     <div className="board-bg flex-1 overflow-x-auto">
-      <div className="flex min-w-min items-start gap-8 px-8 py-6">
+      <div className="grid min-w-[56rem] grid-cols-4 gap-6 px-8 py-6">
         {HOJE_SECTION_ORDER.map((sectionKey) => (
           <SectionColumn
             key={sectionKey}

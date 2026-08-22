@@ -1,5 +1,6 @@
 import { Bell, ChevronDown, ChevronRight } from "lucide-react";
 import { notFound } from "next/navigation";
+import { StageTimeline, StageTimelineItem, StageTimelinePhase } from "@/components/stage-timeline";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -73,6 +74,24 @@ export default function DesignSystemPage() {
             <Spinner /> Spinner
           </span>
         </div>
+      </Card>
+      <Card className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">Linha do tempo</h2>
+        <p className="text-sm text-notes-muted">
+          Vertical, de cima para baixo. Nó quadrado: concluída, atual, futura, bloqueada ou em espera.
+        </p>
+        <StageTimeline>
+          <StageTimelinePhase label="Comercial" />
+          <StageTimelineItem state="completed">
+            <p className="text-sm">Briefing</p>
+          </StageTimelineItem>
+          <StageTimelineItem state="current" current>
+            <p className="text-sm font-medium">Proposta</p>
+          </StageTimelineItem>
+          <StageTimelineItem state="upcoming" last>
+            <p className="text-sm text-notes-muted">Kickoff</p>
+          </StageTimelineItem>
+        </StageTimeline>
       </Card>
     </main>
   );

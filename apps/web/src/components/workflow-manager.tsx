@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
+import { StageTimeline, StageTimelineItem } from "@/components/stage-timeline";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -136,8 +137,8 @@ export function WorkflowManager({ templates }: { templates: WorkflowTemplateDto[
             <button
               key={template.id}
               type="button"
-              className={`rounded px-2 py-1 text-left text-sm ${
-                template.id === selectedId ? "bg-notes-raised text-semantic-blue" : "text-notes-muted"
+              className={`px-2 py-1 text-left text-sm ${
+                template.id === selectedId ? "bg-notes-raised text-notes-ink" : "text-notes-muted"
               }`}
               onClick={() => pick(template.id)}
             >
@@ -173,56 +174,66 @@ export function WorkflowManager({ templates }: { templates: WorkflowTemplateDto[
             />
             Modelo padrão do workspace
           </label>
-          <div className="grid gap-3">
+          <StageTimeline>
             {stages.map((stage, index) => (
-              <div key={`${stage.key}-${index}`} className="grid gap-2 rounded border border-notes-border p-3 md:grid-cols-2">
-                <label className="flex flex-col gap-1 text-sm">
-                  Key
-                  <Input value={stage.key} onChange={(event) => updateStage(index, { key: event.target.value })} required />
-                </label>
-                <label className="flex flex-col gap-1 text-sm">
-                  Label
-                  <Input value={stage.label} onChange={(event) => updateStage(index, { label: event.target.value })} required />
-                </label>
-                <label className="flex flex-col gap-1 text-sm">
-                  Fase
-                  <Select
-                    value={stage.phase}
-                    onChange={(event) => updateStage(index, { phase: event.target.value as StagePhase })}
-                  >
-                    {phases.map((phase) => (
-                      <option key={phase} value={phase}>
-                        {stagePhaseLabel[phase]}
-                      </option>
-                    ))}
-                  </Select>
-                </label>
-                <label className="flex flex-col gap-1 text-sm">
-                  Critério de entrada
-                  <Textarea
-                    value={stage.entryCriteria}
-                    onChange={(event) => updateStage(index, { entryCriteria: event.target.value })}
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-sm md:col-span-2">
-                  Critério de saída
-                  <Textarea
-                    value={stage.exitCriteria}
-                    onChange={(event) => updateStage(index, { exitCriteria: event.target.value })}
-                  />
-                </label>
-                <div>
-                  <Button
-                    type="button"
-                    disabled={stages.length <= 1}
-                    onClick={() => setStages((current) => current.filter((_, i) => i !== index))}
-                  >
-                    Remover etapa
-                  </Button>
+              <StageTimelineItem
+                key={`${stage.key}-${index}`}
+                state="idle"
+                last={index === stages.length - 1}
+                compact
+              >
+                <div className="grid gap-2 border border-notes-border p-3 md:grid-cols-2">
+                  <p className="text-[11px] uppercase tracking-widest text-notes-muted md:col-span-2">
+                    Etapa {index + 1}
+                  </p>
+                  <label className="flex flex-col gap-1 text-sm">
+                    Key
+                    <Input value={stage.key} onChange={(event) => updateStage(index, { key: event.target.value })} required />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    Label
+                    <Input value={stage.label} onChange={(event) => updateStage(index, { label: event.target.value })} required />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    Fase
+                    <Select
+                      value={stage.phase}
+                      onChange={(event) => updateStage(index, { phase: event.target.value as StagePhase })}
+                    >
+                      {phases.map((phase) => (
+                        <option key={phase} value={phase}>
+                          {stagePhaseLabel[phase]}
+                        </option>
+                      ))}
+                    </Select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    Critério de entrada
+                    <Textarea
+                      value={stage.entryCriteria}
+                      onChange={(event) => updateStage(index, { entryCriteria: event.target.value })}
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm md:col-span-2">
+                    Critério de saída
+                    <Textarea
+                      value={stage.exitCriteria}
+                      onChange={(event) => updateStage(index, { exitCriteria: event.target.value })}
+                    />
+                  </label>
+                  <div>
+                    <Button
+                      type="button"
+                      disabled={stages.length <= 1}
+                      onClick={() => setStages((current) => current.filter((_, i) => i !== index))}
+                    >
+                      Remover etapa
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </StageTimelineItem>
             ))}
-          </div>
+          </StageTimeline>
           <Button
             type="button"
             onClick={() =>

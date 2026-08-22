@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { ProjectDto } from "@/lib/domain-types";
-import { projectPriorityLabel, projectStatusLabel } from "@/lib/labels";
+import { projectPriorityLabel, projectStatusLabel, stageKeyLabel } from "@/lib/labels";
 import { projectStatusTone } from "@/lib/status-tone";
 
 export function ProjectList({ projects }: { projects: ProjectDto[] }) {
@@ -16,6 +16,12 @@ export function ProjectList({ projects }: { projects: ProjectDto[] }) {
             <div>
               <p className="font-medium">{project.name}</p>
               <p className="text-sm text-notes-muted">{project.clientName}</p>
+              {project.currentStageKey ? (
+                <p className="mt-2 flex items-center gap-2 text-[12px] text-notes-muted">
+                  <span className="size-2 shrink-0 bg-notes-ink" aria-hidden />
+                  {stageKeyLabel[project.currentStageKey] ?? project.currentStageKey}
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
               {project.visualState === "overdue" ? (

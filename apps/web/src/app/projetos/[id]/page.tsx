@@ -23,7 +23,7 @@ import type {
   MeetingDto,
   ValidationDto,
 } from "@/lib/domain-types";
-import { projectPriorityLabel, projectStatusLabel } from "@/lib/labels";
+import { projectPriorityLabel, projectStatusLabel, stageKeyLabel } from "@/lib/labels";
 import { serverApi } from "@/lib/server-api";
 import { projectStatusTone } from "@/lib/status-tone";
 
@@ -81,7 +81,12 @@ export default async function ProjetoFichaPage({
               {projectStatusLabel[project.status]}
             </StatusPill>
             <StatusPill tone="purple">{projectPriorityLabel[project.priority]}</StatusPill>
-            <p className="text-sm text-notes-muted">{project.progress}% · {project.clientName}</p>
+            <p className="text-sm text-notes-muted">
+              {project.progress}% · {project.clientName}
+              {project.currentStageKey
+                ? ` · ${stageKeyLabel[project.currentStageKey] ?? project.currentStageKey}`
+                : ""}
+            </p>
           </div>
           <ProjectEditForm project={project} members={members} clients={clients} />
         </Card>

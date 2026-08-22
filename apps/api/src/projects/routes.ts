@@ -54,7 +54,7 @@ async function toDto(
   const blockers = includeStages
     ? await openHintsFor(deps, fresh.id)
     : { hints: [], waitingOnClient: false };
-  return serializeProject(
+  const dto = serializeProject(
     fresh,
     await clientNameOf(deps, fresh.clientId),
     deps.now(),
@@ -62,6 +62,11 @@ async function toDto(
     blockers.hints,
     blockers.waitingOnClient,
   );
+  if (includeStages || dto.currentStageKey || !fresh.currentStageId) {
+    return dto;
+  }
+  const current = await deps.store.getStage(fresh.currentStageId);
+  return { ...dto, currentStageKey: current?.key ?? null };
 }
 
 function patchesFromAction(
