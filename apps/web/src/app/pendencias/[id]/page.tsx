@@ -34,7 +34,7 @@ export default async function PendenciaFichaPage({
             )}
             {blocker.visualState === "overdue" ? <StatusPill tone="red">Atrasada</StatusPill> : null}
           </div>
-          <h3 className="mb-2 font-display text-xl">{blocker.title}</h3>
+          <h3 className="mb-2 text-xl font-semibold">{blocker.title}</h3>
           <p className="mb-2 text-sm text-notes-muted">
             <a href={blockerProjectHref(blocker.projectId)}>{blocker.projectName}</a>
             {" · "}

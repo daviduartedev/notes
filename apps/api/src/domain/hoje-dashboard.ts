@@ -5,6 +5,7 @@ import type {
   ReminderRecord,
   ValidationRecord,
 } from "../store/types.js";
+import { isUpcomingWithinLead, utcDaysUntil } from "./attention-lead.js";
 import { FOLLOW_UP_THRESHOLD_MS, PROPOSAL_WAITING_CLIENT_POLICY, WAITING_CLIENT_STAGE_KEY } from "./follow-up-policy.js";
 import { projectVisualState } from "./overdue.js";
 import { comparePipelineCards, type PipelineCardRow } from "./pipeline-board.js";
@@ -23,6 +24,7 @@ export type HojeCard = {
   since: string;
   nextAction: string;
   href: string;
+  alert?: boolean;
 };
 
 export type HojeDashboard = {
@@ -34,6 +36,7 @@ export type HojeDashboard = {
 
 export type HojeDashboardInput = {
   now: Date;
+  attentionLeadDays: number;
   pipeline: readonly PipelineCardRow[];
   validations: readonly ValidationRecord[];
   approvals: readonly ApprovalRecord[];
@@ -73,7 +76,7 @@ function projectHref(id: string): string {
 }
 
 export function buildHojeDashboard(input: HojeDashboardInput): HojeDashboard {
-  const { now } = input;
+  const { now, attentionLeadDays } = input;
   const needsAttention: HojeCard[] = [];
   const today: HojeCard[] = [];
   const waitingClient: HojeCard[] = [];
@@ -180,6 +183,8 @@ export function buildHojeDashboard(input: HojeDashboardInput): HojeDashboard {
   for (const row of input.reminders) {
     const isFollowUp = row.policyKey === PROPOSAL_WAITING_CLIENT_POLICY && row.status === "due";
     const dueToday = row.status === "due" && isSameUtcDay(row.dueAt, now);
+    const active = row.status === "scheduled" || row.status === "due";
+    const daysUntil = utcDaysUntil(row.dueAt, now);
     if (dueToday || isFollowUp) {
       today.push({
         id: `reminder:${row.id}`,
@@ -204,22 +209,48 @@ export function buildHojeDashboard(input: HojeDashboardInput): HojeDashboard {
         href: `/lembretes/${row.id}`,
       });
     }
+    if (active && (daysUntil < 0 || isUpcomingWithinLead(row.dueAt, now, attentionLeadDays))) {
+      needsAttention.push({
+        id: `reminder:${row.id}`,
+        kind: "reminder",
+        clientName: row.clientName,
+        projectName: row.projectName ?? "",
+        reason: daysUntil < 0 ? "Lembrete atrasado" : `Lembrete em ${daysUntil} dia${daysUntil === 1 ? "" : "s"}`,
+        since: row.dueAt.toISOString(),
+        nextAction: "Abrir lembrete",
+        href: `/lembretes/${row.id}`,
+        alert: true,
+      });
+    }
   }
 
   for (const row of input.meetings) {
-    if (!isSameUtcDay(row.startsAt, now)) {
-      continue;
+    if (isSameUtcDay(row.startsAt, now)) {
+      today.push({
+        id: `meeting:${row.id}`,
+        kind: "meeting",
+        clientName: row.clientName ?? "",
+        projectName: row.projectName ?? "",
+        reason: "Reunião hoje",
+        since: row.startsAt.toISOString(),
+        nextAction: "Abrir reunião",
+        href: `/reunioes/${row.id}`,
+      });
     }
-    today.push({
-      id: `meeting:${row.id}`,
-      kind: "meeting",
-      clientName: row.clientName ?? "",
-      projectName: row.projectName ?? "",
-      reason: "Reunião hoje",
-      since: row.startsAt.toISOString(),
-      nextAction: "Abrir reunião",
-      href: `/reunioes/${row.id}`,
-    });
+    const meetingDays = utcDaysUntil(row.startsAt, now);
+    if (meetingDays < 0 || isUpcomingWithinLead(row.startsAt, now, attentionLeadDays)) {
+      needsAttention.push({
+        id: `meeting:${row.id}`,
+        kind: "meeting",
+        clientName: row.clientName ?? "",
+        projectName: row.projectName ?? "",
+        reason: meetingDays < 0 ? "Reunião atrasada" : `Reunião em ${meetingDays} dia${meetingDays === 1 ? "" : "s"}`,
+        since: row.startsAt.toISOString(),
+        nextAction: "Abrir reunião",
+        href: `/reunioes/${row.id}`,
+        alert: true,
+      });
+    }
   }
 
   const inProgress = [...input.pipeline]

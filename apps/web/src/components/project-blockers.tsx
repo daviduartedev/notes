@@ -109,7 +109,7 @@ export function ProjectBlockers({
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
         />
-        <Button disabled={pending || title.trim().length === 0} onClick={() => void createOpen()}>
+        <Button disabled={title.trim().length === 0} pending={pending} onClick={() => void createOpen()}>
           {BLOCKER_CREATE_LABEL}
         </Button>
       </div>

@@ -1165,6 +1165,9 @@ export function createPrismaStore(prisma: PrismaClient): NotesStore {
         if (!project || project.workspaceId !== data.workspaceId) {
           return null;
         }
+        if (project.clientId !== data.clientId) {
+          return null;
+        }
       }
       try {
         const row = await prisma.reminder.create({

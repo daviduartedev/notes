@@ -240,4 +240,48 @@ describe("lembretes C8", () => {
     expect(decide.status).toBe(404);
     expect(await decide.text()).toBe("");
   });
+
+  it("POST cria lembrete manual atrelado a cliente e projeto", async () => {
+    const clock = clockDeps(new Date("2026-08-19T12:00:00.000Z"));
+    const { app, cookie } = await login("owner@example.com", clock);
+    const created = await createProject(app, cookie, "Manual Acme");
+    const response = await app.request("/api/reminders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", cookie },
+      body: JSON.stringify({
+        draftMessage: "Ligar para o cliente sobre o kickoff",
+        dueAt: "2026-08-22T12:00:00.000Z",
+        clientId: created.clientId,
+        projectId: created.id,
+        workspaceId: "forjado",
+      }),
+    });
+    expect(response.status).toBe(201);
+    const body = (await response.json()) as ReminderDto;
+    expect(body.policyKey).toBe("manual");
+    expect(body.status).toBe("scheduled");
+    expect(body.projectId).toBe(created.id);
+    expect(body.draftMessage).toBe("Ligar para o cliente sobre o kickoff");
+
+    const listed = (await (await app.request("/api/reminders", { headers: { cookie } })).json()) as ReminderDto[];
+    expect(listed.some((row) => row.id === body.id)).toBe(true);
+  });
+
+  it("POST recusa projeto que não pertence ao cliente", async () => {
+    const clock = clockDeps(new Date("2026-08-19T12:00:00.000Z"));
+    const { app, cookie } = await login("owner@example.com", clock);
+    const a = await createProject(app, cookie, "Proj A");
+    const b = await createProject(app, cookie, "Proj B");
+    const response = await app.request("/api/reminders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", cookie },
+      body: JSON.stringify({
+        draftMessage: "Detalhe",
+        dueAt: "2026-08-22T12:00:00.000Z",
+        clientId: a.clientId,
+        projectId: b.id,
+      }),
+    });
+    expect(response.status).toBe(400);
+  });
 });

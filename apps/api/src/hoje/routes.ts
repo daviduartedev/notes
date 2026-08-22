@@ -19,6 +19,8 @@ export function hojeRoutes(deps: AppDeps) {
     }
     await evaluateWorkspaceReminders(deps, workspaceId, gate.session.sub);
     const now = deps.now();
+    const workspace = await deps.getWorkspace(workspaceId);
+    const attentionLeadDays = workspace?.attentionLeadDays ?? 3;
     const [pipeline, validations, approvals, blockers, reminders, meetings] = await Promise.all([
       deps.store.listPipelineCards(workspaceId, {}),
       deps.store.listValidations(workspaceId, {}),
@@ -30,6 +32,7 @@ export function hojeRoutes(deps: AppDeps) {
     return c.json(
       buildHojeDashboard({
         now,
+        attentionLeadDays,
         pipeline,
         validations,
         approvals,

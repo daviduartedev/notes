@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
+import { BrandMark } from "@/components/brand-mark";
 import { LogoutButton } from "@/components/logout-button";
 
 const links = [
-  { href: "/hoje", label: "Hoje" },
+  { href: "/hoje", label: "Dashboard" },
   { href: "/pipeline", label: "Pipeline" },
   { href: "/clientes", label: "Clientes" },
   { href: "/projetos", label: "Projetos" },
@@ -24,37 +25,36 @@ export function AppShell({
   pathname: string;
   children: ReactNode;
 }) {
-  const wide = pathname === "/pipeline" || pathname.startsWith("/pipeline/");
+  const wide = pathname === "/pipeline" || pathname.startsWith("/pipeline/") || pathname === "/hoje";
   return (
-    <main
-      className={`mx-auto flex min-h-screen flex-col gap-6 px-6 py-10 ${wide ? "max-w-none" : "max-w-5xl"}`}
-    >
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-notes-border pb-4">
-        <div className="flex flex-wrap items-center gap-6">
-          <h1 className="font-display text-4xl">Notes</h1>
-          <nav className="flex gap-3 text-sm">
-            {links.map((link) => {
-              const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
-              return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className={
-                    active
-                      ? "text-semantic-blue"
-                      : "text-notes-muted hover:text-notes-text"
-                  }
-                >
-                  {link.label}
-                </a>
-              );
-            })}
-          </nav>
-        </div>
+    <div className="flex min-h-screen flex-col bg-notes-canvas">
+      <header className="sticky top-0 z-20 flex h-12 items-center gap-5 border-b border-notes-border bg-notes-canvas px-6">
+        <a href="/hoje" className="flex-none text-notes-text">
+          <BrandMark />
+        </a>
+        <div className="h-4 w-px flex-none bg-notes-border" />
+        <nav className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          {links.map((link) => {
+            const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                className={active ? "nav-item nav-item-active" : "nav-item"}
+              >
+                {link.label}
+              </a>
+            );
+          })}
+        </nav>
         <LogoutButton />
       </header>
-      <h2 className="font-display text-2xl">{title}</h2>
-      {children}
-    </main>
+      <main className={wide ? "flex flex-1 flex-col" : "page-shell"}>
+        <h2 className={`font-semibold tracking-tight ${wide ? "px-8 pt-5 text-[20px]" : "text-[20px]"}`}>
+          {title}
+        </h2>
+        {children}
+      </main>
+    </div>
   );
 }

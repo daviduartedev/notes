@@ -75,19 +75,19 @@ export function StageBoard({ project }: { project: ProjectDto }) {
         }
         return (
           <section key={phase} className="flex flex-col gap-3">
-            <h4 className="font-display text-lg text-notes-muted">{stagePhaseLabel[phase]}</h4>
+            <h4 className="text-lg text-notes-muted">{stagePhaseLabel[phase]}</h4>
             <ol className="flex flex-col gap-3">
               {items.map((stage) => (
                 <li
                   key={stage.id}
-                  className={`rounded-md border p-3 ${
+                  className={`border p-3 ${
                     stage.isCurrent
-                      ? "border-semantic-blue bg-notes-raised"
+                      ? "border-notes-ink bg-notes-raised"
                       : "border-notes-border bg-notes-panel"
                   }`}
                 >
                   <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <p className="font-display text-xl">{stage.label}</p>
+                    <p className="text-xl font-medium">{stage.label}</p>
                     <StatusPill tone={stageStatusTone[stage.status]}>
                       {stageStatusLabel[stage.status]}
                     </StatusPill>
@@ -105,10 +105,11 @@ export function StageBoard({ project }: { project: ProjectDto }) {
                           key={`${item.action}-${item.toKey ?? "none"}`}
                           variant={item.action === "complete" ? "primary" : "ghost"}
                           disabled={!item.enabled || Boolean(pendingId)}
+                          pending={busy}
                           title={item.reason ?? undefined}
                           onClick={() => void runAction(stage, item.action, item.toKey)}
                         >
-                          {busy ? "…" : actionCaption(item.action, item.toKey)}
+                          {actionCaption(item.action, item.toKey)}
                         </Button>
                       );
                     })}

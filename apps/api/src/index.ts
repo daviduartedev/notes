@@ -5,7 +5,7 @@ import { API_PORT, createApp } from "./app.js";
 import { loadEnv } from "./env.js";
 import { logInfo } from "./logger.js";
 import { prisma } from "./prisma.js";
-import { createPrismaAuthenticate, createPrismaSessionVersion, createPrismaWorkspaceLookup } from "./prisma-auth.js";
+import { createPrismaAuthenticate, createPrismaSessionVersion, createPrismaWorkspaceLookup, createPrismaWorkspaceUpdate } from "./prisma-auth.js";
 import { createPrismaStore } from "./store/prisma.js";
 
 loadDotenv({ path: resolve(process.cwd(), "../../.env") });
@@ -22,6 +22,7 @@ serve(
       webOrigin: env.WEB_ORIGIN,
       authenticate: createPrismaAuthenticate(prisma),
       getWorkspace: createPrismaWorkspaceLookup(prisma),
+      updateWorkspace: createPrismaWorkspaceUpdate(prisma),
       getSessionVersion: sessionVersion.getSessionVersion,
       bumpSessionVersion: sessionVersion.bumpSessionVersion,
       store: createPrismaStore(prisma),

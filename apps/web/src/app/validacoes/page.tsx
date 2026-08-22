@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -65,7 +66,7 @@ export default async function ValidacoesPage({
   return (
     <AppShell title="Validações" pathname="/validacoes">
       <Card>
-        <form className="grid gap-3 md:grid-cols-3 lg:grid-cols-6" method="get">
+        <FilterBar method="get">
           <Select name="status" defaultValue={filters.status ?? ""}>
             <option value="">Todos os status</option>
             {statuses.map((value) => (
@@ -100,7 +101,7 @@ export default async function ValidacoesPage({
           </Select>
           <Input name="dueBefore" type="date" defaultValue={filters.dueBefore ?? ""} />
           <Button type="submit">Filtrar</Button>
-        </form>
+        </FilterBar>
       </Card>
 
       {loadError ? (
@@ -119,7 +120,7 @@ export default async function ValidacoesPage({
                   <StatusPill tone={validationStatusTone[validation.status]}>
                     {validationStatusLabel[validation.status]}
                   </StatusPill>
-                  <h3 className="font-display text-xl">{validationTypeLabel[validation.type]}</h3>
+                  <h3 className="text-xl font-semibold">{validationTypeLabel[validation.type]}</h3>
                 </div>
                 <p className="text-sm text-notes-muted">
                   {validation.projectName} · {validation.clientName}

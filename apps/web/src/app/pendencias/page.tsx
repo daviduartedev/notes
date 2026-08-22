@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { Select } from "@/components/ui/select";
 import { StatusPill } from "@/components/ui/status-pill";
 import {
@@ -58,7 +59,7 @@ export default async function PendenciasPage({
   return (
     <AppShell title="Pendências" pathname="/pendencias">
       <Card>
-        <form className="grid gap-3 md:grid-cols-3 lg:grid-cols-6" method="get">
+        <FilterBar method="get">
           <Select name="status" defaultValue={filters.status ?? ""}>
             <option value="">Todos os status</option>
             {statuses.map((value) => (
@@ -100,7 +101,7 @@ export default async function PendenciasPage({
             <option value="true">Atrasadas</option>
           </Select>
           <Button type="submit">Filtrar</Button>
-        </form>
+        </FilterBar>
       </Card>
 
       {loadError ? (
@@ -122,7 +123,7 @@ export default async function PendenciasPage({
                   {blocker.visualState === "overdue" ? (
                     <StatusPill tone="red">Atrasada</StatusPill>
                   ) : null}
-                  <h3 className="font-display text-xl">{blocker.title}</h3>
+                  <h3 className="text-xl font-semibold">{blocker.title}</h3>
                 </div>
                 <p className="text-sm text-notes-muted">
                   {blocker.projectName} · {blocker.clientName}

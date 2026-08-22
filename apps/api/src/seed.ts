@@ -7,6 +7,7 @@ import { prisma } from "./prisma.js";
 import { ensureDeployStagingForWorkspace } from "./checklists/seed.js";
 import { ensureWorkflowCatalogForWorkspace } from "./workflows/seed.js";
 import { createPrismaStore } from "./store/prisma.js";
+import { seedClientsFromInputFile } from "./seed-clients.js";
 
 loadDotenv({ path: resolve(process.cwd(), "../../.env") });
 loadDotenv();
@@ -46,6 +47,7 @@ async function seed() {
   await ensureWorkflowCatalogForWorkspace(prisma, workspaceId);
   await ensureDeployStagingForWorkspace(prisma, workspaceId);
   await createPrismaStore(prisma).backfillMissingStages(workspaceId, new Date());
+  await seedClientsFromInputFile(prisma, workspaceId, user.id);
 
   logInfo("seed ok", { email: env.SEED_OWNER_EMAIL, workspaceId });
 }

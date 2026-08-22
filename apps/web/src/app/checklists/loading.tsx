@@ -1,10 +1,5 @@
-import { AppShell } from "@/components/app-shell";
-import { CHECKLISTS_LOADING } from "@/lib/checklist-copy";
+import { PageSkeleton } from "@/components/page-skeleton";
 
-export default function ChecklistsLoading() {
-  return (
-    <AppShell title="Checklists" pathname="/checklists">
-      <p className="text-sm text-notes-muted">{CHECKLISTS_LOADING}</p>
-    </AppShell>
-  );
+export default function Loading() {
+  return <PageSkeleton title="Checklists" pathname="/checklists" />;
 }

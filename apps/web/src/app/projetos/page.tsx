@@ -3,6 +3,7 @@ import { ProjectCreateForm } from "@/components/project-create-form";
 import { ProjectList } from "@/components/project-list";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type {
@@ -53,7 +54,7 @@ export default async function ProjetosPage({
   return (
     <AppShell title="Projetos" pathname="/projetos">
       <Card>
-        <form className="grid gap-3 md:grid-cols-3 lg:grid-cols-6" method="get">
+        <FilterBar method="get">
           <Select name="ownerUserId" defaultValue={filters.ownerUserId ?? ""}>
             <option value="">Todos os responsáveis</option>
             {members.map((member) => (
@@ -88,11 +89,11 @@ export default async function ProjetosPage({
           </Select>
           <Input name="dueBefore" type="date" defaultValue={filters.dueBefore ?? ""} />
           <Button type="submit">Filtrar</Button>
-        </form>
+        </FilterBar>
       </Card>
 
       <Card>
-        <h3 className="font-display text-xl">Novo projeto</h3>
+        <h3 className="text-xl font-semibold">Novo projeto</h3>
         <ProjectCreateForm members={members} clients={clients} templates={templates} />
       </Card>
 

@@ -1,5 +1,6 @@
 import type { NotesStore } from "./store/types.js";
 import { createMemoryStore, TEST_MEMBERS } from "./store/memory.js";
+import { DEFAULT_ATTENTION_LEAD_DAYS } from "./domain/attention-lead.js";
 
 export type MemberRole = "owner" | "member";
 
@@ -19,6 +20,7 @@ export type Authenticate = (
 export type WorkspaceRecord = {
   id: string;
   name: string;
+  attentionLeadDays: number;
 };
 
 export type AppDeps = {
@@ -26,6 +28,10 @@ export type AppDeps = {
   webOrigin: string;
   authenticate: Authenticate;
   getWorkspace: (workspaceId: string) => Promise<WorkspaceRecord | null>;
+  updateWorkspace: (
+    workspaceId: string,
+    patch: { attentionLeadDays: number },
+  ) => Promise<WorkspaceRecord | null>;
   getSessionVersion: (userId: string) => Promise<number | null>;
   bumpSessionVersion: (userId: string) => Promise<void>;
   store: NotesStore;
@@ -39,6 +45,28 @@ export function createTestDeps(overrides: Partial<AppDeps> = {}): AppDeps {
     ["seed-user-b", 0],
     ["member-user", 0],
   ]);
+
+  const leadDays = new Map<string, number>([
+    ["ws-1", DEFAULT_ATTENTION_LEAD_DAYS],
+    ["ws-2", DEFAULT_ATTENTION_LEAD_DAYS],
+  ]);
+
+  const workspaceNamed: Record<string, string> = {
+    "ws-1": "Notes",
+    "ws-2": "Outro",
+  };
+
+  function workspaceRecord(workspaceId: string): WorkspaceRecord | null {
+    const name = workspaceNamed[workspaceId];
+    if (!name) {
+      return null;
+    }
+    return {
+      id: workspaceId,
+      name,
+      attentionLeadDays: leadDays.get(workspaceId) ?? DEFAULT_ATTENTION_LEAD_DAYS,
+    };
+  }
 
   const deps: AppDeps = {
     authSecret: "a".repeat(32),
@@ -82,14 +110,13 @@ export function createTestDeps(overrides: Partial<AppDeps> = {}): AppDeps {
       }
       return null;
     },
-    getWorkspace: async (workspaceId) => {
-      if (workspaceId === "ws-1") {
-        return { id: "ws-1", name: "Notes" };
+    getWorkspace: async (workspaceId) => workspaceRecord(workspaceId),
+    updateWorkspace: async (workspaceId, patch) => {
+      if (!workspaceNamed[workspaceId]) {
+        return null;
       }
-      if (workspaceId === "ws-2") {
-        return { id: "ws-2", name: "Outro" };
-      }
-      return null;
+      leadDays.set(workspaceId, patch.attentionLeadDays);
+      return workspaceRecord(workspaceId);
     },
     getSessionVersion: async (userId) => (versions.has(userId) ? (versions.get(userId) ?? 0) : null),
     bumpSessionVersion: async (userId) => {

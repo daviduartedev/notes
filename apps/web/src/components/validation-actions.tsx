@@ -48,9 +48,10 @@ export function ValidationActions({ validation }: { validation: ValidationDto })
           <Button
             key={to}
             disabled={pendingTo !== null}
+            pending={pendingTo === to}
             onClick={() => void run(to)}
           >
-            {pendingTo === to ? "…" : validationStatusLabel[to]}
+            {validationStatusLabel[to]}
           </Button>
         ))}
       </div>

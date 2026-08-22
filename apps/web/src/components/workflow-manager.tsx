@@ -243,11 +243,11 @@ export function WorkflowManager({ templates }: { templates: WorkflowTemplateDto[
           </Button>
           {error ? <p className="text-sm text-semantic-red">{error}</p> : null}
           <div className="flex gap-2">
-            <Button type="submit" disabled={pending}>
-              {pending ? "Salvando…" : creating ? "Criar modelo" : "Salvar modelo"}
+            <Button type="submit" pending={pending}>
+              {creating ? "Criar modelo" : "Salvar modelo"}
             </Button>
             {selected && !selected.isCatalog ? (
-              <Button type="button" disabled={pending} onClick={() => void onDelete()}>
+              <Button type="button" variant="ghost" pending={pending} onClick={() => void onDelete()}>
                 Excluir
               </Button>
             ) : null}

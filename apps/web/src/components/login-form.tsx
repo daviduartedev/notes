@@ -45,15 +45,15 @@ export function LoginForm() {
     <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit}>
       <label className="flex flex-col gap-1 text-sm">
         E-mail
-        <Input name="email" type="email" autoComplete="username" required />
+        <Input name="email" type="email" autoComplete="username" required className="min-w-0" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         Senha
-        <Input name="password" type="password" autoComplete="current-password" required />
+        <Input name="password" type="password" autoComplete="current-password" required className="min-w-0" />
       </label>
       {error ? <p className="text-sm text-semantic-red">{error}</p> : null}
-      <Button type="submit" disabled={pending}>
-        {pending ? "Entrando…" : "Entrar"}
+      <Button type="submit" pending={pending}>
+        Entrar
       </Button>
     </form>
   );

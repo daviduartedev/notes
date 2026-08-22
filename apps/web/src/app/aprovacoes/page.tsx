@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { Select } from "@/components/ui/select";
 import { StatusPill } from "@/components/ui/status-pill";
 import {
@@ -62,7 +63,7 @@ export default async function AprovacoesPage({
   return (
     <AppShell title="Aprovações" pathname="/aprovacoes">
       <Card>
-        <form className="grid gap-3 md:grid-cols-3 lg:grid-cols-5" method="get">
+        <FilterBar method="get">
           <Select name="status" defaultValue={filters.status ?? ""}>
             <option value="">Todos os status</option>
             {statuses.map((value) => (
@@ -96,7 +97,7 @@ export default async function AprovacoesPage({
             ))}
           </Select>
           <Button type="submit">Filtrar</Button>
-        </form>
+        </FilterBar>
       </Card>
 
       {loadError ? (
@@ -112,7 +113,7 @@ export default async function AprovacoesPage({
                   <StatusPill tone={approvalStatusTone[approval.status]}>
                     {approvalStatusLabel[approval.status]}
                   </StatusPill>
-                  <h3 className="font-display text-xl">{approvalKindLabel[approval.kind]}</h3>
+                  <h3 className="text-xl font-semibold">{approvalKindLabel[approval.kind]}</h3>
                 </div>
                 <p className="text-sm text-notes-muted">
                   {approval.projectName} · {approval.clientName}

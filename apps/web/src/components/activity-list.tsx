@@ -33,7 +33,7 @@ export function ActivityList({ events }: { events: ActivityDto[] }) {
   return (
     <ol className="flex flex-col gap-3">
       {events.map((event) => (
-        <li key={event.id} className="rounded-md border border-notes-border bg-notes-raised p-3">
+        <li key={event.id} className="border border-notes-border bg-notes-raised p-3">
           <p className="text-sm font-medium">{actionLabel[event.action]}</p>
           <p className="text-xs text-notes-muted">
             {new Date(event.createdAt).toLocaleString("pt-BR")}

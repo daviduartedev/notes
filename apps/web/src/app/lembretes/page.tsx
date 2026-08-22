@@ -1,15 +1,22 @@
 import { AppShell } from "@/components/app-shell";
+import { ReminderCreateForm } from "@/components/reminder-create-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { Select } from "@/components/ui/select";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { ClientDto, ProjectDto, ReminderDto, ReminderStatus } from "@/lib/domain-types";
 import { reminderStatusLabel } from "@/lib/labels";
-import { REMINDERS_EMPTY, REMINDERS_LOAD_ERROR, reminderHref } from "@/lib/reminder-copy";
+import { REMINDER_CREATE_LABEL, REMINDERS_EMPTY, REMINDERS_LOAD_ERROR, reminderHref } from "@/lib/reminder-copy";
 import { serverApi } from "@/lib/server-api";
 import { reminderStatusTone } from "@/lib/status-tone";
 
 const statuses: ReminderStatus[] = ["scheduled", "due", "done", "snoozed", "cancelled"];
+
+function reminderTitle(reminder: ReminderDto): string {
+  const firstLine = reminder.draftMessage.split("\n")[0]?.trim();
+  return firstLine && firstLine.length > 0 ? firstLine : "Lembrete interno";
+}
 
 export default async function LembretesPage({
   searchParams,
@@ -40,7 +47,7 @@ export default async function LembretesPage({
   return (
     <AppShell title="Lembretes" pathname="/lembretes">
       <Card>
-        <form className="grid gap-3 md:grid-cols-4" method="get">
+        <FilterBar method="get">
           <Select name="status" defaultValue={filters.status ?? ""}>
             <option value="">Todos os status</option>
             {statuses.map((value) => (
@@ -66,7 +73,16 @@ export default async function LembretesPage({
             ))}
           </Select>
           <Button type="submit">Filtrar</Button>
-        </form>
+        </FilterBar>
+      </Card>
+
+      <Card>
+        <h3 className="text-xl font-semibold">{REMINDER_CREATE_LABEL}</h3>
+        {clients.length === 0 || projects.length === 0 ? (
+          <p className="mt-2 text-sm text-notes-muted">Crie um cliente e um projeto antes de cadastrar um lembrete.</p>
+        ) : (
+          <ReminderCreateForm clients={clients} projects={projects} />
+        )}
       </Card>
 
       {loadError ? (
@@ -85,7 +101,7 @@ export default async function LembretesPage({
                   {reminder.visualState === "overdue" ? (
                     <StatusPill tone="red">Atrasado</StatusPill>
                   ) : null}
-                  <h3 className="font-display text-xl">Follow-up interno</h3>
+                  <h3 className="text-xl font-semibold">{reminderTitle(reminder)}</h3>
                 </div>
                 <p className="text-sm text-notes-muted">
                   {reminder.projectName ?? "Projeto"} · {reminder.clientName}
